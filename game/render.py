@@ -79,7 +79,13 @@ class Renderer:
     def __init__(self, surface, camera):
         self.surface = surface
         self.cam = camera
-        self.items = []
+        # Two layers: 0 = scenery beside the tracks (buildings, sidewalk decor, tunnel walls,
+        # platforms), 1 = everything on/over the tracks. Seen from a camera above the tracks,
+        # layer-0 geometry can never hide layer-1 geometry, but long buildings would win the
+        # painter's sort against trains next to them - so layer 0 is drawn first, in full.
+        self.layers = ([], [])
+        self.items = self.layers[1]
+        self.layer = 1
         self._counter = 0
         self.fog_color = (180, 200, 230)
         self.draw_distance = 170.0
@@ -91,7 +97,9 @@ class Renderer:
         self.stats_drawn = 0
 
     def begin(self, fog_color, draw_distance, glow=True):
-        self.items.clear()
+        for lst in self.layers:
+            lst.clear()
+        self.layer = 1
         self._counter = 0
         self.fog_color = fog_color
         self.draw_distance = draw_distance
@@ -104,14 +112,17 @@ class Renderer:
     # ------------------------------------------------------------------
     def queue(self, depth, fn, *args):
         self._counter += 1
-        self.items.append((-depth, self._counter, fn, args))
+        self.layers[self.layer].append((-depth, self._counter, fn, args))
 
     def flush(self):
-        self.items.sort(key=lambda it: (it[0], it[1]))
-        self.stats_drawn = len(self.items)
-        for _, _, fn, args in self.items:
-            fn(*args)
-        self.items.clear()
+        self.stats_drawn = 0
+        for lst in self.layers:
+            lst.sort(key=lambda it: (it[0], it[1]))
+            self.stats_drawn += len(lst)
+            for _, _, fn, args in lst:
+                fn(*args)
+            lst.clear()
+        self.layer = 1
 
     def visible_range(self, z0, z1):
         cz = self.cam.z

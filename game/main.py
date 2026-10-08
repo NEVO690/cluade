@@ -13,11 +13,12 @@ from .database import GameData
 from .events import EventManager
 from .gameplay import GameScene
 from .menus import (LoadingScene, MainMenu, CharactersScene, ShopScene, UpgradesScene, MissionsScene,
-                    EventsScene, AchievementsScene, SettingsScene)
+                    EventsScene, AchievementsScene, SettingsScene, SeasonScene)
 from .missions import MissionManager
 from .progression import Progression, Achievements, DailyRewards
 from .save_system import SaveSystem, SettingsStore
 from .scenery import SpriteBank, Sky
+from .season import SeasonPass
 from .shop import Economy, Shop
 from .ui import Toasts
 from .utils import log, setup_logging
@@ -48,6 +49,8 @@ class App:
         self.achievements = Achievements(self.data, self.save, self.economy, self.progression)
         self.daily = DailyRewards(self.data, self.save, self.economy, self.progression)
         self.events = EventManager(self.data, self.save, self.settings, self.economy, self.progression)
+        self.economy.events = self.events
+        self.season = SeasonPass(self.data, self.save, self.economy, self.progression)
         self.missions = MissionManager(self.data, self.save, self.economy, self.progression, self.events)
         self.shop = Shop(self.data, self.economy)
         self.toasts = Toasts(self.assets)
@@ -66,6 +69,7 @@ class App:
             "events": EventsScene(self),
             "achievements": AchievementsScene(self),
             "settings": SettingsScene(self),
+            "season": SeasonScene(self),
         }
         self.scene_name = "loading"
         self.scene = self.scenes["loading"]
@@ -153,6 +157,9 @@ class App:
         if kind == "achievement":
             self.toasts.push(f"Achievement: {data['name']}", data.get("icon", "trophy"), S.UI_ACCENT, 3.5)
             self.audio.play("achievement")
+        elif kind == "season_tier" and self.scene_name != "game":
+            season, tier = data
+            self.toasts.push(f"Season Pass tier {tier} reached!", "star", season["color"], 3.5)
         elif kind == "level_up" and self.scene_name != "game":
             level, lines = data
             self.toasts.push(f"LEVEL {level}! " + ", ".join(lines), "star", S.UI_ACCENT, 4.0)

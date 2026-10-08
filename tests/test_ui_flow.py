@@ -77,7 +77,7 @@ class UIFlowTest(unittest.TestCase):
         self.assertIsNone(menu.popup)
 
         # visit every menu screen and come back with the back button
-        for label, scene in (("CHARACTERS", "characters"), ("SHOP", "shop"), ("MISSIONS", "missions"),
+        for label, scene in (("SEASON PASS", "season"), ("CHARACTERS", "characters"), ("SHOP", "shop"), ("MISSIONS", "missions"),
                              ("UPGRADES", "upgrades"), ("EVENTS", "events"), ("ACHIEVEMENTS", "achievements"),
                              ("SETTINGS", "settings")):
             self.click(self.button(label).rect.center)
@@ -97,6 +97,20 @@ class UIFlowTest(unittest.TestCase):
         self.assertTrue(app.economy.owned("boards", "neon_board"))
         self.assertEqual(app.economy.equipped("boards"), "neon_board")
         self.click(shop._back_btn.rect.center)
+
+        # buy the premium season pass and claim its tier-1 character (only while a season runs)
+        if app.season.current():
+            app.economy.add("coins", 10000)
+            app.season.add_points(1200)
+            self.click(self.button("SEASON PASS").rect.center)
+            self.assertEqual(app.scene_name, "season")
+            self.click(self.button("PREMIUM  10,000").rect.center)
+            season = app.season.current()
+            self.assertTrue(app.season.has_premium(season))
+            card = app.scene._card_rect(0, "premium")
+            self.click(card.center)
+            self.assertTrue(app.economy.owned("characters", "kira"))
+            self.click(app.scene._back_btn.rect.center)
 
         # upgrade the magnet
         self.click(self.button("UPGRADES").rect.center)

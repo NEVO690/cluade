@@ -86,26 +86,41 @@ class EventManager:
         evs = self.save["events"]
         st = evs.get(event["id"])
         if not isinstance(st, dict):
-            st = {"tokens": 0, "claimed": []}
+            st = {"tokens": 0, "earned": 0, "claimed": []}
             evs[event["id"]] = st
         st.setdefault("tokens", 0)
+        st.setdefault("earned", st["tokens"])  # saves from before currencies became spendable
         st.setdefault("claimed", [])
         return st
 
     def tokens(self, event):
+        """Spendable balance (e.g. Candy to buy the Halloween character)."""
         return self._state(event)["tokens"]
+
+    def earned(self, event):
+        """Lifetime amount collected - drives the reward track, never goes down."""
+        return self._state(event)["earned"]
 
     def add_tokens(self, event, n):
         st = self._state(event)
         st["tokens"] += n
+        st["earned"] += n
         self.save.mark_dirty()
+
+    def spend_tokens(self, event, n):
+        st = self._state(event)
+        if n < 0 or st["tokens"] < n:
+            return False
+        st["tokens"] -= n
+        self.save.mark_dirty()
+        return True
 
     def reward_status(self, event, index):
         """'claimed' | 'ready' | 'locked'"""
         st = self._state(event)
         if index in st["claimed"]:
             return "claimed"
-        if st["tokens"] >= event["rewards"][index]["tokens"]:
+        if st["earned"] >= event["rewards"][index]["tokens"]:
             return "ready"
         return "locked"
 

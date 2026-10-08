@@ -202,7 +202,7 @@ class World:
                     cursor += w
                     continue
                 gap = rnd.uniform(0.5, 4.0)
-                inner = S.SIDEWALK_HALF + (2.8 if station else 2.0) + rnd.uniform(0, 1.5)
+                inner = S.SIDEWALK_HALF + (3.4 if station else 3.0) + rnd.uniform(0, 2.0)
                 depth = rnd.uniform(*b["depth"])
                 x0, x1 = (inner, inner + depth) if side > 0 else (-inner - depth, -inner)
                 h = rnd.uniform(*b["height"])
@@ -555,10 +555,16 @@ class World:
             if ch.max_z < cam_z:
                 continue
             night = ch.zone.get("night", False)
+            r.layer = 0
             for b in ch.buildings:
                 b.queue(r, q, night)
             for d in ch.decor:
-                d.queue(r, self.sprites, night, ch.zone)
+                if d.kind != "flags":  # festival flags hang over the tracks
+                    d.queue(r, self.sprites, night, ch.zone)
+            r.layer = 1
+            for d in ch.decor:
+                if d.kind == "flags":
+                    d.queue(r, self.sprites, night, ch.zone)
             for s in ch.structures:
                 s.queue(r, self.sprites, night, ch.zone)
             for ob in ch.obstacles:

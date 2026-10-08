@@ -1,0 +1,293 @@
+{
+  "seasons": [
+    {
+      "id": "s1",
+      "name": "Season 1: Night Shift",
+      "start": "2026-10-08",
+      "days": 30,
+      "premium_price": 10000,
+      "premium_currency": "coins",
+      "points_per_tier": 1000,
+      "points": {
+        "per_meter": 0.25,
+        "per_coin": 2,
+        "per_mission": 100,
+        "per_run": 20
+      },
+      "color": [0, 230, 200],
+      "color_2": [60, 30, 120],
+      "tiers": [
+        {
+          "tier": 1,
+          "free": {
+            "coins": 120
+          },
+          "premium": {
+            "item": "kira"
+          }
+        },
+        {
+          "tier": 2,
+          "free": {
+            "coins": 140
+          },
+          "premium": {
+            "coins": 400
+          }
+        },
+        {
+          "tier": 3,
+          "free": {
+            "coins": 160
+          },
+          "premium": {
+            "coins": 450
+          }
+        },
+        {
+          "tier": 4,
+          "free": {
+            "coins": 180
+          },
+          "premium": {
+            "coins": 500
+          }
+        },
+        {
+          "tier": 5,
+          "free": {
+            "coins": 200
+          },
+          "premium": {
+            "coins": 550
+          }
+        },
+        {
+          "tier": 6,
+          "free": {
+            "coins": 220
+          },
+          "premium": {
+            "coins": 600
+          }
+        },
+        {
+          "tier": 7,
+          "free": {
+            "coins": 240
+          },
+          "premium": {
+            "coins": 650
+          }
+        },
+        {
+          "tier": 8,
+          "free": {
+            "coins": 260
+          },
+          "premium": {
+            "coins": 700
+          }
+        },
+        {
+          "tier": 9,
+          "free": {
+            "coins": 280
+          },
+          "premium": {
+            "coins": 750
+          }
+        },
+        {
+          "tier": 10,
+          "free": {
+            "coins": 300
+          },
+          "premium": {
+            "coins": 800
+          }
+        },
+        {
+          "tier": 11,
+          "free": {
+            "coins": 320
+          },
+          "premium": {
+            "coins": 850
+          }
+        },
+        {
+          "tier": 12,
+          "free": {
+            "coins": 340
+          },
+          "premium": {
+            "coins": 900
+          }
+        },
+        {
+          "tier": 13,
+          "free": {
+            "coins": 360
+          },
+          "premium": {
+            "coins": 950
+          }
+        },
+        {
+          "tier": 14,
+          "free": {
+            "coins": 380
+          },
+          "premium": {
+            "coins": 1000
+          }
+        },
+        {
+          "tier": 15,
+          "free": {
+            "coins": 400
+          },
+          "premium": {
+            "coins": 1050
+          }
+        },
+        {
+          "tier": 16,
+          "free": {
+            "coins": 420
+          },
+          "premium": {
+            "coins": 1100
+          }
+        },
+        {
+          "tier": 17,
+          "free": {
+            "coins": 440
+          },
+          "premium": {
+            "coins": 1150
+          }
+        },
+        {
+          "tier": 18,
+          "free": {
+            "coins": 460
+          },
+          "premium": {
+            "coins": 1200
+          }
+        },
+        {
+          "tier": 19,
+          "free": {
+            "coins": 480
+          },
+          "premium": {
+            "coins": 1250
+          }
+        },
+        {
+          "tier": 20,
+          "free": {
+            "coins": 500
+          },
+          "premium": {
+            "coins": 1300
+          }
+        },
+        {
+          "tier": 21,
+          "free": {
+            "coins": 520
+          },
+          "premium": {
+            "coins": 1350
+          }
+        },
+        {
+          "tier": 22,
+          "free": {
+            "coins": 540
+          },
+          "premium": {
+            "coins": 1400
+          }
+        },
+        {
+          "tier": 23,
+          "free": {
+            "coins": 560
+          },
+          "premium": {
+            "coins": 1450
+          }
+        },
+        {
+          "tier": 24,
+          "free": {
+            "coins": 580
+          },
+          "premium": {
+            "coins": 1500
+          }
+        },
+        {
+          "tier": 25,
+          "free": {
+            "coins": 600
+          },
+          "premium": {
+            "coins": 1550
+          }
+        },
+        {
+          "tier": 26,
+          "free": {
+            "coins": 620
+          },
+          "premium": {
+            "coins": 1600
+          }
+        },
+        {
+          "tier": 27,
+          "free": {
+            "coins": 640
+          },
+          "premium": {
+            "coins": 1650
+          }
+        },
+        {
+          "tier": 28,
+          "free": {
+            "coins": 660
+          },
+          "premium": {
+            "coins": 1700
+          }
+        },
+        {
+          "tier": 29,
+          "free": {
+            "coins": 680
+          },
+          "premium": {
+            "coins": 1750
+          }
+        },
+        {
+          "tier": 30,
+          "free": {
+            "item": "nightfall_board"
+          },
+          "premium": {
+            "coins": 1800
+          }
+        }
+      ]
+    }
+  ]
+}

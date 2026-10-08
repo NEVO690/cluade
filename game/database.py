@@ -7,7 +7,7 @@ and minimal built-in fallbacks are used when a whole file is unusable.
 import os
 
 from . import settings as S
-from .utils import load_json, warn, to_color
+from .utils import load_json, warn, to_color, parse_date
 
 # ---------------------------------------------------------------------------
 # Minimal fallbacks (used only when a data file is missing or broken)
@@ -139,6 +139,7 @@ class GameData:
         self._load_achievements()
         self._load_events()
         self._load_rewards()
+        self._load_seasons()
         self.default_settings = self._load_settings()
 
     # ------------------------------------------------------------------
@@ -352,6 +353,40 @@ class GameData:
                 warn(f"rewards.json: level '{k}' is not a number - skipped")
         dlr = raw.get("default_level_reward") if isinstance(raw.get("default_level_reward"), dict) else {}
         self.coins_per_level = int(_num(dlr.get("coins_per_level"), 150, 0))
+
+    def _load_seasons(self):
+        raw = load_json(_path("season.json"), {"seasons": []})
+        seasons = raw.get("seasons") if isinstance(raw, dict) else None
+        entries = _valid_entries(seasons if seasons is not None else [], ("id", "name", "start"), "season.json") or []
+        out = []
+        for s in entries:
+            start = parse_date(s["start"])
+            if start is None:
+                warn(f"season.json: season '{s['id']}' has an invalid start date (use YYYY-MM-DD) - skipped")
+                continue
+            s["start_date"] = start
+            s["days"] = int(_num(s.get("days"), 30, 1, 365))
+            s["premium_price"] = int(_num(s.get("premium_price"), 10000, 0))
+            s["premium_currency"] = s.get("premium_currency", "coins")
+            s["points_per_tier"] = int(_num(s.get("points_per_tier"), 1000, 1))
+            pts = s.get("points") if isinstance(s.get("points"), dict) else {}
+            s["points"] = {"per_meter": _num(pts.get("per_meter"), 0.25, 0), "per_coin": _num(pts.get("per_coin"), 2, 0),
+                           "per_mission": _num(pts.get("per_mission"), 100, 0), "per_run": _num(pts.get("per_run"), 20, 0)}
+            s["color"] = to_color(s.get("color", (0, 230, 200)))
+            s["color_2"] = to_color(s.get("color_2", (60, 30, 120)))
+            tiers = s.get("tiers") if isinstance(s.get("tiers"), list) else []
+            clean = []
+            for t in tiers:
+                if isinstance(t, dict):
+                    clean.append({"tier": int(_num(t.get("tier"), len(clean) + 1, 1)),
+                                  "free": _norm_reward(t.get("free")), "premium": _norm_reward(t.get("premium"))})
+            clean.sort(key=lambda t: t["tier"])
+            if not clean:
+                warn(f"season.json: season '{s['id']}' has no tiers - skipped")
+                continue
+            s["tiers"] = clean
+            out.append(s)
+        self.seasons = out
 
     def _load_settings(self):
         raw = load_json(_path("settings.json"), DEFAULT_SETTINGS)

@@ -47,6 +47,7 @@ DEFAULT_SAVE = {
     "zones_seen": [],
     "daily_reward": {"last_claim": "", "day": 0},
     "events": {},
+    "season": {},
     "tutorial_done": False,
 }
 

@@ -134,7 +134,7 @@ class SpriteBank:
 # ---------------------------------------------------------------------------
 class Building:
     __slots__ = ("x0", "x1", "z0", "z1", "h", "color", "style", "side", "rows", "lit", "window", "window_lit",
-                 "roof_item", "neon", "stack")
+                 "roof_item", "neon", "stack", "awning", "shop")
 
     def __init__(self, side, x0, x1, z0, z1, h, color, style, zone, rnd):
         self.side = side
@@ -151,6 +151,8 @@ class Building:
         self.roof_item = rnd.choice([None, "tank", "ac", "antenna"]) if style in ("office", "tower", "brick") else None
         self.neon = rnd.choice(NEON_COLORS) if style == "neon" else None
         self.stack = []
+        self.shop = style in ("office", "brick", "house", "tower", "neon") and rnd.random() < 0.75
+        self.awning = rnd.choice(AWNINGS) if self.shop and rnd.random() < 0.7 else None
         if style == "container":
             pal = b["palette"]
             levels = rnd.randint(1, 3)
@@ -171,6 +173,8 @@ class Building:
         windows = quality.get("windows", True)
         r.box(self.x0, self.x1, 0, self.h, self.z0, self.z1, c, shade(c, 0.78), shade(c, 1.12),
               detail=self._detail if windows else self._detail_simple)
+        if windows:
+            self._queue_street_level(r, night)
         if self.roof_item and windows:
             cx = (self.x0 + self.x1) / 2
             cz = self.z0 + 2.5
@@ -187,6 +191,25 @@ class Building:
             xs = self.x0 if self.side > 0 else self.x1
             r.glow(xs, self.h * 0.6, self.z0 - 0.2, 3.0, shade(self.neon, 0.45))
 
+    def _queue_street_level(self, r, night):
+        """Shop window, awning and roof cornice on the facade facing the tracks."""
+        c = self.color
+        face = self.x0 if self.side > 0 else self.x1
+        out = -self.side  # towards the tracks
+        if self.shop:
+            glass = (255, 214, 140) if night else (70, 100, 125)
+            xa, xb = sorted((face, face + out * 0.06))
+            r.box(xa, xb, 0.2, 2.7, self.z0 + 0.7, self.z1 - 0.7, glass, glass, None, bias=-0.71)
+            if night and r.glow_enabled:
+                r.glow(face + out * 0.3, 1.4, (self.z0 + self.z1) / 2, 2.4, (90, 70, 40))
+        if self.awning:
+            xa, xb = sorted((face, face + out * 1.3))
+            aw = self.awning
+            r.box(xa, xb, 2.85, 3.15, self.z0 + 0.5, self.z1 - 0.5, aw, shade(aw, 0.75), shade(aw, 1.15),
+                  shade(aw, 0.6), bias=-0.52, detail=_awning_stripes)
+        r.box(self.x0 - 0.25, self.x1 + 0.25, self.h, self.h + 0.55, self.z0 - 0.25, self.z1 + 0.25,
+              shade(c, 0.82), shade(c, 0.7), shade(c, 0.95), bias=-0.001)
+
     def _rows_geom(self):
         h = self.h
         rows = self.rows
@@ -194,8 +217,9 @@ class Building:
         for i in range(rows):
             y_a = i * band + band * 0.3
             y_b = i * band + band * 0.78
-            if y_a < 1.2:
-                y_a = 1.2
+            floor = 3.5 if self.shop else 1.2
+            if y_a < floor:
+                y_a = floor
             if y_b <= y_a:
                 continue
             yield i, y_a, y_b
@@ -263,6 +287,20 @@ class Building:
                     ka, kb = _persp(t0, d0, d1), _persp(t1, d0, d1)
                     poly(surf, c, ((ux0, f_a + (b_a - f_a) * ka), (ux0, f_b + (b_b - f_b) * ka),
                                    (ux1, f_b + (b_b - f_b) * kb), (ux1, f_a + (b_a - f_a) * kb)))
+
+
+AWNINGS = [(200, 50, 50), (40, 130, 90), (40, 90, 170), (230, 160, 30), (150, 60, 140), (230, 230, 230)]
+
+
+def _awning_stripes(r, fr, br, d0, d1, clipped):
+    ax0, ay1, ax1, ay0 = fr
+    w = ax1 - ax0
+    if w < 8 or clipped:
+        return
+    col = r.fog((250, 250, 250), d0)
+    seg = w / 6
+    for i in range(0, 6, 2):
+        r.surface.fill(col, (ax0 + i * seg, ay1, seg, ay0 - ay1))
 
 
 def _persp(t, d0, d1):
@@ -416,17 +454,21 @@ class Structure:
             z = self.z0
             while z < self.z1:
                 z2 = min(self.z1, z + 10)
+                r.layer = 0
                 r.box(-S.SIDEWALK_HALF - 2, -S.ROAD_HALF - 0.3, 0, 6.6, z, z2, wall, inner, None, bias=-0.001)
                 r.box(S.ROAD_HALF + 0.3, S.SIDEWALK_HALF + 2, 0, 6.6, z, z2, wall, inner, None, bias=-0.001)
-                r.box(-S.SIDEWALK_HALF - 2, S.SIDEWALK_HALF + 2, 6.4, 7.6, z, z2, wall, None, (110, 108, 104), roof, bias=-0.002)
                 for sx in (-S.ROAD_HALF - 0.25, S.ROAD_HALF + 0.25):
                     r.glow(sx, 5.0, z + 5, 1.6, (170, 150, 90))
+                r.layer = 1
+                r.box(-S.SIDEWALK_HALF - 2, S.SIDEWALK_HALF + 2, 6.4, 7.6, z, z2, wall, None, (110, 108, 104), roof, bias=-0.002)
                 z = z2
             if self.data and self.data.get("portal"):
                 # entrance facade with the tunnel name
                 pc = (130, 120, 112)
+                r.layer = 0
                 r.box(-26, -S.ROAD_HALF - 0.3, 0, 12, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
                 r.box(S.ROAD_HALF + 0.3, 26, 0, 12, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
+                r.layer = 1
                 r.box(-S.ROAD_HALF - 0.3, S.ROAD_HALF + 0.3, 6.4, 12, self.z0 - 1.5, self.z0, pc, None, shade(pc, 1.1),
                       shade(pc, 0.6), detail=_sign_detail(sprites.get(("station", self.data.get("name", "TUNNEL"))), 0.55))
         elif k == "bridge":
@@ -435,8 +477,10 @@ class Structure:
             r.box(-60, 60, y0, y0 + 1.6, self.z0, self.z1, col, shade(col, 0.75), shade(col, 1.15), shade(col, 0.55),
                   detail=_sign_detail(sprites.get(("bridge_sign", self.data.get("name", "CITY LINE"))), 0.75))
             r.box(-60, 60, y0 + 1.6, y0 + 2.4, self.z0 + 0.1, self.z0 + 0.3, shade(col, 0.8), None, None, bias=-0.01)
+            r.layer = 0
             for px in (-S.SIDEWALK_HALF - 0.5, S.SIDEWALK_HALF - 0.7):
                 r.box(px, px + 1.2, 0, y0, self.z0 + 0.6, self.z1 - 0.6, shade(col, 0.9), shade(col, 0.7), None, bias=0.01)
+            r.layer = 1
         elif k == "gantry":
             col = (80, 85, 95)
             z = self.z0
@@ -448,6 +492,7 @@ class Structure:
                 color = (255, 60, 50) if (self.data or {}).get("states", [0, 1, 0])[i] == 0 else (60, 255, 120)
                 r.glow(lx, 5.55, z - 0.1, 0.9, shade(color, 0.6))
         elif k == "station":
+            r.layer = 0  # platforms, pillars and canopies all sit beside the tracks
             plat = (150, 146, 140)
             edge = (240, 200, 40)
             for sgn in (-1, 1):
@@ -466,6 +511,7 @@ class Structure:
                     z += 9
             name = self.data.get("name", "CENTRAL")
             sign = sprites.get(("station", name))
+            r.layer = 1
             r.billboard(("station", name), sign, 0, 5.4, self.z0 + 4, 0.9, bias=-0.5)
 
 

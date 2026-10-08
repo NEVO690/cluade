@@ -27,6 +27,7 @@ from game.player import Player  # noqa: E402
 from game.powerups import PowerUpManager  # noqa: E402
 from game.progression import Progression, Achievements, DailyRewards, xp_to_next  # noqa: E402
 from game.save_system import SaveSystem, SettingsStore  # noqa: E402
+from game.season import SeasonPass  # noqa: E402
 from game.shop import Economy, Shop  # noqa: E402
 from game.world import World, PASSABLE, LATERAL_BLOCK  # noqa: E402
 
@@ -58,6 +59,7 @@ def make_systems(tmp):
     settings = SettingsStore(DATA.default_settings, os.path.join(tmp, "settings.json"))
     settings.load()
     events = EventManager(DATA, save, settings, eco, prog)
+    eco.events = events
     missions = MissionManager(DATA, save, eco, prog, events)
     return save, eco, prog, settings, events, missions
 
@@ -274,6 +276,69 @@ class EventTests(TempDirTest):
         self.assertIsNone(events.claim(ev, 1))
 
 
+class CandyAndSeasonTests(TempDirTest):
+    def test_buy_halloween_character_with_candy(self):
+        save, eco, prog, st, events, missions = make_systems(self.tmp)
+        ev = DATA.event_by_id["halloween"]
+        vex = DATA.item("vex")
+        self.assertEqual(vex["currency"], "event:halloween")
+        ok, msg = eco.purchase(vex)
+        self.assertFalse(ok)
+        self.assertIn("Candy", msg)
+        events.add_tokens(ev, 200)
+        ok, msg = eco.purchase(vex)
+        self.assertTrue(ok, msg)
+        self.assertTrue(eco.owned("characters", "vex"))
+        self.assertEqual(events.tokens(ev), 200 - vex["price"])
+        self.assertEqual(events.earned(ev), 200)  # reward track keeps lifetime progress
+        self.assertEqual(events.reward_status(ev, 0), "ready")
+
+    def test_season_pass_flow(self):
+        import datetime
+        save, eco, prog, *_ = make_systems(self.tmp)
+        sp = SeasonPass(DATA, save, eco, prog)
+        season = DATA.seasons[0]
+        mid = sp.start_dt(season) + datetime.timedelta(days=3)
+        self.assertIs(sp.current(mid), season)
+        self.assertEqual(len(season["tiers"]), 30)
+        self.assertEqual(sp.time_left(season, mid), datetime.timedelta(days=27))
+        after = sp.end_dt(season) + datetime.timedelta(seconds=1)
+        self.assertIsNone(sp.current(after))
+        # exclusive rewards cannot be bought
+        self.assertFalse(eco.purchase(DATA.item("kira"))[0])
+        self.assertFalse(eco.purchase(DATA.item("nightfall_board"))[0])
+        # points -> tiers
+        self.assertEqual(sp.tier(season), 0)
+        sp.add_points(2500, mid)
+        self.assertEqual(sp.tier(season), 2)
+        self.assertEqual(sp.status(season, 0, "free", mid), "ready")
+        self.assertEqual(sp.status(season, 0, "premium", mid), "premium")
+        self.assertEqual(sp.status(season, 5, "free", mid), "locked")
+        coins = eco.coins
+        sp.claim(season, 0, "free", mid)
+        self.assertEqual(eco.coins, coins + season["tiers"][0]["free"]["coins"])
+        # premium costs 10,000 coins and unlocks the season character at tier 1
+        self.assertFalse(sp.buy_premium(mid)[0])
+        eco.add("coins", 10000)
+        before = eco.coins
+        self.assertTrue(sp.buy_premium(mid)[0])
+        self.assertEqual(eco.coins, before - 10000)
+        sp.claim(season, 0, "premium", mid)
+        self.assertTrue(eco.owned("characters", "kira"))
+        # premium coin rewards are larger than the free ones
+        for t in season["tiers"][1:29]:
+            self.assertGreater(t["premium"]["coins"], t["free"]["coins"])
+        # the board is the free reward at tier 30
+        sp.add_points(10 ** 6, mid)
+        self.assertEqual(sp.tier(season), 30)
+        sp.claim_all(season, mid)
+        self.assertTrue(eco.owned("boards", "nightfall_board"))
+        self.assertEqual(sp.claimable_count(mid), 0)
+        # nothing can be claimed or earned after the season ends
+        self.assertEqual(sp.add_points(1000, after), 0)
+        self.assertFalse(sp.buy_premium(after)[0])
+
+
 class FakeSession:
     def __init__(self, world, player):
         self.world = world
@@ -423,6 +488,7 @@ class SessionCollisionTests(TempDirTest):
         app.data, app.save, app.economy, app.progression = DATA, save, eco, prog
         app.settings, app.events, app.missions = st, events, missions
         app.achievements = Achievements(DATA, save, eco, prog)
+        app.season = SeasonPass(DATA, save, eco, prog)
         app.audio = Audio()
         app.assets = FakeAssets()
         from game.scenery import SpriteBank

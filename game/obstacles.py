@@ -52,6 +52,13 @@ STYLES = {
 DARK = (28, 28, 34)
 
 
+def _hubcap(r, fr, br, d0, d1, clipped):
+    ax0, ay1, ax1, ay0 = fr
+    w = ax1 - ax0
+    if w > 6 and not clipped:
+        pygame.draw.circle(r.surface, r.fog((150, 150, 160), d0), (int((ax0 + ax1) / 2), int((ay0 + ay1) / 2)), max(1, int(w * 0.25)))
+
+
 class Obstacle:
     __slots__ = ("kind", "lane", "x", "z0", "z1", "y0", "y1", "vel", "style", "variant", "prev_z0",
                  "passed", "alive", "color", "accent", "train_color", "has_ramp", "counted")
@@ -290,41 +297,81 @@ class Obstacle:
         return detail
 
     def _draw_train(self, r, quality, night):
-        x0, x1, z0, z1 = self.x0 + 0.05, self.x1 - 0.05, self.z0, self.z1
+        x0, x1 = self.x0 + 0.05, self.x1 - 0.05
         body = self.train_color
-        roof = shade(body, 0.85)
         moving = self.vel != 0
-        r.box(x0 + 0.15, x1 - 0.15, 0.0, 0.45, z0 + 0.4, z1 - 0.4, DARK, DARK, None, bias=0.02)
-        r.box(x0, x1, 0.4, self.y1, z0, z1, body, shade(body, 0.72), roof,
-              detail=self._train_detail(quality, moving, night))
+        length = self.z1 - self.z0
+        n = max(1, int(round(length / 12.5)))
+        gap = 0.6 if n > 1 else 0.0
+        car_len = (length - gap * (n - 1)) / n
+        roof = (178, 183, 194)
+        for i in range(n):
+            cz0 = self.z0 + i * (car_len + gap)
+            cz1 = cz0 + car_len
+            if not r.visible_range(cz0, cz1 + gap):
+                continue
+            r.box(x0 + 0.22, x1 - 0.22, 0.0, 0.5, cz0 + 0.6, cz1 - 0.6, DARK, DARK, None, bias=0.02)     # bogies
+            r.box(x0 + 0.06, x1 - 0.06, 0.42, 0.85, cz0, cz1, shade(body, 0.5), shade(body, 0.45), None,
+                  bias=0.015, detail=self._skirt_detail(i == 0, moving))                                    # skirt
+            r.box(x0, x1, 0.8, 3.1, cz0, cz1, body, shade(body, 0.74), shade(body, 0.92),
+                  detail=self._train_detail(quality, moving, night, cz0, cz1, i == 0))                     # body
+            r.box(x0 + 0.24, x1 - 0.24, 3.1, 3.3, cz0 + 0.18, cz1 - 0.18, shade(roof, 0.9), shade(roof, 0.78),
+                  roof, bias=-0.19)                                                                         # roof
+            if gap and i < n - 1:
+                r.box(x0 + 0.45, x1 - 0.45, 0.9, 2.9, cz1, cz1 + gap, (40, 40, 46), (30, 30, 34), (55, 55, 60))
         if moving or night:
             for sx in (-0.65, 0.65):
-                r.glow(self.x + sx, 1.0, z0 - 0.2, 1.4 if moving else 0.9, (255, 240, 180) if moving else (255, 120, 80))
+                r.glow(self.x + sx, 1.15, self.z0 - 0.2, 1.4 if moving else 0.9,
+                       (255, 240, 180) if moving else (255, 120, 80))
         if moving:
-            r.glow(self.x, 2.2, z0 - 0.3, 3.5, (120, 100, 60))
+            r.glow(self.x, 2.2, self.z0 - 0.3, 3.5, (120, 100, 60))
 
-    def _train_detail(self, quality, moving, night):
+    def _skirt_detail(self, front, moving):
+        def detail(r, fr, br, d0, d1, clipped):
+            if not front or clipped:
+                return
+            ax0, ay1, ax1, ay0 = fr
+            w, h = ax1 - ax0, ay0 - ay1
+            if w < 10:
+                return
+            # coupler + hazard stripes on the front skirt
+            r.surface.fill(r.fog((25, 25, 28), d0), (ax0 + w * 0.42, ay1 + h * 0.25, w * 0.16, h * 0.5))
+            col = r.fog((240, 200, 40), d0)
+            for k in range(4):
+                xa = ax0 + w * (0.05 + k * 0.09)
+                pygame.draw.polygon(r.surface, col, [(xa, ay0 - 1), (xa + w * 0.04, ay0 - 1), (xa + w * 0.08, ay1 + 1), (xa + w * 0.04, ay1 + 1)])
+                xb = ax1 - w * (0.13 + k * 0.09)
+                pygame.draw.polygon(r.surface, col, [(xb, ay0 - 1), (xb + w * 0.04, ay0 - 1), (xb + w * 0.08, ay1 + 1), (xb + w * 0.04, ay1 + 1)])
+        return detail
+
+    def _train_detail(self, quality, moving, night, cz0, cz1, front):
         ob = self
+        body = self.train_color
 
         def detail(r, fr, br, d0, d1, clipped):
             ax0, ay1, ax1, ay0 = fr
             w, h = ax1 - ax0, ay0 - ay1
             surf = r.surface
-            if not clipped and w > 6:
-                # windshield
-                surf.fill(r.fog((40, 60, 90) if not night else (255, 230, 150), d0),
-                          (ax0 + w * 0.12, ay1 + h * 0.12, w * 0.76, h * 0.3))
-                # stripe
-                surf.fill(r.fog((250, 250, 250), d0), (ax0, ay1 + h * 0.52, w, h * 0.07))
-                # headlights
+            if front and not clipped and w > 6:
+                glass = (255, 230, 150) if night else (36, 54, 84)
+                # two-pane windshield with a centre pillar
+                surf.fill(r.fog(glass, d0), (ax0 + w * 0.08, ay1 + h * 0.1, w * 0.4, h * 0.34))
+                surf.fill(r.fog(glass, d0), (ax0 + w * 0.52, ay1 + h * 0.1, w * 0.4, h * 0.34))
+                if w > 30:
+                    surf.fill(r.fog((150, 190, 230) if not night else (255, 250, 220), d0),
+                              (ax0 + w * 0.1, ay1 + h * 0.12, w * 0.1, h * 0.08))
+                    # destination sign
+                    surf.fill(r.fog((20, 20, 24), d0), (ax0 + w * 0.3, ay1 + h * 0.015, w * 0.4, h * 0.07))
+                    surf.fill(r.fog((255, 170, 40), d0), (ax0 + w * 0.33, ay1 + h * 0.03, w * 0.34, h * 0.04))
+                # stripe + lights
+                surf.fill(r.fog((250, 250, 250), d0), (ax0, ay1 + h * 0.56, w, h * 0.06))
                 lc = (255, 250, 210) if moving else (220, 50, 40)
-                rad = max(1, int(w * 0.07))
-                for fx in (0.2, 0.8):
+                rad = max(1, int(w * 0.065))
+                for fx in (0.17, 0.83):
+                    pygame.draw.circle(surf, r.fog((30, 30, 34), d0), (int(ax0 + w * fx), int(ay1 + h * 0.8)), rad + 2)
                     pygame.draw.circle(surf, r.fog(lc, d0), (int(ax0 + w * fx), int(ay1 + h * 0.8)), rad)
                 if w > 40:
-                    num = r.fog((30, 30, 40), d0)
-                    surf.fill(num, (ax0 + w * 0.38, ay1 + h * 0.62, w * 0.24, h * 0.1))
-            # side windows
+                    surf.fill(r.fog((30, 30, 40), d0), (ax0 + w * 0.4, ay1 + h * 0.68, w * 0.2, h * 0.12))
             cam = r.cam
             if cam.x < ob.x0 + 0.05:
                 sx = ob.x0 + 0.05
@@ -332,21 +379,29 @@ class Obstacle:
                 sx = ob.x1 - 0.05
             else:
                 return
-            if not quality.get("windows", True):
+            zs = max(cz0, cam.z + S.NEAR_PLANE)
+            stripe = r.fog((245, 245, 245), (zs + cz1) / 2 - cam.z)
+            r.polygon3d(((sx, 1.4, zs), (sx, 1.55, zs), (sx, 1.55, cz1), (sx, 1.4, cz1)), stripe)
+            if not quality.get("windows", True) or cz0 - cam.z > r.draw_distance * 0.8:
                 return
-            zs = max(ob.z0, cam.z + S.NEAR_PLANE)
-            win = (40, 60, 90) if not night else (255, 225, 140)
-            z = ob.z0 + 1.2
-            n = 0
-            far = cam.z + r.draw_distance
-            while z < ob.z1 - 1.5 and z < far and n < 14:
-                if z > zs:
-                    zz = min(z + 1.6, ob.z1 - 1.0)
-                    r.polygon3d(((sx, 1.8, z), (sx, 2.75, z), (sx, 2.75, zz), (sx, 1.8, zz)), r.fog(win, z - cam.z))
-                z += 2.6
-                n += 1
-            r.polygon3d(((sx, 1.35, zs), (sx, 1.5, zs), (sx, 1.5, ob.z1), (sx, 1.35, ob.z1)),
-                        r.fog((245, 245, 245), (zs + ob.z1) / 2 - cam.z))
+            L = cz1 - cz0
+            win = (255, 225, 140) if night else (40, 58, 88)
+            door = shade(body, 0.62)
+            # two doors per carriage, windows in between
+            for frac in (0.22, 0.78):
+                dz0 = cz0 + L * frac - 0.65
+                dz1 = dz0 + 1.3
+                if dz1 > zs:
+                    za = max(dz0, zs)
+                    dd = (za + dz1) / 2 - cam.z
+                    r.polygon3d(((sx, 0.85, za), (sx, 2.9, za), (sx, 2.9, dz1), (sx, 0.85, dz1)), r.fog(door, dd))
+                    r.polygon3d(((sx, 1.75, za), (sx, 2.6, za), (sx, 2.6, dz1), (sx, 1.75, dz1)), r.fog(win, dd))
+            for a0, a1 in ((0.04, 0.15), (0.31, 0.47), (0.53, 0.69), (0.85, 0.96)):
+                wz0, wz1 = cz0 + L * a0, cz0 + L * a1
+                if wz1 > zs:
+                    za = max(wz0, zs)
+                    r.polygon3d(((sx, 1.8, za), (sx, 2.75, za), (sx, 2.75, wz1), (sx, 1.8, wz1)),
+                                r.fog(win, (za + wz1) / 2 - cam.z))
         return detail
 
     def _draw_ramp(self, r):
@@ -382,10 +437,14 @@ class Obstacle:
         x0, x1, z0, z1 = self.x - 0.95, self.x + 0.95, self.z0, self.z1
         c = self.color
         moving = self.vel != 0
-        r.box(x0 + 0.1, x1 - 0.1, 0.0, 0.32, z0 + 0.3, z1 - 0.3, DARK, DARK, None, bias=0.02)
-        r.box(x0, x1, 0.3, 0.92, z0, z1, c, shade(c, 0.72), shade(c, 1.1), detail=self._car_lights(moving))
-        r.box(x0 + 0.18, x1 - 0.18, 0.92, self.y1, z0 + 0.9, z1 - 1.0, (60, 80, 110), shade(c, 0.65), shade(c, 1.05),
-              bias=-0.9)
+        glass = (255, 230, 160) if night else (55, 75, 105)
+        for wz in (z0 + 0.45, z1 - 1.0):
+            for wx in (x0 - 0.03, x1 - 0.27):
+                r.box(wx, wx + 0.3, 0.0, 0.6, wz, wz + 0.58, (24, 24, 26), (34, 34, 38), (40, 40, 44), bias=0.02,
+                      detail=_hubcap)
+        r.box(x0, x1, 0.25, 0.92, z0, z1, c, shade(c, 0.72), shade(c, 1.1), detail=self._car_lights(moving))
+        r.box(x0 + 0.13, x1 - 0.13, 0.92, 1.34, z0 + 0.95, z1 - 1.05, glass, shade(glass, 0.85), None, bias=-0.95)
+        r.box(x0 + 0.17, x1 - 0.17, 1.34, self.y1, z0 + 1.05, z1 - 1.15, c, shade(c, 0.7), shade(c, 1.15), bias=-1.05)
         if moving or night:
             for sx in (-0.65, 0.65):
                 r.glow(self.x + sx, 0.65, z0 - 0.1, 0.8, (255, 240, 190) if moving else (255, 60, 50))

@@ -75,8 +75,22 @@ All keys can be re-bound in **Settings → Controls**.
   coins, gems, a combo meter (coins, jumps over obstacles, roof landings, near misses).
 * **6 power-ups**: Coin Magnet, Jet Boost, Shield, Score Multiplier, Super Jump,
   Speed Boost – each with icon, effect, timer, sound and particles.
-* **8 characters** with unique abilities (coin bonus, higher jumps, longer
-  power-ups, score bonus, start magnet, start shield, XP bonus).
+* **Low-poly 3D characters**: every runner is a real 3D mesh (head, face, hair,
+  backpack, limbs, shoes, accessories) on an animated skeleton – run, jump, slide,
+  fall, idle, wave and cheer – lit and rendered in perspective in the game and on
+  rotating turntables in the menus.
+* **14 characters** with unique abilities (coin bonus, higher jumps, longer
+  power-ups, score bonus, start magnet, start shield, XP bonus), bought with coins,
+  gems, **Halloween Candy** (Vex, the pumpkin-headed prankster) or earned in the
+  Season Pass (Kira).
+* **Season Pass**: a 30-day season with a live countdown and 30 tiers. The free
+  track gives coins and the exclusive *Nightfall Board* at tier 30; the premium
+  track (10,000 coins – no real money) gives the exclusive character *Kira* at tier 1
+  and more coins than the free track on every other tier. Season points come from
+  distance, coins and missions. Exclusive rewards cannot be bought anywhere else.
+* **Detailed world models**: multi-carriage trains with roofs, doors, windows,
+  destination signs and hazard skirts; cars with wheels, glass cabins and lights;
+  buildings with shop windows, striped awnings and roof ledges.
 * **Boards** (Street, Neon, Hover, Cyber + event boards) – each with a look and a perk;
   a board absorbs one crash.
 * **Shop** with tabs: Characters, Power-Ups (consumables), Upgrades, Boards,
@@ -126,6 +140,8 @@ game/
   menus.py              loading, main menu, characters, shop, upgrades, missions,
                         events, achievements, settings scenes
   shop.py               economy (currencies, ownership, rewards) + shop catalogue
+  season.py             Season Pass (countdown, tiers, free/premium tracks)
+  model3d.py            low-poly 3D character meshes, skeleton poses and renderer
   missions.py           regular / daily / event missions
   progression.py        XP & levels, achievements, daily rewards
   events.py             seasonal event system
@@ -134,7 +150,7 @@ game/
   utils.py              logging, safe JSON IO, maths & colour helpers
 data/
   characters.json  items.json  powerups.json  zones.json  missions.json
-  achievements.json  events.json  rewards.json  settings.json
+  achievements.json  events.json  rewards.json  season.json  settings.json
 assets/
   images/ sounds/ music/ fonts/   (optional replacement art & audio)
 tests/
@@ -165,7 +181,9 @@ Append to `data/characters.json`:
 ```
 
 * `hair_style`: `spiky`, `short`, `long`, `bun`, `mohawk`, `bald`
-* `accessory`: `cap`, `headphones`, `goggles`, `bandana`, `visor`, `none`
+* `accessory`: `cap`, `headphones`, `goggles`, `bandana`, `visor`, `pumpkin`, `none`
+* `currency`: `coins`, `gems` or `event:<event id>` (pay with that event's currency, e.g. `event:halloween` = Candy)
+* `"season_only": "<season id>"` makes a character (or item) a Season Pass exclusive that the shop never sells
 * `ability.type`: `none`, `coin_bonus`, `jump_bonus`, `powerup_duration`, `score_bonus`,
   `magnet_start` (value = seconds), `shield_start`, `xp_bonus`
   (new types: handle them in `GameSession.__init__` / `finalize` in `game/gameplay.py`).
@@ -254,6 +272,15 @@ Append to `data/events.json`:
   as a reward (`{"item": "..."}`); they are hidden from the shop until earned.
 * To test an event outside its dates set `"force_event": "spring"` in `saves/settings.json`.
 
+### Add a Season Pass season
+
+Append a season to `data/season.json` (copy `s1`): `start` (YYYY-MM-DD), `days` (length;
+the in-game countdown runs to the end), `premium_price`, `points_per_tier`, the point values
+(`per_meter`, `per_coin`, `per_mission`, `per_run`) and `tiers` – each tier has a `free` and a
+`premium` reward (`coins`, `gems`, `item`, `consumable`). Exclusive rewards are items or
+characters marked `"season_only": "<season id>"`. When a season ends nothing more can be earned
+or claimed; the next season in the file starts automatically on its start date.
+
 ### Add shop items / cosmetics
 
 Add entries to the lists in `data/items.json` (`boards`, `outfits`, `trails`, `effects`,
@@ -294,5 +321,6 @@ python -m tests.autoplay --runs 3 --seconds 90 # bot plays real runs headlessly
   (no GPU 3D); very long objects can occasionally overlap incorrectly for a frame.
   A port to Panda3D/Ursina could reuse `world.py`, `gameplay.py` and all systems unchanged
   and only replace `render.py`/`scenery.py`/drawing code.
-* Characters are procedural placeholders – add sprite frames for real art (see above).
+* Characters and props are built in code as low-poly meshes (no Blender files needed).
+  Sprite frames can still replace the 3D model per character (see above).
 * Touch input uses SDL's mouse emulation, which works on Windows touch screens.

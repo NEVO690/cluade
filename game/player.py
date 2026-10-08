@@ -4,7 +4,7 @@ import math
 import pygame
 
 from . import settings as S
-from .characters import draw_runner, draw_board
+from . import model3d
 from .render import make_radial
 from .utils import approach, clamp
 
@@ -21,6 +21,8 @@ class Player:
         self.reset()
         self._shadow = pygame.transform.smoothscale(make_radial(48, (0, 0, 0), 150), (96, 30))
         self._shield = None
+        self._jetpack = model3d.jetpack_part()
+        self._board_cache = {}
 
     def reset(self):
         self.lane = 1
@@ -203,6 +205,15 @@ class Player:
             return "jump"
         return "run"
 
+    def _board_part(self, lift):
+        key = (self.board.get("id"), lift)
+        part = self._board_cache.get(key)
+        if part is None:
+            part = model3d.board_part(self.board)
+            part.verts = [(x, y - lift, z) for x, y, z in part.verts]
+            self._board_cache[key] = part
+        return part
+
     def queue_draw(self, r, shielded=False, jet=False, magnet=False):
         r.queue(self.z + 0.02, self._draw, r, shielded, jet, magnet)
 
@@ -223,31 +234,37 @@ class Player:
         if self.blink and int(self.t * 14) % 2 == 0:
             return
         board_lift = 0.0
+        extra = []
         if self.board_active and self.board and not jet:
-            board_lift = 0.2 if self.board.get("style") == "hover" else 0.14
-            bx, by = r.proj(self.x, self.y + board_lift * 0.5 + (0.08 if self.board.get("style") == "hover" else 0), self.z)
+            hover = self.board.get("style") == "hover"
+            board_lift = 0.24 if hover else 0.13
+            extra.append(self._board_part(board_lift))
             if self.board.get("style") in ("neon", "hover", "cyber") and r.glow_enabled:
                 r.draw_glow(self.x, self.y + 0.05, self.z, 0.9, self.board["colors"]["glow"])
-            draw_board(surf, bx, by, s, self.board, self.t)
-        fx, fy = r.proj(self.x, self.y + board_lift, self.z)
+        if jet:
+            extra.append(self._jetpack)
         lean = clamp((S.LANE_X[self.lane] - self.x) / S.LANE_WIDTH, -1, 1)
         frames = self.assets.sprite_frames(self.look.get("id", ""), self.pose()) if self.assets else []
-        if jet:
-            # jetpack behind the runner
-            jx, jy = r.proj(self.x, self.y + 1.15, self.z + 0.25)
-            w = 0.36 * s
-            pygame.draw.rect(surf, (200, 205, 220), (jx - w / 2, jy - w * 0.8, w, w * 1.3), border_radius=int(w * 0.2))
-            for sx in (-0.28, 0.28):
-                fl = 0.25 + 0.15 * math.sin(self.t * 40 + sx * 10)
-                pygame.draw.polygon(surf, (255, 170, 30), [(jx + sx * w - w * 0.15, jy + w * 0.5),
-                                                           (jx + sx * w + w * 0.15, jy + w * 0.5),
-                                                           (jx + sx * w, jy + w * 0.5 + fl * s)])
         if frames:
+            fx, fy = r.proj(self.x, self.y + board_lift, self.z)
             idx = int(self.anim_phase / math.pi * 2) % len(frames)
             img = r.scaled(("pl", self.look.get("id"), self.pose(), idx), frames[idx], S.PLAYER_HEIGHT * s)
             surf.blit(img, (fx - img.get_width() / 2, fy - img.get_height()))
         else:
-            draw_runner(surf, fx, fy, s, self.look, self.pose(), self.anim_phase, self.t, "back", lean)
+            pose = self.pose()
+            if pose == "jump" and self.flying:
+                pose = "run"
+            model3d.draw_in_world(r, self.look, pose, self.anim_phase, self.t, self.x, self.y + board_lift, self.z,
+                                  lean, extra)
+        if jet:
+            # exhaust flames under the jetpack nozzles
+            for sx in (-0.1, 0.1):
+                fl = 0.3 + 0.15 * math.sin(self.t * 40 + sx * 30)
+                ax, ay = r.proj(self.x + sx, self.y + 0.9, self.z - 0.27)
+                bx, by = r.proj(self.x + sx, self.y + 0.9 - fl, self.z - 0.35)
+                w = max(2, int(0.06 * s))
+                pygame.draw.polygon(surf, (255, 170, 30), [(ax - w, ay), (ax + w, ay), (bx, by)])
+                pygame.draw.polygon(surf, (255, 240, 160), [(ax - w * 0.5, ay), (ax + w * 0.5, ay), (bx, (ay + by) / 2)])
         if magnet:
             mx, my = r.proj(self.x, self.y + 1.0, self.z)
             rr = int(0.9 * s * (1 + 0.1 * math.sin(self.t * 10)))

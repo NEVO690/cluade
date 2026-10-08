@@ -540,6 +540,11 @@ class GameSession:
             save["best_score"] = int(self.score)
         if self.distance > save["best_distance"]:
             save["best_distance"] = int(self.distance)
+        season_pts = 0
+        season = app.season.current()
+        if season:
+            season_pts = app.season.run_points(season, self.distance, self.coins, len(app.missions.completed_this_run))
+            app.season.add_points(season_pts)
         new_ach = app.achievements.check()
         save.save()
         self.result = {
@@ -547,6 +552,7 @@ class GameSession:
             "tokens": self.tokens_run, "xp": xp, "best": save["best_score"], "new_best": new_best,
             "missions": [m.desc for m, _ in app.missions.completed_this_run],
             "achievements": [a["name"] for a in new_ach], "level_up": prog.level > old_level, "level": prog.level,
+            "season_points": season_pts,
         }
         return self.result
 
@@ -956,6 +962,10 @@ class GameScene:
         ]
         if res["gems"]:
             rows.insert(3, ("Gems", f"+{res['gems']}", "gem", S.GEM_COLOR))
+        if res.get("season_points"):
+            season = self.app.season.current()
+            col = season["color"] if season else S.UI_ACCENT_2
+            rows.insert(4, ("Season points", f"+{fmt_int(res['season_points'])}", "star", col))
         if res["tokens"] and self.session.event:
             ev = self.session.event
             rows.insert(3, (ev["currency"]["name"], f"+{res['tokens']}", "token", ev["currency"]["color"]))

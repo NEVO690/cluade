@@ -7,7 +7,8 @@ import pygame
 
 from . import settings as S
 from .camera import Camera
-from .characters import draw_runner, build_look, draw_board
+from . import model3d
+from .characters import build_look, draw_board
 from .collectibles import CollectibleRenderer
 from .render import Renderer
 from .scenery import zone_colors
@@ -147,10 +148,10 @@ class MainMenu(Scene):
         self.buttons = [
             Button((x0, 250, 380, 96), "PLAY", lambda: go("game"), "primary", icon="play", size=48),
         ]
-        items = [("CHARACTERS", "characters", "character"), ("SHOP", "shop", "cart"), ("MISSIONS", "missions", "mission"),
-                 ("UPGRADES", "upgrades", "upgrade"), ("EVENTS", "events", "event"), ("ACHIEVEMENTS", "achievements", "trophy"),
-                 ("SETTINGS", "settings", "gear")]
-        badges = {"events": app.events.claimable_count() or None}
+        items = [("SEASON PASS", "season", "star"), ("CHARACTERS", "characters", "character"), ("SHOP", "shop", "cart"),
+                 ("MISSIONS", "missions", "mission"), ("UPGRADES", "upgrades", "upgrade"), ("EVENTS", "events", "event"),
+                 ("ACHIEVEMENTS", "achievements", "trophy"), ("SETTINGS", "settings", "gear")]
+        badges = {"events": app.events.claimable_count() or None, "season": app.season.claimable_count() or None}
         for i, (label, scene, icon) in enumerate(items):
             col, row = i % 2, i // 2
             w = 186
@@ -254,12 +255,12 @@ class MainMenu(Scene):
         # character preview
         look = build_look(app.data, app.save["character"], app.save["outfit"])
         pose = "wave" if self.wave_timer < 0 else "idle"
-        cx, cy = 900, 600
+        cx, cy = 760, 610
         pygame.draw.ellipse(surf, (0, 0, 0), (cx - 110, cy - 18, 220, 36))
         board = app.data.item(app.save["board"])
         if board:
             draw_board(surf, cx - 150, cy - 30, 150, board)
-        draw_runner(surf, cx, cy, 230, look, pose, 0, self.t, "front")
+        model3d.draw_on_screen(surf, look, pose, cx, cy, 370, t=self.t, yaw=math.pi + 0.45 * math.sin(self.t * 0.5))
         ch = app.data.character(app.save["character"])
         name = a.text(ch["name"].upper(), 34, (255, 255, 255), shadow=True)
         blit_center(surf, name, (cx, cy + 40))
@@ -267,7 +268,7 @@ class MainMenu(Scene):
         if emote and emote.get("text") and pose == "wave":
             txt = a.text(emote["text"], 26, (30, 30, 40))
             rect = pygame.Rect(0, 0, txt.get_width() + 24, txt.get_height() + 12)
-            rect.midbottom = (cx + 120, cy - 440)
+            rect.midbottom = (cx + 110, cy - 392)
             pygame.draw.rect(surf, (255, 255, 255), rect, border_radius=14)
             blit_center(surf, txt, rect.center)
         # best score + event banner
@@ -279,6 +280,15 @@ class MainMenu(Scene):
             surf.blit(a.icon("token", 40, ev["currency"]["color"]), (br.x + 10, br.y + 10))
             surf.blit(a.text(ev["name"].upper(), 22, (255, 255, 255)), (br.x + 60, br.y + 8))
             surf.blit(a.text(f"{app.events.days_left(ev)} days left - tap EVENTS", 16, S.UI_TEXT_DIM), (br.x + 60, br.y + 34))
+        season = app.season.current()
+        if season:
+            sr = pygame.Rect(S.SCREEN_W - 380, 240, 360, 60)
+            pygame.draw.rect(surf, season["color_2"], sr, border_radius=16)
+            pygame.draw.rect(surf, season["color"], sr, 3, border_radius=16)
+            surf.blit(a.icon("star", 40, season["color"]), (sr.x + 10, sr.y + 10))
+            surf.blit(a.text(f"SEASON PASS  -  TIER {app.season.tier(season)}", 20, (255, 255, 255)), (sr.x + 60, sr.y + 8))
+            left = app.season.format_left(app.season.time_left(season))
+            surf.blit(a.text(f"Ends in {left}", 16, season["color"]), (sr.x + 60, sr.y + 34))
         self.draw_buttons(surf)
         if self.popup == "daily":
             self._draw_daily(surf)
@@ -345,10 +355,13 @@ class CharactersScene(Scene):
                 b = Button((S.SCREEN_W // 2 + 140, 590, 300, 76), "SELECTED", None, "dark", enabled=False)
             else:
                 b = Button((S.SCREEN_W // 2 + 140, 590, 300, 76), "SELECT", self._select, "good")
+        elif ch.get("season_only"):
+            b = Button((S.SCREEN_W // 2 + 140, 590, 300, 76), "SEASON PASS", lambda: self.app.change_scene("season"),
+                       "secondary", icon="star", size=26)
         elif eco.item_locked_by_level(item):
             b = Button((S.SCREEN_W // 2 + 140, 590, 300, 76), f"LEVEL {ch['unlock_level']}", None, "dark", icon="lock", enabled=False)
         else:
-            icon = "gem" if ch["currency"] == "gems" else "coin"
+            icon, _ = eco.currency_icon(ch["currency"])
             b = Button((S.SCREEN_W // 2 + 140, 590, 300, 76), fmt_int(ch["price"]), self._buy, "primary", icon=icon,
                        enabled=eco.can_afford(ch["price"], ch["currency"]))
         self.buttons.append(b)
@@ -411,7 +424,8 @@ class CharactersScene(Scene):
             sel = i == self.index
             pygame.draw.rect(surf, (60, 70, 120) if sel else (30, 36, 66), rect, border_radius=14)
             pygame.draw.rect(surf, S.UI_ACCENT if sel else (70, 80, 120), rect, 3, border_radius=14)
-            draw_runner(surf, rect.centerx, rect.bottom - 4, 32, build_look(app.data, c["id"]), "idle", 0, 0, "front")
+            thumb = model3d.thumbnail(build_look(app.data, c["id"]), rect.w - 6)
+            surf.blit(thumb, (rect.x + 3, rect.y + 2))
             if not eco.owned("characters", c["id"]):
                 surf.blit(a.icon("lock", 22), (rect.right - 24, rect.bottom - 24))
         # preview
@@ -419,8 +433,8 @@ class CharactersScene(Scene):
         pygame.draw.ellipse(surf, (0, 0, 0), (cx - 110, 610, 220, 36))
         outfit = app.save["outfit"] if eco.owned("characters", ch["id"]) else None
         look = build_look(app.data, ch["id"], outfit)
-        draw_runner(surf, cx, 628, 240, look, "cheer" if eco.equipped("characters") == ch["id"] else "idle", 0, self.t,
-                    "front")
+        model3d.draw_on_screen(surf, look, "cheer" if eco.equipped("characters") == ch["id"] else "idle", cx, 628, 430,
+                               t=self.t, yaw=math.pi + self.t * 0.7)
         # info panel
         px = S.SCREEN_W // 2 + 60
         panel(surf, (px, 190, 520, 380), S.UI_PANEL, radius=24)
@@ -429,9 +443,11 @@ class CharactersScene(Scene):
         pygame.draw.rect(surf, (30, 36, 70), (px + 24, 360, 472, 110), border_radius=16)
         surf.blit(a.text("SPECIAL ABILITY", 20, S.UI_ACCENT_2), (px + 40, 372))
         draw_wrapped(surf, a, ch["ability"].get("desc", "-"), 26, (255, 255, 255), (px + 40, 402, 440, 60))
+        cur_name = eco.currency_name(ch["currency"])
         status = ("Owned" if eco.owned("characters", ch["id"]) else
+                  "Exclusive: Season Pass tier 1 (premium)" if ch.get("season_only") else
                   f"Unlocks at level {ch['unlock_level']}" if eco.item_locked_by_level(app.data.item(ch["id"])) else
-                  f"Price: {fmt_int(ch['price'])} {ch['currency']}")
+                  f"Price: {fmt_int(ch['price'])} {cur_name}  (you have {fmt_int(eco.balance(ch['currency']))})")
         surf.blit(a.text(status, 22, S.UI_TEXT_DIM), (px + 30, 500))
         self.draw_buttons(surf)
         self.draw_header(surf, "CHARACTERS")
@@ -521,7 +537,8 @@ class ShopScene(Scene):
                 base = S.UI_ACCENT if afford else (90, 90, 110)
                 pygame.draw.rect(surf, shade(base, 0.6), ar.move(0, 4), border_radius=16)
                 pygame.draw.rect(surf, base, ar, border_radius=16)
-                ic = a.icon("gem" if e.currency == "gems" else "coin", 30)
+                icon_name, icon_col = eco.currency_icon(e.currency)
+                ic = a.icon(icon_name, 30, icon_col)
                 t = a.text(fmt_int(e.price), 22, (40, 30, 10) if afford else (200, 200, 210))
                 surf.blit(ic, (ar.x + 10, ar.centery - 15))
                 surf.blit(t, (ar.x + 46, ar.centery - t.get_height() // 2))
@@ -537,7 +554,8 @@ class ShopScene(Scene):
     def _draw_preview(self, surf, e, rect):
         a = self.app.assets
         if e.category == "characters":
-            draw_runner(surf, rect.centerx, rect.bottom - 6, 48, build_look(self.app.data, e.id), "idle", 0, self.t, "front")
+            thumb = model3d.thumbnail(build_look(self.app.data, e.id), rect.w - 4)
+            surf.blit(thumb, (rect.x + 2, rect.y + 2))
             return
         if e.category == "boards":
             draw_board(surf, rect.centerx, rect.centery, 110, e.item)
@@ -702,10 +720,11 @@ class EventsScene(Scene):
             pygame.draw.rect(surf, (255, 255, 255), banner, 3, border_radius=24)
             surf.blit(a.text(ev["name"].upper(), 48, (255, 255, 255), shadow=True), (70, 112))
             draw_wrapped(surf, a, ev["desc"], 20, (255, 255, 255), (72, 170, 760, 50))
-            tok = em.tokens(ev)
+            tok = em.earned(ev)
             surf.blit(a.icon("token", 56, ev["currency"]["color"]), (S.SCREEN_W - 330, 120))
-            surf.blit(a.text(f"{fmt_int(tok)}", 44, (255, 255, 255), shadow=True), (S.SCREEN_W - 266, 120))
-            surf.blit(a.text(ev["currency"]["name"], 20, (255, 255, 255)), (S.SCREEN_W - 266, 170))
+            surf.blit(a.text(f"{fmt_int(em.tokens(ev))}", 44, (255, 255, 255), shadow=True), (S.SCREEN_W - 266, 120))
+            surf.blit(a.text(f"{ev['currency']['name']} to spend  ·  {fmt_int(tok)} collected", 16, (255, 255, 255)),
+                      (S.SCREEN_W - 330, 172))
             surf.blit(a.text(f"{em.days_left(ev)} days left", 20, (255, 255, 255)), (S.SCREEN_W - 330, 196))
             # reward track
             n = len(ev["rewards"])
@@ -734,6 +753,11 @@ class EventsScene(Scene):
                 blit_center(surf, a.text(label if len(label) < 24 else label[:22] + "..", 15, S.UI_TEXT_DIM), (x, y + 58))
                 if st == "claimed":
                     blit_center(surf, a.text("CLAIMED", 18, S.UI_GOOD), (x, y + 92))
+            buyable = [c for c in self.app.data.characters if c.get("currency") == f"event:{ev['id']}"]
+            if buyable:
+                names = ", ".join(c["name"] for c in buyable)
+                surf.blit(a.text(f"Spend your {ev['currency']['name']} on {names} in CHARACTERS!", 20, ev["currency"]["color"]),
+                          (40, 430))
             # event missions
             surf.blit(a.text("EVENT MISSIONS", 26, S.UI_ACCENT), (40, 470))
             y = 506
@@ -941,3 +965,235 @@ class SettingsScene(Scene):
             surf.blit(a.text(label, 20, (255, 255, 255)), (856, 144 + i * 66))
         self.draw_buttons(surf)
         self.draw_header(surf, "SETTINGS")
+
+
+# ---------------------------------------------------------------------------
+class SeasonScene(Scene):
+    """Season Pass: countdown, tier progress, free + premium reward tracks."""
+    COL_W, COL_GAP = 150, 12
+    TRACK_X = 170
+
+    def enter(self, **kw):
+        self.scroll = 0.0
+        self._drag = None
+        self._dragged = False
+        sp = self.app.season
+        self.season = sp.latest()
+        if self.season:
+            tier = sp.tier(self.season)
+            self.scroll = self._clamp(max(0, tier - 4) * (self.COL_W + self.COL_GAP))
+        self._build()
+
+    def _max_scroll(self):
+        if not self.season:
+            return 0
+        n = len(self.season["tiers"])
+        return max(0, n * (self.COL_W + self.COL_GAP) - (S.SCREEN_W - self.TRACK_X - 30))
+
+    def _clamp(self, v):
+        return clamp(v, 0, self._max_scroll())
+
+    def _build(self):
+        self.buttons = [self.back_button()]
+        sp, s = self.app.season, self.season
+        if s and sp.is_active(s):
+            if not sp.has_premium(s):
+                self.buttons.append(Button((S.SCREEN_W - 380, 150, 340, 66), f"PREMIUM  {fmt_int(s['premium_price'])}",
+                                           self._buy, "primary", icon="coin", size=24,
+                                           enabled=self.app.economy.can_afford(s["premium_price"], s["premium_currency"])))
+            n = sp.claimable_count()
+            self.buttons.append(Button((S.SCREEN_W // 2 - 140, 642, 280, 60), f"CLAIM ALL ({n})", self._claim_all,
+                                       "good" if n else "dark", size=22, enabled=n > 0))
+        self.buttons.append(Button((40, 642, 64, 60), "<", lambda: self._page(-1), "dark", size=30))
+        self.buttons.append(Button((S.SCREEN_W - 104, 642, 64, 60), ">", lambda: self._page(1), "dark", size=30))
+
+    def _page(self, d):
+        self.scroll = self._clamp(self.scroll + d * 4 * (self.COL_W + self.COL_GAP))
+
+    def _buy(self):
+        ok, msg = self.app.season.buy_premium()
+        self.app.audio.play("unlock" if ok else "error")
+        self.app.toasts.push(msg, "star", S.UI_GOOD if ok else S.UI_BAD)
+        self._build()
+
+    def _claim_all(self):
+        lines = self.app.season.claim_all(self.season)
+        if lines:
+            self.app.audio.play("unlock")
+            self.app.toasts.push("Claimed: " + ", ".join(lines[:4]) + ("..." if len(lines) > 4 else ""), "star", S.UI_GOOD, 4)
+            self.app.achievements.check()
+        self._build()
+
+    def _col_x(self, i):
+        return self.TRACK_X + i * (self.COL_W + self.COL_GAP) - int(self.scroll)
+
+    def _card_rect(self, i, track):
+        return pygame.Rect(self._col_x(i), 304 if track == "free" else 470, self.COL_W, 154)
+
+    def handle(self, event):
+        if super().handle(event):
+            return True
+        if not self.season:
+            return False
+        area = pygame.Rect(self.TRACK_X, 250, S.SCREEN_W - self.TRACK_X, 380)
+        if event.type == pygame.MOUSEWHEEL:
+            self.scroll = self._clamp(self.scroll - (event.y + event.x) * 80)
+            return True
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and area.collidepoint(event.pos):
+            self._drag = (event.pos[0], self.scroll)
+            self._dragged = False
+        elif event.type == pygame.MOUSEMOTION and self._drag:
+            dx = event.pos[0] - self._drag[0]
+            if abs(dx) > 8:
+                self._dragged = True
+            if self._dragged:
+                self.scroll = self._clamp(self._drag[1] - dx)
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            dragged, self._drag, self._dragged = self._dragged, None, False
+            if dragged or not area.collidepoint(event.pos):
+                return dragged
+            for i in range(len(self.season["tiers"])):
+                for track in ("free", "premium"):
+                    if self._card_rect(i, track).collidepoint(event.pos):
+                        self._click(i, track)
+                        return True
+        elif event.type == pygame.KEYDOWN and event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+            self._page(1 if event.key == pygame.K_RIGHT else -1)
+        return False
+
+    def _click(self, i, track):
+        sp = self.app.season
+        st = sp.status(self.season, i, track)
+        if st == "ready":
+            lines = sp.claim(self.season, i, track)
+            self.app.audio.play("unlock")
+            self.app.toasts.push(f"Tier {i + 1}: " + ", ".join(lines), "star", S.UI_GOOD, 3.5)
+            self.app.achievements.check()
+            self._build()
+        elif st == "premium":
+            self.app.audio.play("error")
+            self.app.toasts.push("Unlock the Premium Pass to claim this", "lock", S.UI_BAD)
+        elif st == "locked":
+            self.app.audio.play("error")
+            self.app.toasts.push(f"Reach tier {i + 1} first - keep running!", "lock", S.UI_BAD)
+
+    def update(self, dt):
+        super().update(dt)
+
+    # ------------------------------------------------------------------
+    def draw(self, surf):
+        self.draw_background(surf)
+        a = self.app.assets
+        sp = self.app.season
+        s = self.season
+        if s is None:
+            nxt = sp.next_season()
+            blit_center(surf, a.text("No season is running", 40, (255, 255, 255)), (S.SCREEN_W // 2, 300))
+            if nxt:
+                blit_center(surf, a.text(f"{nxt['name']} starts {nxt['start_date'].strftime('%b %d')}", 24,
+                                         S.UI_TEXT_DIM), (S.SCREEN_W // 2, 350))
+            self.draw_buttons(surf)
+            self.draw_header(surf, "SEASON PASS")
+            return
+        active = sp.is_active(s)
+        c1, c2 = s["color"], s["color_2"]
+        banner = pygame.Rect(40, 100, S.SCREEN_W - 80, 136)
+        surf.blit(gradient_rect(banner.size, c2, shade(c2, 0.55), 24), banner.topleft)
+        pygame.draw.rect(surf, c1, banner, 3, border_radius=24)
+        surf.blit(a.text(s["name"].upper(), 28, (255, 255, 255), shadow=True), (66, 114))
+        if active:
+            left = sp.format_left(sp.time_left(s))
+            surf.blit(a.text("SEASON ENDS IN", 16, shade(c1, 1.1)), (68, 158))
+            surf.blit(a.text(left, 32, c1, shadow=True), (68, 178))
+        else:
+            surf.blit(a.text("SEASON ENDED", 30, S.UI_BAD, shadow=True), (68, 168))
+        # tier + points
+        tier = sp.tier(s)
+        n = len(s["tiers"])
+        tx = 548
+        pygame.draw.circle(surf, (14, 16, 34), (tx, 168), 46)
+        pygame.draw.circle(surf, c1, (tx, 168), 46, 4)
+        blit_center(surf, a.text("TIER", 14, S.UI_TEXT_DIM), (tx, 142))
+        blit_center(surf, a.text(str(tier), 40, (255, 255, 255)), (tx, 174))
+        pts = sp.points(s)
+        nxt_txt = "All tiers unlocked!" if tier >= n else \
+            f"{fmt_int(pts % s['points_per_tier'])} / {fmt_int(s['points_per_tier'])} pts to tier {tier + 1}"
+        surf.blit(a.text(nxt_txt, 18, (255, 255, 255)), (612, 140))
+        progress_bar(surf, (612, 170, 270, 18), sp.tier_progress(s), c1)
+        surf.blit(a.text("Points: distance, coins, missions", 15, S.UI_TEXT_DIM, bold=False), (612, 198))
+        if sp.has_premium(s):
+            pr = pygame.Rect(S.SCREEN_W - 380, 150, 340, 66)
+            pygame.draw.rect(surf, (40, 30, 10), pr, border_radius=20)
+            pygame.draw.rect(surf, S.UI_ACCENT, pr, 3, border_radius=20)
+            blit_center(surf, a.text("PREMIUM ACTIVE", 26, S.UI_ACCENT), pr.center)
+        # row labels
+        for track, y, col in (("FREE", 304, (180, 190, 230)), ("PREMIUM", 470, S.UI_ACCENT)):
+            lab = pygame.Rect(40, y, 118, 154)
+            pygame.draw.rect(surf, (22, 26, 52), lab, border_radius=16)
+            pygame.draw.rect(surf, col, lab, 2, border_radius=16)
+            blit_center(surf, a.text(track, 20, col), lab.center)
+            if track == "PREMIUM" and not sp.has_premium(s):
+                blit_center(surf, a.icon("lock", 30), (lab.centerx, lab.centery + 34))
+        # columns
+        clip = pygame.Rect(self.TRACK_X - 4, 248, S.SCREEN_W - self.TRACK_X - 26, 384)
+        surf.set_clip(clip)
+        for i, t in enumerate(s["tiers"]):
+            x = self._col_x(i)
+            if x + self.COL_W < clip.x or x > clip.right:
+                continue
+            reached = i < tier
+            cc = (x + self.COL_W // 2, 276)
+            pygame.draw.circle(surf, c1 if reached else (50, 56, 92), cc, 20)
+            blit_center(surf, a.text(str(t["tier"]), 20, (20, 20, 30) if reached else (200, 200, 220)), cc)
+            if i + 1 < n:
+                pygame.draw.line(surf, c1 if i + 1 < tier else (50, 56, 92), (cc[0] + 22, 276),
+                                 (cc[0] + self.COL_W + self.COL_GAP - 22, 276), 4)
+            for track in ("free", "premium"):
+                self._draw_card(surf, self._card_rect(i, track), t[track], sp.status(s, i, track), track)
+        surf.set_clip(None)
+        self.draw_buttons(surf)
+        self.draw_header(surf, "SEASON PASS")
+
+    def _draw_card(self, surf, rect, reward, status, track):
+        a = self.app.assets
+        prem = track == "premium"
+        base = (58, 46, 22) if prem else (36, 42, 78)
+        border = {"ready": S.UI_GOOD, "claimed": (70, 120, 90)}.get(status, S.UI_ACCENT if prem else (70, 80, 120))
+        panel(surf, rect, base, radius=16, border=border, shadow=False)
+        item = self.app.data.item(reward["item"]) if reward.get("item") else None
+        center = (rect.centerx, rect.y + 52)
+        if item and item["category"] == "characters":
+            from .characters import build_look
+            thumb = model3d.thumbnail(build_look(self.app.data, item["id"]), 92)
+            surf.blit(thumb, (center[0] - 46, rect.y + 4))
+            label = item["name"]
+        elif item and item["category"] == "boards":
+            draw_board(surf, center[0], center[1], 120, item)
+            label = item["name"]
+        elif item:
+            blit_center(surf, a.icon({"outfits": "outfit", "trails": "trail", "effects": "effect",
+                                      "emotes": "emote"}.get(item["category"], "star"), 60), center)
+            label = item["name"]
+        elif reward.get("gems"):
+            blit_center(surf, a.icon("gem", 56), center)
+            label = f"{reward['gems']} gems"
+        else:
+            blit_center(surf, a.icon("coin", 56), center)
+            label = f"{fmt_int(reward.get('coins', 0))}"
+        if item:
+            tag = a.text("EXCLUSIVE", 13, S.UI_ACCENT)
+            surf.blit(tag, (rect.x + 8, rect.y + 6))
+        blit_center(surf, a.text(label if len(label) < 16 else label[:15] + ".", 18, (255, 255, 255)),
+                    (rect.centerx, rect.y + 104))
+        sr = pygame.Rect(rect.x + 12, rect.bottom - 38, rect.w - 24, 30)
+        if status == "ready":
+            pygame.draw.rect(surf, S.UI_GOOD, sr, border_radius=12)
+            blit_center(surf, a.text("CLAIM", 18, (255, 255, 255)), sr.center)
+        elif status == "claimed":
+            blit_center(surf, a.text("CLAIMED", 16, S.UI_GOOD), sr.center)
+        elif status == "premium":
+            blit_center(surf, a.icon("lock", 24, S.UI_ACCENT), sr.center)
+        elif status == "ended":
+            blit_center(surf, a.text("EXPIRED", 16, S.UI_BAD), sr.center)
+        else:
+            blit_center(surf, a.icon("lock", 22, (140, 140, 170)), sr.center)

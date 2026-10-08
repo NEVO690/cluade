@@ -25,6 +25,7 @@ class Economy:
     def __init__(self, gamedata, save):
         self.gamedata = gamedata
         self.save = save
+        self.events = None   # EventManager, set by the App (event currencies such as Candy)
         self.listeners = []  # callables(kind, data) for UI notifications
 
     def notify(self, kind, data):
@@ -49,11 +50,38 @@ class Economy:
         if currency in CURRENCIES and amount:
             self.save[currency] = max(0, int(self.save[currency] + amount))
 
+    def _event_of(self, currency):
+        if isinstance(currency, str) and currency.startswith("event:") and self.events is not None:
+            return self.gamedata.event_by_id.get(currency[6:])
+        return None
+
+    def balance(self, currency="coins"):
+        ev = self._event_of(currency)
+        if ev is not None:
+            return self.events.tokens(ev)
+        return self.save.get(currency, 0) if currency in CURRENCIES else 0
+
+    def currency_name(self, currency):
+        ev = self._event_of(currency)
+        return ev["currency"]["name"] if ev else currency
+
+    def currency_icon(self, currency):
+        """(icon name, colour) used to draw a price."""
+        ev = self._event_of(currency)
+        if ev:
+            return "token", ev["currency"]["color"]
+        return ("gem", None) if currency == "gems" else ("coin", None)
+
     def can_afford(self, price, currency="coins"):
-        return self.save.get(currency, 0) >= price
+        return self.balance(currency) >= price
 
     def spend(self, price, currency="coins"):
-        if price < 0 or currency not in CURRENCIES or not self.can_afford(price, currency):
+        if price < 0 or not self.can_afford(price, currency):
+            return False
+        ev = self._event_of(currency)
+        if ev is not None:
+            return self.events.spend_tokens(ev, price)
+        if currency not in CURRENCIES:
             return False
         self.save[currency] = self.save[currency] - price
         return True
@@ -93,13 +121,15 @@ class Economy:
         cat = item.get("category")
         if item.get("event_only"):
             return False, "Event reward only"
+        if item.get("season_only"):
+            return False, "Season Pass reward only"
         if cat != "consumables" and self.owned(cat, item["id"]):
             return False, "Already owned"
         if self.item_locked_by_level(item):
             return False, f"Reach level {item['unlock_level']}"
         price, cur = item.get("price", 0), item.get("currency", "coins")
         if not self.spend(price, cur):
-            return False, f"Not enough {cur}"
+            return False, f"Not enough {self.currency_name(cur)}"
         if cat == "consumables":
             self.add_consumable(item["id"], 1)
         else:
@@ -225,17 +255,19 @@ class Shop:
         if tab == "characters":
             for c in gd.characters:
                 item = gd.item(c["id"])
+                if item.get("season_only") and not eco.owned("characters", c["id"]):
+                    continue
                 out.append(self._item_entry(item, "character", c["colors"]["shirt"]))
         elif tab in ("boards", "trails"):
             for it in gd.items[tab]:
-                if it.get("event_only") and not eco.owned(tab, it["id"]):
+                if (it.get("event_only") or it.get("season_only")) and not eco.owned(tab, it["id"]):
                     continue
                 color = it["colors"]["deck"] if tab == "boards" else it.get("color", (255, 255, 255))
                 out.append(self._item_entry(it, CATEGORY_ICONS[tab], color))
         elif tab == "cosmetics":
             for cat in ("outfits", "effects", "emotes"):
                 for it in gd.items[cat]:
-                    if it.get("event_only") and not eco.owned(cat, it["id"]):
+                    if (it.get("event_only") or it.get("season_only")) and not eco.owned(cat, it["id"]):
                         continue
                     color = it.get("colors", {}).get("shirt") or it.get("color") or (255, 200, 80)
                     out.append(self._item_entry(it, CATEGORY_ICONS[cat], color))
@@ -273,6 +305,8 @@ class Shop:
             action, status = "equip", "Owned"
         elif item.get("event_only"):
             action, status = None, "Event reward"
+        elif item.get("season_only"):
+            action, status = None, "Season Pass reward"
         elif locked:
             action, status = None, f"Level {item['unlock_level']}"
         else:
