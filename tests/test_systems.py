@@ -22,13 +22,13 @@ from game import utils  # noqa: E402
 from game.database import GameData  # noqa: E402
 from game.events import EventManager, event_window  # noqa: E402
 from game.missions import MissionManager  # noqa: E402
-from game.obstacles import Obstacle, LOW, HIGH, BLOCK, TRAIN, RAMP, CAR  # noqa: E402
+from game.obstacles import Obstacle, LOW, HIGH, BLOCK, TRAIN, RAMP  # noqa: E402
 from game.player import Player  # noqa: E402
 from game.powerups import PowerUpManager  # noqa: E402
 from game.progression import Progression, Achievements, DailyRewards, xp_to_next  # noqa: E402
 from game.save_system import SaveSystem, SettingsStore  # noqa: E402
 from game.shop import Economy, Shop  # noqa: E402
-from game.world import World, PASSABLE, HARD_BLOCK, LATERAL_BLOCK  # noqa: E402
+from game.world import World, PASSABLE, LATERAL_BLOCK  # noqa: E402
 
 pygame.init()
 DATA = GameData()

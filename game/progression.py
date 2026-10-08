@@ -1,6 +1,4 @@
 """Player level / XP, level rewards, achievements and daily login rewards."""
-import datetime
-
 from . import settings as S
 from .utils import today, parse_date
 

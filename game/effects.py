@@ -83,7 +83,6 @@ class ParticleSystem:
         self.active = active
 
     def queue_draw(self, renderer):
-        cam = renderer.cam
         for p in self.pool:
             if p.alive and renderer.visible_range(p.z, p.z):
                 renderer.queue(p.z, self._draw_one, renderer, p)
@@ -94,13 +93,15 @@ class ParticleSystem:
             return
         cam = renderer.cam
         dz = p.z - cam.z
-        if dz < S.NEAR_PLANE:
-            return
+        if dz < 3.0:
+            return  # particles drifting past the lens would fill the screen
         s = cam.focal / dz
         sx = cam.hx + (p.x - cam.x) * s
         sy = cam.hy - (p.y - cam.y) * s
         k = p.life / p.max_life
         r = p.size * s * (0.4 + 0.6 * k)
+        if dz < 5.0:
+            r *= (dz - 3.0) / 2.0
         surf = renderer.surface
         if r < 0.7:
             return

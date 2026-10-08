@@ -12,8 +12,6 @@ Mechanical kinds (what the player must do):
 Visual style comes from the zone's ``obstacle_style`` (see ``STYLES``), so a
 new zone can restyle every obstacle without touching collision code.
 """
-import math
-
 import pygame
 
 from . import settings as S

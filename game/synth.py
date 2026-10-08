@@ -159,7 +159,6 @@ class Synth:
     def make_sfx(self, name):
         if np is None:
             return self._py_fallback(name)
-        r = self.rate
         if name == "jump":
             s = self.osc(260, 0.16, "square", 720, duty=0.3) * 0.35
             return s * self.env(len(s), 0.003, curve=1.2)

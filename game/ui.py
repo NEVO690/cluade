@@ -1,6 +1,4 @@
 """UI toolkit: buttons, sliders, scrolling, toasts, panels and the in-run HUD."""
-import math
-
 import pygame
 
 from . import settings as S

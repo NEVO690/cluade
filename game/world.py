@@ -14,8 +14,6 @@ import math
 import random
 from collections import deque
 
-import pygame
-
 from . import settings as S
 from .collectibles import Collectible, COIN, GEM, TOKEN, POWERUP
 from .obstacles import Obstacle, LOW, HIGH, BLOCK, TRAIN, RAMP, CAR
@@ -586,7 +584,6 @@ class World:
         zfar = cam.z + r.draw_distance
         F, hx, hy, cx, cy = cam.focal, cam.hx, cam.hy, cam.x, cam.y
         W = surf.get_width()
-        H = surf.get_height()
         za0, zb0, t0 = self.schedule.zone_at(zfar)
         fog_far = zone_colors(za0, zb0, t0)["fog"]
         horizon_y = int(hy + cy * F / (zfar - cam.z)) - 1

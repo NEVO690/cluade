@@ -213,6 +213,13 @@ class App:
 
     def shutdown(self):
         try:
+            game = self.scenes.get("game") if hasattr(self, "scenes") else None
+            sess = getattr(game, "session", None)
+            if sess is not None and sess.result is None and sess.time > 1.0:
+                sess.finalize()  # closing the window mid-run still banks the coins
+        except Exception:
+            log.error("Could not bank the current run on exit:\n%s", traceback.format_exc())
+        try:
             self.save.save()
             self.settings.save()
         finally:

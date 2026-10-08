@@ -712,7 +712,6 @@ class EventsScene(Scene):
             pts = [self._node_pos(i, n) for i in range(n)]
             if n > 1:
                 pygame.draw.line(surf, (60, 66, 100), pts[0], pts[-1], 10)
-                maxt = ev["rewards"][-1]["tokens"] or 1
                 frac_x = pts[0][0]
                 for i, rw in enumerate(ev["rewards"]):
                     if tok >= rw["tokens"]:
@@ -810,9 +809,7 @@ class AchievementsScene(Scene):
 # ---------------------------------------------------------------------------
 class SettingsScene(Scene):
     def enter(self, **kw):
-        self.back_to = kw.get("back", getattr(self, "back_to", "menu"))
-        if "back" in kw:
-            self.back_to = kw["back"]
+        self.back_to = kw.get("back", "menu")
         self.capture = None
         self.confirm_reset = False
         self._build()

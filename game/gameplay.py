@@ -13,9 +13,9 @@ from .obstacles import LOW, HIGH, BLOCK, TRAIN, RAMP, CAR
 from .player import Player
 from .powerups import PowerUpManager
 from .render import Renderer
-from .scenery import Sky, zone_colors
+from .scenery import zone_colors
 from .ui import HUD, Button, panel, blit_center, progress_bar
-from .utils import clamp, lerp_color, fmt_int, shade
+from .utils import clamp, lerp_color, fmt_int
 from .world import World, default_speed
 
 RUN_STATS = ("coins", "gems", "tokens", "distance", "score", "jumps", "slides", "lane_switches", "jump_over",
@@ -368,7 +368,6 @@ class GameSession:
 
     def _pickup(self, c):
         c.alive = False
-        p = self.player
         if c.kind == COIN:
             self.coins += 1
             self.record("coins")
@@ -452,36 +451,40 @@ class GameSession:
         p = self.player
         if p.dead:
             return
+        # particles inherit most of the runner's forward speed so they trail a few metres
+        # behind instead of flying into the camera
+        fz = self.speed * 0.8
+        emit = self.particles.emit
         if self.powerups.has("jet"):
             for _ in range(2):
-                self.particles.emit(p.x + random.uniform(-0.2, 0.2), p.y + 0.6, p.z - 0.4, random.uniform(-0.5, 0.5),
-                                    -4, random.uniform(-2, 0), 0.4, 0.22, random.choice([(255, 170, 40), (255, 90, 30)]), 0, "dot")
+                emit(p.x + random.uniform(-0.2, 0.2), p.y + 0.7, p.z - 0.3, random.uniform(-0.4, 0.4),
+                     -3, fz, 0.3, 0.12, random.choice([(255, 170, 40), (255, 90, 30), (255, 230, 120)]), 0, "dot")
         if self.powerups.has("speed"):
-            self.particles.emit(p.x + random.uniform(-0.6, 0.6), p.y + random.uniform(0.2, 1.6), p.z - 0.5, 0, 0, -6,
-                                0.3, 0.1, (255, 240, 120), 0, "streak")
-        if self.player.board_active and self.board and self.board.get("style") in ("neon", "cyber", "hover"):
-            self.particles.emit(p.x, p.y + 0.1, p.z - 0.6, 0, 0, -2, 0.4, 0.1, self.board["colors"]["glow"], 0, "dot")
+            emit(p.x + random.uniform(-0.6, 0.6), p.y + random.uniform(0.2, 1.6), p.z - 0.5, 0, 0, fz,
+                 0.25, 0.08, (255, 240, 120), 0, "streak")
+        if p.board_active and self.board and self.board.get("style") in ("neon", "cyber", "hover"):
+            emit(p.x, p.y + 0.1, p.z - 0.6, 0, 0, fz, 0.4, 0.08, self.board["colors"]["glow"], 0, "dot")
         if style == "none":
             return
         col = self.trail.get("color", (255, 255, 255))
         x, y, z = p.x + random.uniform(-0.15, 0.15), p.y + 0.15, p.z - 0.4
         if style == "sparks":
-            self.particles.emit(x, y, z, random.uniform(-1.5, 1.5), random.uniform(1, 3), random.uniform(-2, 0), 0.4, 0.06,
-                                random.choice([col, (255, 255, 200)]), -9, "dot")
+            emit(x, y, z, random.uniform(-1.5, 1.5), random.uniform(1, 3), fz, 0.4, 0.05,
+                 random.choice([col, (255, 255, 200)]), -9, "dot")
         elif style == "bubbles":
             if random.random() < 0.5:
-                self.particles.emit(x, y + 0.5, z, random.uniform(-0.4, 0.4), random.uniform(0.5, 1.5), -1, 0.8, 0.14, col, 0, "bubble")
+                emit(x, y + 0.5, z, random.uniform(-0.4, 0.4), random.uniform(0.5, 1.5), fz, 0.7, 0.1, col, 0, "bubble")
         elif style == "streak":
-            self.particles.emit(p.x, y + 0.6, z, 0, 0, -1, 0.35, 0.18, col, 0, "dot")
+            emit(p.x, y + 0.6, z, 0, 0, fz, 0.35, 0.12, col, 0, "dot")
         elif style == "rainbow":
-            self.particles.emit(x, y + 0.5, z, 0, 0, -1, 0.5, 0.14, RAINBOW[int(self.time * 12) % len(RAINBOW)], 0, "square")
+            emit(x, y + 0.5, z, 0, 0, fz, 0.45, 0.09, RAINBOW[int(self.time * 12) % len(RAINBOW)], 0, "square")
         elif style == "stars":
             if random.random() < 0.6:
-                self.particles.emit(x, y + random.uniform(0, 1.2), z, 0, 0.3, -1, 0.6, 0.12, col, 0, "star")
+                emit(x, y + random.uniform(0, 1.2), z, 0, 0.3, fz, 0.6, 0.09, col, 0, "star")
         elif style == "leaves":
             if random.random() < 0.5:
-                self.particles.emit(x, y + 0.8, z, random.uniform(-1, 1), 0.5, -1, 0.9, 0.12,
-                                    random.choice([(230, 120, 30), (200, 70, 20), (240, 180, 40)]), -2, "square")
+                emit(x, y + 0.8, z, random.uniform(-1, 1), 0.5, fz, 0.8, 0.09,
+                     random.choice([(230, 120, 30), (200, 70, 20), (240, 180, 40)]), -2, "square")
 
     # ------------------------------------------------------------------
     # Revive / finish
@@ -869,8 +872,8 @@ class GameScene:
         self.screen_particles.draw(surf)
         self.texts.draw(surf, self.app.assets)
         self.flash.draw(surf)
-        if self.mode == "play" and not self.app.save["tutorial_done"] and sess.time < 9:
-            self._draw_tutorial(surf, sess.time)
+        if self.mode == "play" and not self.app.save["tutorial_done"] and 3.0 < sess.time < 12:
+            self._draw_tutorial(surf, sess.time - 3.0)
         if sess.stumble_timer > 0 and self.mode == "play":
             k = sess.stumble_timer / S.STUMBLE_WINDOW
             pygame.draw.rect(surf, (255, 80, 60), (0, 0, S.SCREEN_W, S.SCREEN_H), max(1, int(10 * k)))
@@ -895,18 +898,18 @@ class GameScene:
         lines = [("<  >", "A / D / arrows / swipe", "Change lane"),
                  ("^", "W / Up / Space / swipe up", "Jump"),
                  ("v", "S / Down / swipe down", "Slide")]
-        w, h = 620, 40 + 44 * len(lines)
+        w, h = 540, 30 + 40 * len(lines)
         layer = pygame.Surface((w, h), pygame.SRCALPHA)
         pygame.draw.rect(layer, (10, 12, 30, int(200 * k)), (0, 0, w, h), border_radius=20)
         pygame.draw.rect(layer, (*S.UI_ACCENT, int(255 * k)), (0, 0, w, h), 3, border_radius=20)
         for i, (sym, keys, label) in enumerate(lines):
-            y = 20 + i * 44
-            for img, x in ((a.text(sym, 28, S.UI_ACCENT), 24), (a.text(label, 24, (255, 255, 255)), 110),
-                           (a.text(keys, 20, S.UI_TEXT_DIM), 290)):
+            y = 16 + i * 40
+            for img, x in ((a.text(sym, 24, S.UI_ACCENT), 20), (a.text(label, 21, (255, 255, 255)), 88),
+                           (a.text(keys, 18, S.UI_TEXT_DIM), 248)):
                 img = img.copy()
                 img.set_alpha(int(255 * k))
                 layer.blit(img, (x, y))
-        surf.blit(layer, (S.SCREEN_W // 2 - w // 2, S.SCREEN_H - h - 120))
+        surf.blit(layer, (S.SCREEN_W - w - 20, 150))
 
     def _dim(self, surf, alpha=150):
         layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)

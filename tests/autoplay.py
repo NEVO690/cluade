@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygame  # noqa: E402
 
 from game import settings as S  # noqa: E402
-from game.obstacles import LOW, HIGH, BLOCK, TRAIN, RAMP, CAR  # noqa: E402
+from game.obstacles import LOW, HIGH, TRAIN, RAMP, CAR  # noqa: E402
 
 
 def lane_blocked(world, lane, z0, z1, player):
@@ -33,6 +33,10 @@ def lane_blocked(world, lane, z0, z1, player):
             continue
         if ob.kind in (LOW, HIGH):
             continue
+        if ob.kind == TRAIN and ob.has_ramp and ob.vel == 0:
+            continue  # reachable via its ramp
+        if ob.kind == CAR and ob.vel == 0:
+            continue  # can be jumped
         return True
     return False
 

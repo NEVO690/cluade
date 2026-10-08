@@ -26,7 +26,8 @@ class Camera:
 
     def follow(self, px, py, pz, dt, snap=False):
         tx = px * 0.72
-        ty = S.CAMERA_HEIGHT + py * 0.62
+        # follow jumps loosely, but rise fully with roofs and jet flights
+        ty = S.CAMERA_HEIGHT + (py * 0.62 if py < 3.4 else 3.4 * 0.62 + (py - 3.4) * 0.95)
         tz = pz - S.CAMERA_BACK
         if snap:
             self.x, self.y = tx, ty
