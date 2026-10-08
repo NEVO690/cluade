@@ -858,9 +858,11 @@ class GameScene:
         if sess.event:
             self.crender.token_color = sess.event["currency"]["color"]
         pw = sess.powerups
-        sess.player.queue_draw(r, shielded=pw.has("shield"), jet=pw.has("jet"), magnet=pw.magnet_radius > 0 and pw.has("magnet"))
         sess.particles.queue_draw(r)
         r.flush()
+        # The runner is drawn after the world: nothing visible can be in front of it (obstacles it has
+        # passed are not drawn), while long trains/ramps it stands on would otherwise win the depth sort.
+        sess.player._draw(r, pw.has("shield"), pw.has("jet"), pw.magnet_radius > 0 and pw.has("magnet"))
         if sess.event:
             th = sess.event["theme"]
             mult = lerp_color((255, 255, 255), th["tint"], th["tint_strength"])
