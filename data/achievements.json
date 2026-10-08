@@ -1,0 +1,20 @@
+[
+  {"id": "first_run", "name": "First Run", "desc": "Finish your first run", "stat": "runs", "target": 1, "icon": "play", "reward": {"coins": 200}},
+  {"id": "regular", "name": "City Regular", "desc": "Finish 50 runs", "stat": "runs", "target": 50, "icon": "play", "reward": {"coins": 1500, "gems": 3}},
+  {"id": "coin_collector", "name": "Coin Collector", "desc": "Collect 1,000 coins in total", "stat": "coins", "target": 1000, "icon": "coin", "reward": {"coins": 500}},
+  {"id": "coin_hoarder", "name": "Coin Hoarder", "desc": "Collect 25,000 coins in total", "stat": "coins", "target": 25000, "icon": "coin", "reward": {"gems": 10}},
+  {"id": "long_runner", "name": "Long Runner", "desc": "Run 3,000 m in a single run", "stat": "best_distance", "target": 3000, "icon": "distance", "reward": {"coins": 800, "gems": 2}},
+  {"id": "marathon", "name": "Marathon", "desc": "Run 42,195 m in total", "stat": "distance", "target": 42195, "icon": "distance", "reward": {"coins": 2000, "gems": 5}},
+  {"id": "speed_demon", "name": "Speed Demon", "desc": "Reach top speed (30 m/s)", "stat": "top_speed", "target": 30, "icon": "speed", "reward": {"coins": 1000, "gems": 2}},
+  {"id": "power_master", "name": "Power Master", "desc": "Use 100 power-ups", "stat": "powerups", "target": 100, "icon": "magnet", "reward": {"coins": 1500, "gems": 4}},
+  {"id": "high_flyer", "name": "High Flyer", "desc": "Pick up 10 Jet Boosts", "stat": "powerup_jet", "target": 10, "icon": "jet", "reward": {"coins": 800}},
+  {"id": "roof_rider", "name": "Roof Rider", "desc": "Land on 50 train roofs", "stat": "trains_landed", "target": 50, "icon": "train", "reward": {"coins": 1200, "gems": 2}},
+  {"id": "hurdler", "name": "Hurdler", "desc": "Jump over 500 obstacles", "stat": "jump_over", "target": 500, "icon": "super_jump", "reward": {"coins": 1500, "gems": 3}},
+  {"id": "high_score", "name": "Big Score", "desc": "Score 100,000 points in one run", "stat": "best_score", "target": 100000, "icon": "star", "reward": {"coins": 1500, "gems": 3}},
+  {"id": "millionaire", "name": "Millionaire", "desc": "Earn 1,000,000 points in total", "stat": "score", "target": 1000000, "icon": "trophy", "reward": {"coins": 5000, "gems": 10}},
+  {"id": "city_explorer", "name": "City Explorer", "desc": "Visit all 7 city zones", "stat": "zones_seen", "target": 7, "icon": "map", "reward": {"coins": 3000, "gems": 5}},
+  {"id": "level_10", "name": "Rising Star", "desc": "Reach player level 10", "stat": "level", "target": 10, "icon": "star", "reward": {"gems": 5}},
+  {"id": "level_50", "name": "City Legend", "desc": "Reach player level 50", "stat": "level", "target": 50, "icon": "trophy", "reward": {"gems": 50}},
+  {"id": "collector", "name": "Crew Builder", "desc": "Own 4 characters", "stat": "characters_owned", "target": 4, "icon": "character", "reward": {"coins": 2000, "gems": 3}},
+  {"id": "board_rider", "name": "Board Rider", "desc": "Use 10 Board Charges", "stat": "boards_used", "target": 10, "icon": "board", "reward": {"coins": 1000}}
+]

@@ -1,0 +1,43 @@
+{
+  "active_slots": 3,
+  "daily_count": 3,
+  "regular": [
+    {"id": "m01", "desc": "Collect 100 coins in total", "stat": "coins", "mode": "total", "target": 100, "reward": {"coins": 150, "xp": 60}},
+    {"id": "m02", "desc": "Run 1,000 m in one run", "stat": "distance", "mode": "run", "target": 1000, "reward": {"coins": 200, "xp": 80}},
+    {"id": "m03", "desc": "Jump 25 times", "stat": "jumps", "mode": "total", "target": 25, "reward": {"coins": 150, "xp": 60}},
+    {"id": "m04", "desc": "Use 3 power-ups", "stat": "powerups", "mode": "total", "target": 3, "reward": {"coins": 250, "xp": 90}},
+    {"id": "m05", "desc": "Slide under 10 barriers", "stat": "slide_under", "mode": "total", "target": 10, "reward": {"coins": 250, "xp": 90}},
+    {"id": "m06", "desc": "Score 10,000 points in one run", "stat": "score", "mode": "run", "target": 10000, "reward": {"coins": 300, "xp": 100}},
+    {"id": "m07", "desc": "Jump over 20 obstacles", "stat": "jump_over", "mode": "total", "target": 20, "reward": {"coins": 300, "xp": 100}},
+    {"id": "m08", "desc": "Land on 5 train roofs", "stat": "trains_landed", "mode": "total", "target": 5, "reward": {"coins": 350, "gems": 1, "xp": 120}},
+    {"id": "m09", "desc": "Collect 250 coins in one run", "stat": "coins", "mode": "run", "target": 250, "reward": {"coins": 400, "xp": 120}},
+    {"id": "m10", "desc": "Run 2,000 m in one run", "stat": "distance", "mode": "run", "target": 2000, "reward": {"coins": 500, "gems": 1, "xp": 150}},
+    {"id": "m11", "desc": "Use a Board Charge", "stat": "boards_used", "mode": "total", "target": 1, "reward": {"coins": 300, "xp": 100}},
+    {"id": "m12", "desc": "Switch lanes 150 times", "stat": "lane_switches", "mode": "total", "target": 150, "reward": {"coins": 350, "xp": 120}},
+    {"id": "m13", "desc": "Reach a x3 combo", "stat": "combo", "mode": "run", "target": 3, "reward": {"coins": 400, "xp": 140}},
+    {"id": "m14", "desc": "Pick up 3 Jet Boosts", "stat": "powerup_jet", "mode": "total", "target": 3, "reward": {"coins": 450, "xp": 150}},
+    {"id": "m15", "desc": "Score 50,000 points in one run", "stat": "score", "mode": "run", "target": 50000, "reward": {"coins": 700, "gems": 2, "xp": 200}},
+    {"id": "m16", "desc": "Collect 5 gems", "stat": "gems", "mode": "total", "target": 5, "reward": {"coins": 600, "xp": 180}},
+    {"id": "m17", "desc": "Complete 15 runs", "stat": "runs", "mode": "total", "target": 15, "reward": {"coins": 600, "xp": 180}},
+    {"id": "m18", "desc": "Run 4,000 m in one run", "stat": "distance", "mode": "run", "target": 4000, "reward": {"coins": 900, "gems": 3, "xp": 250}},
+    {"id": "m19", "desc": "Collect 5,000 coins in total", "stat": "coins", "mode": "total", "target": 5000, "reward": {"coins": 1000, "gems": 2, "xp": 250}},
+    {"id": "m20", "desc": "Use 40 power-ups", "stat": "powerups", "mode": "total", "target": 40, "reward": {"coins": 1200, "gems": 3, "xp": 300}},
+    {"id": "m21", "desc": "Jump over 300 obstacles", "stat": "jump_over", "mode": "total", "target": 300, "reward": {"coins": 1500, "gems": 3, "xp": 350}},
+    {"id": "m22", "desc": "Score 150,000 points in one run", "stat": "score", "mode": "run", "target": 150000, "reward": {"coins": 2000, "gems": 5, "xp": 500}},
+    {"id": "m23", "desc": "Reach a x4 combo", "stat": "combo", "mode": "run", "target": 4, "reward": {"coins": 1500, "gems": 3, "xp": 400}},
+    {"id": "m24", "desc": "Run 50,000 m in total", "stat": "distance", "mode": "total", "target": 50000, "reward": {"coins": 3000, "gems": 6, "xp": 700}}
+  ],
+  "daily_pool": [
+    {"id": "d_coins_run", "desc": "Collect {target} coins in one run", "stat": "coins", "mode": "run", "targets": [150, 250, 350], "reward": {"coins": 300, "xp": 120}},
+    {"id": "d_coins_total", "desc": "Collect {target} coins today", "stat": "coins", "mode": "total", "targets": [400, 700, 1000], "reward": {"coins": 400, "xp": 140}},
+    {"id": "d_distance_run", "desc": "Run {target} m in one run", "stat": "distance", "mode": "run", "targets": [1200, 1800, 2500], "reward": {"coins": 350, "gems": 1, "xp": 140}},
+    {"id": "d_distance_total", "desc": "Run {target} m today", "stat": "distance", "mode": "total", "targets": [3000, 5000, 8000], "reward": {"coins": 400, "xp": 160}},
+    {"id": "d_powerups", "desc": "Use {target} power-ups", "stat": "powerups", "mode": "total", "targets": [3, 5, 8], "reward": {"coins": 300, "xp": 120}},
+    {"id": "d_jump_over", "desc": "Jump over {target} obstacles", "stat": "jump_over", "mode": "total", "targets": [15, 25, 40], "reward": {"coins": 300, "xp": 120}},
+    {"id": "d_slide", "desc": "Slide {target} times", "stat": "slides", "mode": "total", "targets": [20, 35, 50], "reward": {"coins": 250, "xp": 100}},
+    {"id": "d_score", "desc": "Score {target} points in one run", "stat": "score", "mode": "run", "targets": [15000, 30000, 60000], "reward": {"coins": 500, "gems": 1, "xp": 180}},
+    {"id": "d_trains", "desc": "Land on {target} train roofs", "stat": "trains_landed", "mode": "total", "targets": [3, 6, 10], "reward": {"coins": 400, "xp": 150}},
+    {"id": "d_runs", "desc": "Play {target} runs", "stat": "runs", "mode": "total", "targets": [3, 5, 7], "reward": {"coins": 250, "xp": 100}},
+    {"id": "d_lanes", "desc": "Switch lanes {target} times", "stat": "lane_switches", "mode": "total", "targets": [60, 100, 150], "reward": {"coins": 250, "xp": 100}}
+  ]
+}

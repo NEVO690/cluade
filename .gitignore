@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+saves/
+cache/
+logs/
+.venv/
+venv/
+*.whl

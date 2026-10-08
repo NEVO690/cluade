@@ -1,0 +1,18 @@
+{
+  "music_volume": 0.6,
+  "sfx_volume": 0.8,
+  "graphics_quality": "medium",
+  "fullscreen": false,
+  "vsync": true,
+  "show_fps": false,
+  "swipe_threshold": 40,
+  "force_event": "",
+  "keys": {
+    "left": ["a", "left"],
+    "right": ["d", "right"],
+    "jump": ["w", "up", "space"],
+    "slide": ["s", "down"],
+    "board": ["b"],
+    "pause": ["escape", "p"]
+  }
+}

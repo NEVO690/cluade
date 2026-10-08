@@ -1,0 +1,74 @@
+[
+  {
+    "id": "halloween", "name": "Halloween Nights",
+    "desc": "Spooky season hits the city! Collect Candy to unlock exclusive rewards.",
+    "start": "10-01", "end": "11-07",
+    "currency": {"name": "Candy", "color": [255, 140, 20], "spawn_chance": 0.35},
+    "theme": {"tint": [70, 20, 90], "tint_strength": 0.22, "decor": "pumpkin", "weather": "leaves",
+              "banner": [255, 120, 20], "banner_2": [90, 30, 130]},
+    "missions": [
+      {"id": "hw1", "desc": "Collect 50 Candy", "stat": "tokens", "mode": "total", "target": 50, "reward": {"coins": 500, "xp": 100}},
+      {"id": "hw2", "desc": "Run 2,500 m in one run", "stat": "distance", "mode": "run", "target": 2500, "reward": {"gems": 2, "xp": 150}},
+      {"id": "hw3", "desc": "Use 10 power-ups", "stat": "powerups", "mode": "total", "target": 10, "reward": {"coins": 800, "xp": 150}}
+    ],
+    "rewards": [
+      {"tokens": 30, "reward": {"coins": 750}},
+      {"tokens": 80, "reward": {"item": "emote_boo"}},
+      {"tokens": 150, "reward": {"item": "trail_leaves"}},
+      {"tokens": 250, "reward": {"item": "outfit_pumpkin"}},
+      {"tokens": 400, "reward": {"item": "ghost_board", "gems": 5}}
+    ]
+  },
+  {
+    "id": "winter", "name": "Winter Wonderland",
+    "desc": "Snow covers the rails. Collect Snowflakes for frosty prizes.",
+    "start": "12-10", "end": "01-15",
+    "currency": {"name": "Snowflakes", "color": [170, 230, 255], "spawn_chance": 0.35},
+    "theme": {"tint": [200, 230, 255], "tint_strength": 0.25, "decor": "snowman", "weather": "snow",
+              "banner": [120, 200, 255], "banner_2": [40, 70, 140]},
+    "missions": [
+      {"id": "wi1", "desc": "Collect 60 Snowflakes", "stat": "tokens", "mode": "total", "target": 60, "reward": {"coins": 600, "xp": 100}},
+      {"id": "wi2", "desc": "Slide 40 times", "stat": "slides", "mode": "total", "target": 40, "reward": {"coins": 600, "xp": 120}},
+      {"id": "wi3", "desc": "Score 40,000 in one run", "stat": "score", "mode": "run", "target": 40000, "reward": {"gems": 3, "xp": 150}}
+    ],
+    "rewards": [
+      {"tokens": 40, "reward": {"coins": 800}},
+      {"tokens": 150, "reward": {"item": "outfit_snow"}},
+      {"tokens": 300, "reward": {"item": "frost_board", "gems": 5}}
+    ]
+  },
+  {
+    "id": "summer", "name": "Summer Splash",
+    "desc": "Heatwave! Grab Sun Tokens along the rails.",
+    "start": "06-20", "end": "08-31",
+    "currency": {"name": "Sun Tokens", "color": [255, 220, 60], "spawn_chance": 0.35},
+    "theme": {"tint": [255, 220, 150], "tint_strength": 0.15, "decor": "umbrella", "weather": "sun",
+              "banner": [255, 200, 40], "banner_2": [40, 160, 220]},
+    "missions": [
+      {"id": "su1", "desc": "Collect 60 Sun Tokens", "stat": "tokens", "mode": "total", "target": 60, "reward": {"coins": 600, "xp": 100}},
+      {"id": "su2", "desc": "Jump 80 times", "stat": "jumps", "mode": "total", "target": 80, "reward": {"coins": 600, "xp": 120}}
+    ],
+    "rewards": [
+      {"tokens": 40, "reward": {"coins": 800}},
+      {"tokens": 150, "reward": {"gems": 5}},
+      {"tokens": 300, "reward": {"coins": 3000, "gems": 5}}
+    ]
+  },
+  {
+    "id": "festival", "name": "City Festival",
+    "desc": "The whole city celebrates! Collect Confetti Tickets.",
+    "start": "04-01", "end": "04-21",
+    "currency": {"name": "Tickets", "color": [255, 80, 160], "spawn_chance": 0.35},
+    "theme": {"tint": [255, 140, 200], "tint_strength": 0.1, "decor": "flags", "weather": "confetti",
+              "banner": [255, 80, 160], "banner_2": [80, 60, 200]},
+    "missions": [
+      {"id": "fe1", "desc": "Collect 60 Tickets", "stat": "tokens", "mode": "total", "target": 60, "reward": {"coins": 600, "xp": 100}},
+      {"id": "fe2", "desc": "Reach a x3 combo", "stat": "combo", "mode": "run", "target": 3, "reward": {"gems": 2, "xp": 120}}
+    ],
+    "rewards": [
+      {"tokens": 40, "reward": {"coins": 800}},
+      {"tokens": 150, "reward": {"gems": 4}},
+      {"tokens": 300, "reward": {"coins": 4000, "gems": 6}}
+    ]
+  }
+]

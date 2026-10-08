@@ -1,0 +1,82 @@
+[
+  {
+    "id": "rex",
+    "name": "Rex",
+    "description": "Downtown skater who never stops moving.",
+    "price": 0, "currency": "coins", "unlock_level": 1,
+    "colors": {"skin": [222, 170, 120], "hair": [70, 45, 30], "shirt": [232, 72, 52],
+               "pants": [44, 62, 112], "shoes": [245, 245, 245], "accent": [255, 212, 60]},
+    "hair_style": "spiky", "accessory": "cap", "build": 1.0,
+    "ability": {"type": "none", "value": 0, "desc": "Balanced all-rounder"}
+  },
+  {
+    "id": "maya",
+    "name": "Maya",
+    "description": "Street artist with an eye for shiny things.",
+    "price": 2500, "currency": "coins", "unlock_level": 2,
+    "colors": {"skin": [176, 118, 82], "hair": [25, 20, 25], "shirt": [255, 190, 40],
+               "pants": [60, 60, 70], "shoes": [255, 90, 140], "accent": [90, 220, 200]},
+    "hair_style": "long", "accessory": "headphones", "build": 0.95,
+    "ability": {"type": "coin_bonus", "value": 0.15, "desc": "+15% coins from every run"}
+  },
+  {
+    "id": "kai",
+    "name": "Kai",
+    "description": "Parkour champion from the Old Town rooftops.",
+    "price": 5000, "currency": "coins", "unlock_level": 4,
+    "colors": {"skin": [240, 200, 160], "hair": [230, 200, 90], "shirt": [40, 170, 90],
+               "pants": [30, 30, 40], "shoes": [255, 120, 40], "accent": [255, 255, 255]},
+    "hair_style": "short", "accessory": "bandana", "build": 1.0,
+    "ability": {"type": "jump_bonus", "value": 0.12, "desc": "Jumps 12% higher"}
+  },
+  {
+    "id": "nova",
+    "name": "Nova",
+    "description": "Inventor who tunes every gadget she finds.",
+    "price": 8000, "currency": "coins", "unlock_level": 6,
+    "colors": {"skin": [120, 80, 60], "hair": [150, 80, 220], "shirt": [70, 110, 240],
+               "pants": [230, 230, 240], "shoes": [40, 40, 50], "accent": [0, 240, 255]},
+    "hair_style": "bun", "accessory": "goggles", "build": 0.95,
+    "ability": {"type": "powerup_duration", "value": 0.2, "desc": "Power-ups last 20% longer"}
+  },
+  {
+    "id": "zed",
+    "name": "Zed",
+    "description": "Night-shift courier of the Neon District.",
+    "price": 60, "currency": "gems", "unlock_level": 8,
+    "colors": {"skin": [205, 150, 110], "hair": [20, 230, 160], "shirt": [30, 30, 36],
+               "pants": [70, 30, 100], "shoes": [0, 255, 200], "accent": [255, 40, 160]},
+    "hair_style": "mohawk", "accessory": "visor", "build": 1.05,
+    "ability": {"type": "score_bonus", "value": 0.2, "desc": "+20% score"}
+  },
+  {
+    "id": "luma",
+    "name": "Luma",
+    "description": "Harbor diver with a magnetic personality.",
+    "price": 12000, "currency": "coins", "unlock_level": 12,
+    "colors": {"skin": [250, 215, 185], "hair": [240, 110, 60], "shirt": [20, 140, 200],
+               "pants": [250, 245, 230], "shoes": [255, 220, 0], "accent": [255, 120, 80]},
+    "hair_style": "long", "accessory": "none", "build": 0.92,
+    "ability": {"type": "magnet_start", "value": 6, "desc": "Starts each run with a 6s Coin Magnet"}
+  },
+  {
+    "id": "bolt",
+    "name": "Bolt",
+    "description": "Ex-factory engineer wearing his own armour.",
+    "price": 120, "currency": "gems", "unlock_level": 16,
+    "colors": {"skin": [150, 100, 70], "hair": [40, 40, 40], "shirt": [250, 150, 30],
+               "pants": [60, 70, 80], "shoes": [40, 40, 40], "accent": [255, 240, 120]},
+    "hair_style": "bald", "accessory": "goggles", "build": 1.12,
+    "ability": {"type": "shield_start", "value": 1, "desc": "Starts each run with a Shield"}
+  },
+  {
+    "id": "juno",
+    "name": "Juno",
+    "description": "Skyline photographer who learns from every run.",
+    "price": 20000, "currency": "coins", "unlock_level": 22,
+    "colors": {"skin": [230, 185, 150], "hair": [250, 240, 245], "shirt": [240, 70, 140],
+               "pants": [40, 40, 90], "shoes": [255, 255, 255], "accent": [130, 255, 120]},
+    "hair_style": "bun", "accessory": "headphones", "build": 0.95,
+    "ability": {"type": "xp_bonus", "value": 0.3, "desc": "+30% XP"}
+  }
+]

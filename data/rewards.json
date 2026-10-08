@@ -1,0 +1,32 @@
+{
+  "daily_rewards": [
+    {"day": 1, "reward": {"coins": 200}},
+    {"day": 2, "reward": {"coins": 400}},
+    {"day": 3, "reward": {"consumable": {"board_charge": 2}}},
+    {"day": 4, "reward": {"coins": 800}},
+    {"day": 5, "reward": {"gems": 2}},
+    {"day": 6, "reward": {"consumable": {"head_start": 1}, "coins": 500}},
+    {"day": 7, "reward": {"gems": 5, "coins": 1500}}
+  ],
+  "level_rewards": {
+    "2": {"coins": 300},
+    "3": {"coins": 400, "consumable": {"board_charge": 2}},
+    "4": {"coins": 500},
+    "5": {"gems": 2, "item": "trail_sparks"},
+    "6": {"coins": 600},
+    "7": {"consumable": {"head_start": 1}},
+    "8": {"coins": 800, "item": "emote_yo"},
+    "10": {"gems": 5, "item": "outfit_tracksuit"},
+    "12": {"coins": 1200, "consumable": {"revive_key": 1}},
+    "15": {"gems": 5, "item": "neon_board"},
+    "18": {"coins": 2000, "item": "fx_burst"},
+    "20": {"gems": 8, "item": "outfit_night"},
+    "25": {"gems": 10, "item": "trail_stars"},
+    "30": {"gems": 12, "item": "hover_board"},
+    "35": {"gems": 15, "coins": 5000},
+    "40": {"gems": 20, "item": "outfit_royal"},
+    "45": {"gems": 25, "coins": 10000},
+    "50": {"gems": 50, "item": "cyber_board"}
+  },
+  "default_level_reward": {"coins_per_level": 150}
+}
