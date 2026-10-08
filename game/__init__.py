@@ -1,1 +1,1 @@
-"""SUBWAY SURFER CITY - an original endless runner built with pygame-ce."""
+"""RAILBLAZE: City Run - an original endless runner built with pygame-ce."""

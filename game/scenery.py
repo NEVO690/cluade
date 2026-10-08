@@ -134,7 +134,7 @@ class SpriteBank:
 # ---------------------------------------------------------------------------
 class Building:
     __slots__ = ("x0", "x1", "z0", "z1", "h", "color", "style", "side", "rows", "lit", "window", "window_lit",
-                 "roof_item", "neon", "stack", "awning", "shop")
+                 "roof_item", "neon", "stack", "awning", "shop", "cols")
 
     def __init__(self, side, x0, x1, z0, z1, h, color, style, zone, rnd):
         self.side = side
@@ -153,6 +153,12 @@ class Building:
         self.stack = []
         self.shop = style in ("office", "brick", "house", "tower", "neon") and rnd.random() < 0.75
         self.awning = rnd.choice(AWNINGS) if self.shop and rnd.random() < 0.7 else None
+        c = color
+        aw = self.awning or (0, 0, 0)
+        # every colour this building needs, computed once instead of every frame
+        self.cols = {"side": shade(c, 0.78), "top": shade(c, 1.12), "cornice": shade(c, 0.82),
+                     "cornice_side": shade(c, 0.7), "cornice_top": shade(c, 0.95), "aw_side": shade(aw, 0.75),
+                     "aw_top": shade(aw, 1.15), "aw_bottom": shade(aw, 0.6)}
         if style == "container":
             pal = b["palette"]
             levels = rnd.randint(1, 3)
@@ -171,9 +177,10 @@ class Building:
             return
         c = self.color
         windows = quality.get("windows", True)
-        r.box(self.x0, self.x1, 0, self.h, self.z0, self.z1, c, shade(c, 0.78), shade(c, 1.12),
+        cols = self.cols
+        r.box(self.x0, self.x1, 0, self.h, self.z0, self.z1, c, cols["side"], cols["top"],
               detail=self._detail if windows else self._detail_simple)
-        if windows:
+        if windows and self.z0 - r.cam.z < r.draw_distance * 0.6:
             self._queue_street_level(r, night)
         if self.roof_item and windows:
             cx = (self.x0 + self.x1) / 2
@@ -193,7 +200,7 @@ class Building:
 
     def _queue_street_level(self, r, night):
         """Shop window, awning and roof cornice on the facade facing the tracks."""
-        c = self.color
+        cols = self.cols
         face = self.x0 if self.side > 0 else self.x1
         out = -self.side  # towards the tracks
         if self.shop:
@@ -205,10 +212,10 @@ class Building:
         if self.awning:
             xa, xb = sorted((face, face + out * 1.3))
             aw = self.awning
-            r.box(xa, xb, 2.85, 3.15, self.z0 + 0.5, self.z1 - 0.5, aw, shade(aw, 0.75), shade(aw, 1.15),
-                  shade(aw, 0.6), bias=-0.52, detail=_awning_stripes)
+            r.box(xa, xb, 2.85, 3.15, self.z0 + 0.5, self.z1 - 0.5, aw, cols["aw_side"], cols["aw_top"],
+                  cols["aw_bottom"], bias=-0.52, detail=_awning_stripes)
         r.box(self.x0 - 0.25, self.x1 + 0.25, self.h, self.h + 0.55, self.z0 - 0.25, self.z1 + 0.25,
-              shade(c, 0.82), shade(c, 0.7), shade(c, 0.95), bias=-0.001)
+              cols["cornice"], cols["cornice_side"], cols["cornice_top"], bias=-0.001)
 
     def _rows_geom(self):
         h = self.h
@@ -448,6 +455,8 @@ class Structure:
             return
         k = self.kind
         if k == "tunnel":
+            # Roof at 8 m: high enough for train-roof running; hidden while the camera is
+            # above it (Jet Boost) so it never fills the screen.
             wall = (92, 88, 86)
             inner = (70, 66, 64)
             roof = (60, 58, 58)
@@ -455,28 +464,33 @@ class Structure:
             while z < self.z1:
                 z2 = min(self.z1, z + 10)
                 r.layer = 0
-                r.box(-S.SIDEWALK_HALF - 2, -S.ROAD_HALF - 0.3, 0, 6.6, z, z2, wall, inner, None, bias=-0.001)
-                r.box(S.ROAD_HALF + 0.3, S.SIDEWALK_HALF + 2, 0, 6.6, z, z2, wall, inner, None, bias=-0.001)
+                r.box(-S.SIDEWALK_HALF - 2, -S.ROAD_HALF - 0.3, 0, 8.2, z, z2, wall, inner, None, bias=-0.001)
+                r.box(S.ROAD_HALF + 0.3, S.SIDEWALK_HALF + 2, 0, 8.2, z, z2, wall, inner, None, bias=-0.001)
                 for sx in (-S.ROAD_HALF - 0.25, S.ROAD_HALF + 0.25):
-                    r.glow(sx, 5.0, z + 5, 1.6, (170, 150, 90))
+                    r.glow(sx, 6.0, z + 5, 1.6, (170, 150, 90))
                 r.layer = 1
-                r.box(-S.SIDEWALK_HALF - 2, S.SIDEWALK_HALF + 2, 6.4, 7.6, z, z2, wall, None, (110, 108, 104), roof, bias=-0.002)
+                r.box(-S.SIDEWALK_HALF - 2, S.SIDEWALK_HALF + 2, 8.0, 9.2, z, z2, wall, None, (110, 108, 104), roof,
+                      bias=-0.002, overhead=True)
                 z = z2
             if self.data and self.data.get("portal"):
                 # entrance facade with the tunnel name
                 pc = (130, 120, 112)
                 r.layer = 0
-                r.box(-26, -S.ROAD_HALF - 0.3, 0, 12, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
-                r.box(S.ROAD_HALF + 0.3, 26, 0, 12, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
+                r.box(-26, -S.ROAD_HALF - 0.3, 0, 13, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
+                r.box(S.ROAD_HALF + 0.3, 26, 0, 13, self.z0 - 1.5, self.z0, pc, shade(pc, 0.75), shade(pc, 1.1))
                 r.layer = 1
-                r.box(-S.ROAD_HALF - 0.3, S.ROAD_HALF + 0.3, 6.4, 12, self.z0 - 1.5, self.z0, pc, None, shade(pc, 1.1),
-                      shade(pc, 0.6), detail=_sign_detail(sprites.get(("station", self.data.get("name", "TUNNEL"))), 0.55))
+                r.box(-S.ROAD_HALF - 0.3, S.ROAD_HALF + 0.3, 8.0, 13, self.z0 - 1.5, self.z0, pc, None, shade(pc, 1.1),
+                      shade(pc, 0.6), overhead=True,
+                      detail=_sign_detail(sprites.get(("station", self.data.get("name", "TUNNEL"))), 0.55))
         elif k == "bridge":
+            # Deck at 11 m, well above the Jet Boost flight path (7.5 m).
             col = self.data.get("color", (150, 150, 160))
-            y0 = 7.6
+            y0 = 11.0
             r.box(-60, 60, y0, y0 + 1.6, self.z0, self.z1, col, shade(col, 0.75), shade(col, 1.15), shade(col, 0.55),
+                  overhead=True,
                   detail=_sign_detail(sprites.get(("bridge_sign", self.data.get("name", "CITY LINE"))), 0.75))
-            r.box(-60, 60, y0 + 1.6, y0 + 2.4, self.z0 + 0.1, self.z0 + 0.3, shade(col, 0.8), None, None, bias=-0.01)
+            r.box(-60, 60, y0 + 1.6, y0 + 2.4, self.z0 + 0.1, self.z0 + 0.3, shade(col, 0.8), None, None, bias=-0.01,
+                  overhead=True)
             r.layer = 0
             for px in (-S.SIDEWALK_HALF - 0.5, S.SIDEWALK_HALF - 0.7):
                 r.box(px, px + 1.2, 0, y0, self.z0 + 0.6, self.z1 - 0.6, shade(col, 0.9), shade(col, 0.7), None, bias=0.01)
@@ -485,12 +499,15 @@ class Structure:
             col = (80, 85, 95)
             z = self.z0
             for px in (-S.ROAD_HALF - 0.4, S.ROAD_HALF + 0.1):
-                r.box(px, px + 0.3, 0, 6.2, z, z + 0.3, col, shade(col, 0.7), None, bias=0.01)
-            r.box(-S.ROAD_HALF - 0.4, S.ROAD_HALF + 0.4, 6.0, 6.4, z, z + 0.3, col, None, shade(col, 1.2), shade(col, 0.6))
+                r.box(px, px + 0.3, 0, 7.6, z, z + 0.3, col, shade(col, 0.7), None, bias=0.01)
+            r.box(-S.ROAD_HALF - 0.4, S.ROAD_HALF + 0.4, 7.2, 7.6, z, z + 0.3, col, None, shade(col, 1.2), shade(col, 0.6),
+                  overhead=True)
             for i, lx in enumerate(S.LANE_X):
-                r.box(lx - 0.25, lx + 0.25, 5.1, 6.0, z - 0.05, z + 0.25, (30, 30, 34), (20, 20, 24), None, bias=-0.01)
+                r.box(lx - 0.25, lx + 0.25, 6.3, 7.2, z - 0.05, z + 0.25, (30, 30, 34), (20, 20, 24), None, bias=-0.01,
+                      overhead=True)
                 color = (255, 60, 50) if (self.data or {}).get("states", [0, 1, 0])[i] == 0 else (60, 255, 120)
-                r.glow(lx, 5.55, z - 0.1, 0.9, shade(color, 0.6))
+                if r.cam.y < 6.3:
+                    r.glow(lx, 6.75, z - 0.1, 0.9, shade(color, 0.6))
         elif k == "station":
             r.layer = 0  # platforms, pillars and canopies all sit beside the tracks
             plat = (150, 146, 140)

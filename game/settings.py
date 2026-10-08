@@ -1,4 +1,4 @@
-"""Global constants, paths and tunables for SUBWAY SURFER CITY.
+"""Global constants, paths and tunables for RAILBLAZE: City Run.
 
 Everything that is a "magic number" for gameplay lives here so balancing the
 game never requires hunting through the code.
@@ -23,7 +23,7 @@ LOG_DIR = os.path.join(ROOT_DIR, "logs")
 # --------------------------------------------------------------------------
 # Window
 # --------------------------------------------------------------------------
-TITLE = "SUBWAY SURFER CITY"
+TITLE = "RAILBLAZE: City Run"
 VERSION = "1.0.0"
 SCREEN_W, SCREEN_H = 1280, 720
 FPS = 60

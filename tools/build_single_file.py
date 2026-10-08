@@ -3,7 +3,7 @@
     python tools/build_single_file.py [output.py]
 
 The generated file embeds game/, data/ and assets/ as a compressed archive.
-When run it extracts them next to itself (folder "SubwaySurferCity_files"),
+When run it extracts them next to itself (folder "Railblaze_files"),
 installs pygame-ce/numpy if they are missing, and starts the game.
 """
 import base64
@@ -18,17 +18,18 @@ INCLUDE_DIRS = ("game", "data", "assets")
 INCLUDE_FILES = ("README.md", "requirements.txt")
 
 TEMPLATE = r'''#!/usr/bin/env python3
-"""SUBWAY SURFER CITY - single-file edition.
+"""RAILBLAZE: City Run - single-file edition.
 
-Run:   python SubwaySurferCity.py
+Run:   python Railblaze.py
 
 On first start the game files are unpacked into a folder next to this file
-("SubwaySurferCity_files") and missing packages (pygame-ce, numpy) are
+("Railblaze_files") and missing packages (pygame-ce, numpy) are
 installed with pip. Saves are kept in that folder too.
 """
 import base64
 import io
 import os
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -56,13 +57,17 @@ def ensure_packages():
 
 def unpack():
     here = os.path.dirname(os.path.abspath(__file__))
-    target = os.path.join(here, "SubwaySurferCity_files")
+    target = os.path.join(here, "Railblaze_files")
     stamp = os.path.join(target, ".version")
     try:
         with open(stamp, encoding="utf-8") as f:
             current = f.read().strip()
     except OSError:
         current = ""
+    old_saves = os.path.join(here, "SubwaySurferCity_files", "saves")
+    if os.path.isdir(old_saves) and not os.path.isdir(os.path.join(target, "saves")):
+        # keep the progress made with the game's previous name
+        shutil.copytree(old_saves, os.path.join(target, "saves"))
     if current != VERSION:
         print("Unpacking game files to", target)
         data = base64.b64decode("".join(PAYLOAD))
@@ -75,7 +80,7 @@ def unpack():
 
 def main():
     if sys.version_info < (3, 9):
-        sys.exit("SUBWAY SURFER CITY needs Python 3.9 or newer.")
+        sys.exit("RAILBLAZE: City Run needs Python 3.9 or newer.")
     ensure_packages()
     target = unpack()
     sys.path.insert(0, target)
@@ -112,4 +117,4 @@ def build(out_path):
 
 
 if __name__ == "__main__":
-    build(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "SubwaySurferCity.py"))
+    build(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "Railblaze.py"))

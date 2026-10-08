@@ -339,6 +339,45 @@ class CandyAndSeasonTests(TempDirTest):
         self.assertFalse(sp.buy_premium(after)[0])
 
 
+class OfferTests(TempDirTest):
+    def test_offers_expire_and_can_be_bought_once(self):
+        import datetime
+        from game.offers import Offers
+        save, eco, prog, st, events, missions = make_systems(self.tmp)
+        offers = Offers(DATA, save, eco, prog)
+        t0 = datetime.datetime(2026, 10, 8, 12, 0, 0)
+        self.assertTrue(offers.active(t0))
+        self.assertEqual(len(offers.list(t0)), 2)
+        self.assertEqual(offers.time_left(t0), datetime.timedelta(days=3))
+        self.assertEqual(offers.list(t0 + datetime.timedelta(days=3, seconds=1)), [])
+        vex = [o for o in offers.list(t0) if o["id"] == "vex_coins"][0]
+        self.assertEqual((vex["price"], vex["currency"]), (900, "coins"))
+        self.assertFalse(offers.buy(vex, t0)[0])          # no coins yet
+        eco.add("coins", 900)
+        self.assertTrue(offers.buy(vex, t0)[0])
+        self.assertTrue(eco.owned("characters", "vex"))
+        self.assertEqual(eco.coins, 0)
+        self.assertFalse(offers.buy(vex, t0)[0])          # once only
+        self.assertEqual(DATA.item("vex")["price"], 150)  # the Locker price stays 150 Candy
+
+    def test_level_boost_offer(self):
+        import datetime
+        from game.offers import Offers
+        save, eco, prog, st, events, missions = make_systems(self.tmp)
+        offers = Offers(DATA, save, eco, prog)
+        t0 = datetime.datetime(2026, 10, 8, 12, 0, 0)
+        boost = [o for o in offers.list(t0) if o["type"] == "level"][0]
+        self.assertEqual((boost["price"], boost["currency"], boost["level"]), (50, "gems", 15))
+        eco.add("gems", 50)
+        self.assertTrue(offers.buy(boost, t0)[0])
+        self.assertEqual(prog.level, 15)
+        self.assertEqual(eco.gems, 0 + sum(DATA.level_rewards.get(l, {}).get("gems", 0) for l in range(2, 16)))
+        for c in DATA.characters:
+            if c["unlock_level"] <= 15:
+                self.assertFalse(eco.item_locked_by_level(DATA.item(c["id"])), c["id"])
+        self.assertEqual(offers.status(boost), "bought")
+
+
 class FakeSession:
     def __init__(self, world, player):
         self.world = world

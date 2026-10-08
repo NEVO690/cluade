@@ -140,6 +140,7 @@ class GameData:
         self._load_events()
         self._load_rewards()
         self._load_seasons()
+        self._load_offers()
         self.default_settings = self._load_settings()
 
     # ------------------------------------------------------------------
@@ -387,6 +388,30 @@ class GameData:
             s["tiers"] = clean
             out.append(s)
         self.seasons = out
+
+    def _load_offers(self):
+        raw = load_json(_path("offers.json"), {"duration_days": 3, "offers": []})
+        if not isinstance(raw, dict):
+            raw = {}
+        self.offer_days = _num(raw.get("duration_days"), 3, 0.01, 365)
+        offers = _valid_entries(raw.get("offers", []), ("id", "type", "price"), "offers.json") or []
+        good = []
+        for o in offers:
+            o["price"] = int(_num(o["price"], 0, 0))
+            o.setdefault("currency", "coins")
+            o.setdefault("title", o["id"].upper())
+            o.setdefault("desc", "")
+            o.setdefault("was", "")
+            if o["type"] == "item" and not self.item(o.get("item", "")):
+                warn(f"offers.json: offer '{o['id']}' points to unknown item '{o.get('item')}' - skipped")
+                continue
+            if o["type"] == "level":
+                o["level"] = int(_num(o.get("level"), 10, 2, S.MAX_LEVEL))
+            elif o["type"] != "item":
+                warn(f"offers.json: offer '{o['id']}' has unknown type '{o['type']}' - skipped")
+                continue
+            good.append(o)
+        self.offers = good
 
     def _load_settings(self):
         raw = load_json(_path("settings.json"), DEFAULT_SETTINGS)

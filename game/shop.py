@@ -8,13 +8,18 @@ from .utils import fmt_int
 
 CURRENCIES = ("coins", "gems")
 
+# The shop sells consumables, upgrades and limited-time offers; owning and choosing
+# characters / boards / trails / cosmetics happens in the Locker.
 SHOP_TABS = [
-    ("characters", "Characters"),
+    ("offers", "Offers"),
     ("powerups", "Power-Ups"),
     ("upgrades", "Upgrades"),
+]
+LOCKER_TABS = [
+    ("characters", "Characters"),
     ("boards", "Boards"),
-    ("cosmetics", "Cosmetics"),
     ("trails", "Trails"),
+    ("cosmetics", "Cosmetics"),
 ]
 
 CATEGORY_ICONS = {"characters": "character", "boards": "board", "outfits": "outfit", "trails": "trail",

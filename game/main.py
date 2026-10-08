@@ -12,13 +12,14 @@ from .audio import AudioManager
 from .database import GameData
 from .events import EventManager
 from .gameplay import GameScene
-from .menus import (LoadingScene, MainMenu, CharactersScene, ShopScene, UpgradesScene, MissionsScene,
+from .menus import (LoadingScene, MainMenu, LockerScene, ShopScene, UpgradesScene, MissionsScene,
                     EventsScene, AchievementsScene, SettingsScene, SeasonScene)
 from .missions import MissionManager
 from .progression import Progression, Achievements, DailyRewards
 from .save_system import SaveSystem, SettingsStore
 from .scenery import SpriteBank, Sky
 from .season import SeasonPass
+from .offers import Offers
 from .shop import Economy, Shop
 from .ui import Toasts
 from .utils import log, setup_logging
@@ -51,6 +52,7 @@ class App:
         self.events = EventManager(self.data, self.save, self.settings, self.economy, self.progression)
         self.economy.events = self.events
         self.season = SeasonPass(self.data, self.save, self.economy, self.progression)
+        self.offers = Offers(self.data, self.save, self.economy, self.progression)
         self.missions = MissionManager(self.data, self.save, self.economy, self.progression, self.events)
         self.shop = Shop(self.data, self.economy)
         self.toasts = Toasts(self.assets)
@@ -62,7 +64,7 @@ class App:
             "loading": LoadingScene(self),
             "menu": MainMenu(self),
             "game": GameScene(self),
-            "characters": CharactersScene(self),
+            "locker": LockerScene(self),
             "shop": ShopScene(self),
             "upgrades": UpgradesScene(self),
             "missions": MissionsScene(self),
@@ -241,7 +243,7 @@ def show_fatal_error(message):
         screen = pygame.display.get_surface() or pygame.display.set_mode((900, 400))
         font = pygame.font.Font(None, 30)
         screen.fill((30, 10, 20))
-        lines = ["SUBWAY SURFER CITY hit an unexpected error.", "Your progress was saved.",
+        lines = ["RAILBLAZE hit an unexpected error.", "Your progress was saved.",
                  "Details: logs/crash.log", "", message[-80:], "", "Press any key to close."]
         for i, ln in enumerate(lines):
             screen.blit(font.render(ln, True, (255, 230, 230)), (30, 40 + i * 40))

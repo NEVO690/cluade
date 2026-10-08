@@ -48,6 +48,7 @@ DEFAULT_SAVE = {
     "daily_reward": {"last_claim": "", "day": 0},
     "events": {},
     "season": {},
+    "offers": {"start": "", "bought": []},
     "tutorial_done": False,
 }
 

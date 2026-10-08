@@ -1,5 +1,5 @@
 @echo off
-REM SUBWAY SURFER CITY - start the game
+REM RAILBLAZE: City Run - start the game
 cd /d "%~dp0"
 if exist ".venv\Scripts\python.exe" (
   ".venv\Scripts\python.exe" main.py

@@ -431,13 +431,15 @@ def draw_faces(surf, faces, project, eye, fog=None, outline=None):
     lx, ly, lz = LIGHT
     items = []
     for pts, n, col in faces:
-        k = len(pts)
-        cx = sum(p[0] for p in pts) / k
-        cy = sum(p[1] for p in pts) / k
-        cz = sum(p[2] for p in pts) / k
-        vx, vy, vz = ex - cx, ey - cy, ez - cz
-        if n[0] * vx + n[1] * vy + n[2] * vz <= 0:
+        p0 = pts[0]
+        # back-face test against any vertex of the (planar) face
+        if n[0] * (ex - p0[0]) + n[1] * (ey - p0[1]) + n[2] * (ez - p0[2]) <= 0:
             continue
+        p2 = pts[len(pts) // 2]
+        cx = (p0[0] + p2[0]) * 0.5
+        cy = (p0[1] + p2[1]) * 0.5
+        cz = (p0[2] + p2[2]) * 0.5
+        vx, vy, vz = ex - cx, ey - cy, ez - cz
         lit = AMBIENT + DIFFUSE * max(0.0, n[0] * lx + n[1] * ly + n[2] * lz)
         c = (min(255, int(col[0] * lit)), min(255, int(col[1] * lit)), min(255, int(col[2] * lit)))
         if fog is not None:

@@ -1,0 +1,11 @@
+{
+  "duration_days": 3,
+  "offers": [
+    {"id": "vex_coins", "title": "VEX FOR COINS", "type": "item", "item": "vex",
+     "price": 900, "currency": "coins", "was": "150 Candy",
+     "desc": "Get Vex with coins instead of Candy. Shop only!"},
+    {"id": "level_boost", "title": "LEVEL 15 BOOST", "type": "level", "level": 15,
+     "price": 50, "currency": "gems", "was": "",
+     "desc": "Jump straight to level 15: every character up to level 15 unlocks, plus all level rewards."}
+  ]
+}

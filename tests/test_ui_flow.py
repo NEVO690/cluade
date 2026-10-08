@@ -77,7 +77,7 @@ class UIFlowTest(unittest.TestCase):
         self.assertIsNone(menu.popup)
 
         # visit every menu screen and come back with the back button
-        for label, scene in (("SEASON PASS", "season"), ("CHARACTERS", "characters"), ("SHOP", "shop"), ("MISSIONS", "missions"),
+        for label, scene in (("SEASON PASS", "season"), ("LOCKER", "locker"), ("SHOP", "shop"), ("MISSIONS", "missions"),
                              ("UPGRADES", "upgrades"), ("EVENTS", "events"), ("ACHIEVEMENTS", "achievements"),
                              ("SETTINGS", "settings")):
             self.click(self.button(label).rect.center)
@@ -86,17 +86,28 @@ class UIFlowTest(unittest.TestCase):
             self.click(app.scene._back_btn.rect.center)
             self.assertEqual(app.scene_name, "menu")
 
-        # buy a board in the shop with coins we give ourselves
+        # buy a board in the locker with coins we give ourselves
         app.economy.add("coins", 5000)
-        self.click(self.button("SHOP").rect.center)
-        shop = app.scene
+        self.click(self.button("LOCKER").rect.center)
+        locker = app.scene
         self.click(self.button("Boards").rect.center)
-        idx = [e.id for e in shop.entries].index("neon_board")
-        card = shop._card_rect(idx)
-        self.click(shop._action_rect(card).center)
+        idx = [e.id for e in locker.entries].index("neon_board")
+        card = locker._card_rect(idx)
+        self.click(locker._action_rect(card).center)
         self.assertTrue(app.economy.owned("boards", "neon_board"))
         self.assertEqual(app.economy.equipped("boards"), "neon_board")
-        self.click(shop._back_btn.rect.center)
+        self.click(locker._back_btn.rect.center)
+
+        # limited-time shop offers: Vex for 900 coins
+        if app.offers.active():
+            app.economy.add("coins", 900)
+            self.click(self.button("SHOP").rect.center)
+            shop = app.scene
+            self.assertEqual(shop.tab, "offers")
+            buy = [b for b in shop.buttons if b.text == "" and b.style == "primary"][0]
+            self.click(buy.rect.center)
+            self.assertTrue(app.economy.owned("characters", "vex"))
+            self.click(shop._back_btn.rect.center)
 
         # buy the premium season pass and claim its tier-1 character (only while a season runs)
         if app.season.current():

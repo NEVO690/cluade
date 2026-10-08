@@ -1,5 +1,5 @@
 @echo off
-REM SUBWAY SURFER CITY - one-time setup (creates .venv and installs the packages)
+REM RAILBLAZE: City Run - one-time setup (creates .venv and installs the packages)
 cd /d "%~dp0"
 where py >nul 2>nul
 if %errorlevel%==0 (

@@ -170,7 +170,10 @@ class Renderer:
     # ------------------------------------------------------------------
     # Boxes
     # ------------------------------------------------------------------
-    def box(self, x0, x1, y0, y1, z0, z1, front, side=None, top=None, bottom=None, bias=0.0, detail=None):
+    def box(self, x0, x1, y0, y1, z0, z1, front, side=None, top=None, bottom=None, bias=0.0, detail=None,
+            overhead=False):
+        if overhead and self.cam.y > y0 - 1.0:
+            return  # overhead structure at/below camera height (Jet Boost): it would fill the whole screen
         cz = self.cam.z
         zn = cz + S.NEAR_PLANE
         if z1 <= zn or z0 > cz + self.draw_distance:

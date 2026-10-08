@@ -55,6 +55,17 @@ class Progression:
         self.save.mark_dirty()
         return gained
 
+    def boost_to(self, level):
+        """Raise the player to ``level`` (granting every level reward on the way)."""
+        gained = []
+        level = min(level, S.MAX_LEVEL)
+        while self.level < level:
+            got = self.add_xp(max(1, self.xp_needed - self.xp))
+            if not got:
+                break
+            gained.extend(got)
+        return gained
+
     def unlocked_zone_ids(self):
         return [z["id"] for z in self.gamedata.zones if z["unlock_level"] <= self.level]
 

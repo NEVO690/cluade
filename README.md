@@ -1,4 +1,4 @@
-# SUBWAY SURFER CITY
+# RAILBLAZE: City Run
 
 An original endless-runner written in Python with **pygame-ce**. You sprint down
 an endless procedurally generated city on three rail lanes, dodge trains, cars and
@@ -93,8 +93,14 @@ All keys can be re-bound in **Settings → Controls**.
   buildings with shop windows, striped awnings and roof ledges.
 * **Boards** (Street, Neon, Hover, Cyber + event boards) – each with a look and a perk;
   a board absorbs one crash.
-* **Shop** with tabs: Characters, Power-Ups (consumables), Upgrades, Boards,
-  Cosmetics (outfits, pickup effects, emotes) and Trails.
+* **Locker**: choose, buy and equip everything you can own – Characters (3D
+  turntable), Boards, Trails and Cosmetics (outfits, pickup effects, emotes).
+* **Shop**: limited-time **Offers**, consumable Power-Ups and Upgrades.
+* **Limited-time offers** (`data/offers.json`): a 3-day countdown starts the first
+  time you play this version; when it hits zero the offers disappear. Current offers:
+  *Vex for 900 coins* (instead of 150 Candy in the Locker) and a *Level 15 Boost* for
+  50 gems (jumps you to level 15, unlocking every character up to level 15 and
+  granting all level rewards on the way). Each offer can be bought once.
 * **Upgrades**: 5 levels for Magnet, Jet Boost, Shield, Multiplier and Super Jump.
 * **Missions**: 24 sequential missions (3 active at a time), 3 daily missions
   (new set every day) and event missions.
@@ -139,7 +145,8 @@ game/
   ui.py                 widgets (buttons, sliders, scrolling, toasts) + HUD
   menus.py              loading, main menu, characters, shop, upgrades, missions,
                         events, achievements, settings scenes
-  shop.py               economy (currencies, ownership, rewards) + shop catalogue
+  shop.py               economy (currencies, ownership, rewards) + shop/locker catalogue
+  offers.py             limited-time shop offers with a countdown
   season.py             Season Pass (countdown, tiers, free/premium tracks)
   model3d.py            low-poly 3D character meshes, skeleton poses and renderer
   missions.py           regular / daily / event missions
@@ -150,7 +157,7 @@ game/
   utils.py              logging, safe JSON IO, maths & colour helpers
 data/
   characters.json  items.json  powerups.json  zones.json  missions.json
-  achievements.json  events.json  rewards.json  season.json  settings.json
+  achievements.json  events.json  rewards.json  season.json  offers.json  settings.json
 assets/
   images/ sounds/ music/ fonts/   (optional replacement art & audio)
 tests/
@@ -280,6 +287,12 @@ the in-game countdown runs to the end), `premium_price`, `points_per_tier`, the 
 `premium` reward (`coins`, `gems`, `item`, `consumable`). Exclusive rewards are items or
 characters marked `"season_only": "<season id>"`. When a season ends nothing more can be earned
 or claimed; the next season in the file starts automatically on its start date.
+
+### Add a limited-time offer
+
+Add an entry to `data/offers.json` (`type` `item` with an `item` id, or `type` `level` with a
+target `level`; plus `price`, `currency`, `title`, `desc`). `duration_days` sets how long the
+offer window stays open after the first launch.
 
 ### Add shop items / cosmetics
 
