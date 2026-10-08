@@ -202,7 +202,9 @@ class World:
                     cursor += w
                     continue
                 gap = rnd.uniform(0.5, 4.0)
-                inner = S.SIDEWALK_HALF + (3.4 if station else 3.0) + rnd.uniform(0, 2.0)
+                # set well back from the tracks so the street stays open and buildings never
+                # swallow the screen edges next to the camera
+                inner = S.SIDEWALK_HALF + (7.5 if station else 6.5) + rnd.uniform(0, 3.0)
                 depth = rnd.uniform(*b["depth"])
                 x0, x1 = (inner, inner + depth) if side > 0 else (-inner - depth, -inner)
                 h = rnd.uniform(*b["height"])
@@ -210,6 +212,11 @@ class World:
                                              b["style"], zone, rnd))
                 cursor += w + gap
             self.building_cursor[side] = cursor
+        # --- low fences along the outer edge of the sidewalks -----------------
+        if not ch.tunnel and not station:
+            for side in (-1, 1):
+                if not ((zone.get("water") == "right" and side > 0) or (zone.get("water") == "left" and side < 0)):
+                    ch.decor.append(Decor("fence", side * (S.SIDEWALK_HALF + 0.4), z0, z1))
         # --- decor --------------------------------------------------------
         if not ch.tunnel and not station:
             self._generate_decor(ch, zone)
@@ -546,8 +553,12 @@ class World:
     # ------------------------------------------------------------------
     # Drawing
     # ------------------------------------------------------------------
-    def draw(self, r, crender, cam_z):
+    def draw(self, r, crender, cam_z, passed_z=None):
+        """Queue everything visible.  Obstacles that end before ``passed_z`` (the runner's
+        position) are skipped: they sit between the chase camera and the runner and would
+        otherwise be drawn huge right in front of the lens, covering the screen."""
         q = self.quality
+        cull = -1e9 if passed_z is None else passed_z
         far = cam_z + r.draw_distance
         for ch in self.chunks:
             if ch.z0 > far:
@@ -568,12 +579,14 @@ class World:
             for s in ch.structures:
                 s.queue(r, self.sprites, night, ch.zone)
             for ob in ch.obstacles:
-                ob.queue_draw(r, q, night)
+                if ob.z1 > cull:
+                    ob.queue_draw(r, q, night)
             for c in ch.collectibles:
                 crender.queue(r, c)
         zone_now, _, _ = self.schedule.zone_at(cam_z + 20)
         for ob in self.movers:
-            ob.queue_draw(r, q, zone_now.get("night", False))
+            if ob.z1 > cull:
+                ob.queue_draw(r, q, zone_now.get("night", False))
         for c in self.sky_coins:
             crender.queue(r, c)
 

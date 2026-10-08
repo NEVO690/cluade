@@ -347,9 +347,15 @@ class Decor:
     def queue(self, r, sprites, night, zone):
         k = self.kind
         x, z = self.x, self.z
-        if not r.visible_range(z - 2, z + 2):
+        z_end = self.data if self.kind == "fence" else z + 2
+        if not r.visible_range(z - 2, z_end):
             return
-        if k == "lamp":
+        if k == "fence":
+            z1 = self.data
+            col = (110, 115, 125)
+            r.box(x - 0.08, x + 0.08, 0, 1.15, z, z1, col, shade(col, 0.75), shade(col, 1.2), detail=None)
+            r.box(x - 0.12, x + 0.12, 1.05, 1.2, z, z1, shade(col, 1.15), shade(col, 0.9), shade(col, 1.3), bias=-0.001)
+        elif k == "lamp":
             r.box(x - 0.1, x + 0.1, 0, 6.0, z, z + 0.2, (70, 72, 80), (50, 52, 60), None)
             arm_dir = -1 if x > 0 else 1
             ax = x + arm_dir * 1.2

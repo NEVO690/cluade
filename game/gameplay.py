@@ -853,7 +853,7 @@ class GameScene:
         r.begin(colors["fog"], q["draw_distance"], q.get("glow", True))
         self.sky.draw(surf, cam, zone_a, zone_b, t)
         world.draw_ground(r, cam)
-        world.draw(r, self.crender, cam.z)
+        world.draw(r, self.crender, cam.z, passed_z=sess.player.z - S.PLAYER_HALF_D)
         self.crender.time = sess.time
         if sess.event:
             self.crender.token_color = sess.event["currency"]["color"]
