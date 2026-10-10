@@ -32,6 +32,10 @@ class Settings:
     bot_count: int = 19            # opponents in an offline match
     bot_difficulty: str = "Normal" # Easy / Normal / Hard
     autoplay_videos: bool = True
+    online_address: str = ""       # last server joined (host[:port])
+    social_server: str = ""        # online social server URL ("" = local only)
+    social_username: str = ""
+    social_token: str = ""         # session token from the social server (the password is never stored)
 
     @classmethod
     def load(cls) -> "Settings":

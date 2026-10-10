@@ -21,7 +21,7 @@ class ProfileTab(Tab):
         acc = self.svc.accounts.get(target)
         own = target == me
         prog = self.svc.progression
-        social = self.svc.social.profile(me, target)
+        social = self._social_profile(me, target)
         # player card
         loadout = self.svc.locker.equipped(target)
         banner = self.svc.catalog.items.get(loadout.get("banner"))
@@ -118,9 +118,20 @@ class ProfileTab(Tab):
         self.app.toasts.show(f"Created local account @{acc.username} (1,000 XON welcome gift)", "success")
         self.app.switch_account(acc.id)
 
+    def _social_profile(self, me, target):
+        """Your own card shows your online follower count while signed in; other local accounts are local."""
+        from social.errors import SocialError
+        if target == me and self.svc.online:
+            try:
+                sid = self.svc.social.self_id(me)
+                return self.svc.social.profile(sid, sid)
+            except SocialError:
+                pass
+        return self.svc.local_social.profile(me, target)
+
     def _edit(self):
         from ui.lobby.tiktok import TikTokTab
-        TikTokTab.view = ("profile", self.account.id)
+        TikTokTab.view = ("profile", self.svc.social.self_id(self.account.id))
         self.lobby.select("TIKTOK")
         self.lobby.tab_obj._edit_profile()
 

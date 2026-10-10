@@ -23,10 +23,20 @@
 | Thumbnails | Real frames extracted in-game into `userdata/thumbs/`. |
 | Building | Harvest wood/stone/metal with the pickaxe, then place walls, floors and ramps on a 4 m grid. Pieces have HP by material and bullets destroy them. Bots harvest and build cover. |
 | Social tab name | Label configurable via `XGUN_SOCIAL_NAME`. |
+| Online matches | `net/match_server.py` is an authoritative 30 Hz server; clients mirror state from diffs. Host/Join in the PLAY tab, dedicated server via `run_match_server.bat`, and bots replace players who leave. Tested with real TCP on localhost: two clients, a full match to the end, version mismatch and late joins. |
+| Online social | `net/social_server.py` (HTTP/JSON, PBKDF2 passwords, tokens) plus `RemoteSocialBackend`. Tested over real HTTP: two accounts see each other's uploads, likes, comments and follows. Privacy and ownership are enforced server-side, and the UI falls back to local when the server disappears. |
 
 ## Known limitations
 
-* **Offline only.** Bots stand in for players, and all social data is local.
+* **Online was tested on localhost only**, not across real routers or the
+  internet. Internet play needs TCP port forwarding (47800 matches, 47801
+  social).
+* **No client-side prediction** in online matches. Movement lags by the round
+  trip, which is fine on a LAN but noticeable at high ping.
+* **The social server speaks plain HTTP.** Put it behind an HTTPS reverse
+  proxy before using it on the internet.
+* **Economy, cosmetics, progression and friends are local per PC**, even
+  online. No real money is involved.
 * **No edit mode** for build pieces, and no roofs or cones.
 * **Not play-tested on a real Windows GPU** by a human. CI runs the software renderer.
 
@@ -39,5 +49,5 @@
    a builder to `tools/blender_generation/xgb/outfits.py` (or `gear.py` /
    `weapons.py`), then run `build_assets.bat <category>` and
    `validate_assets.py`.
-3. Online: implement `RemoteSocialBackend` against a real service, and run
-   `MatchSim` on an authoritative server streaming `events` to clients.
+3. Online: add client-side prediction for the local player, and move
+   friends and the XON economy to the server if they should be shared.

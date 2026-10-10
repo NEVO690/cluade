@@ -165,7 +165,7 @@ class LobbyScreen:
         self.wallet_btn.set_text(f"{bal:,} XON")
         lvl = self.svc.progression.level(self.account.id)
         self.level_txt.setText(f"LEVEL {lvl}")
-        self.user_txt.setText(self.account.display_name + "  •  OFFLINE")
+        self.user_txt.setText(self.account.display_name + ("  •  SOCIAL ONLINE" if self.svc.online else "  •  OFFLINE"))
 
     def show_wallet(self):
         history = self.svc.wallet.history(self.account.id, 12)

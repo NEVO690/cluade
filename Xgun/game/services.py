@@ -32,7 +32,8 @@ class Services:
         self.progression = Progression(self.db, self.catalog, self.wallet, self.locker)
         self.accounts = AccountService(self.db)
         self.friends = FriendService(self.db)
-        self.social = LocalSocialBackend(self.db, probe=probe)
+        self.local_social = LocalSocialBackend(self.db, probe=probe)
+        self.social = self.local_social          # swapped for RemoteSocialBackend while signed in online
         self.accounts.on_created(self._setup_new_account)
         if seed_demo:
             from social.demo_seed import seed_demo_content
@@ -42,6 +43,16 @@ class Services:
         is_demo = bool(self.db.scalar("SELECT is_demo FROM accounts WHERE id = ?", (account_id,), 0))
         self.wallet.open(account_id, starter_gift=0 if is_demo else 1000)
         self.locker.grant_defaults(account_id)
+
+    def go_online(self, remote) -> None:
+        self.social = remote
+
+    def go_offline(self) -> None:
+        self.social = self.local_social
+
+    @property
+    def online(self) -> bool:
+        return self.social is not self.local_social
 
     # -- convenience ----------------------------------------------------
     def ensure_player(self, default_name: str = "Player") -> Account:

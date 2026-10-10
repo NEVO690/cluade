@@ -67,7 +67,8 @@ class DropShip:
 class MatchSim:
     def __init__(self, *, seed: int | None = None, bot_count: int = 19, difficulty: str = "Normal",
                  player_name: str | None = "Player", player_loadout: dict | None = None, layout: IslandLayout | None = None,
-                 storm_time_scale: float = 1.0, bot_loadouts: list[dict] | None = None):
+                 storm_time_scale: float = 1.0, bot_loadouts: list[dict] | None = None,
+                 humans: list[tuple[str, dict]] | None = None):
         from bots.brain import BotBrain, bot_names
         self.seed = seed if seed is not None else random.randrange(1 << 30)
         self.rng = random.Random(self.seed)
@@ -95,7 +96,10 @@ class MatchSim:
                              (-math.cos(a) * 650 + nx * off, -math.sin(a) * 650 + ny * off))
 
         names = bot_names(self.rng, bot_count)
-        if player_name is not None:
+        if humans is not None:                    # online match: several players, ids in join order
+            for name, loadout in humans:
+                self._add_combatant(name, False, loadout or {})
+        elif player_name is not None:
             self._add_combatant(player_name, False, player_loadout or {})
         for i, name in enumerate(names):
             lo = bot_loadouts[i % len(bot_loadouts)] if bot_loadouts else {}
@@ -741,6 +745,13 @@ class MatchSim:
                             damage=s.damage, chests=s.chests, survive_secs=s.survive_secs, healed=s.healed,
                             pickaxe_hits=s.pickaxe_hits, glide_secs=s.glide_secs, sniper_hits=s.sniper_hits,
                             duration=self.time)
+
+    def hand_to_bot(self, cid: int, difficulty: str = "Normal") -> None:
+        """A player who disconnected keeps playing as a bot (so the match stays fair)."""
+        from bots.brain import BotBrain
+        c = self.combatants[cid]
+        if c.alive and cid not in self.brains:
+            self.brains[cid] = BotBrain(self, c, difficulty, random.Random(self.seed + cid))
 
     def drain_events(self) -> list[dict]:
         ev, self.events = self.events, []

@@ -6,11 +6,12 @@ with a persistent **XON** economy, a cosmetics shop and locker, a free battle
 pass, quests, friends and local profiles, and an in-lobby **TIKTOK**
 short-video network.
 
-> **Offline build.** Matches are solo against **AI bots** (always labelled
-> `BOT`). All accounts, purchases, videos, likes, comments and follows are
-> stored on this PC. Nothing is published online. The code is structured so an
-> authoritative server and an online social backend can be added later (see
-> *Architecture*).
+> **Offline by default, online when you choose.** Solo matches are against
+> **AI bots** (always labelled `BOT`). From the PLAY tab you can **host or join an
+> online match**, where friends and bots share one authoritative server. The
+> short-video tab can **sign in to a shared social server**. Otherwise all
+> accounts, purchases, videos, likes, comments and follows stay on this PC.
+> Economy, cosmetics and progression are always local. Nothing involves real money.
 
 ## Quick start (Windows)
 
@@ -173,16 +174,54 @@ run_tests.bat        :: or: .venv\Scripts\python -m pytest -q tests
 
 `tools/screenshots/drive.py` drives the real game and captures screenshots.
 
+## Online play
+
+**Matches (host or join from the PLAY tab).**
+
+* **HOST** starts a match server inside the game and shows the address
+  friends should type, e.g. `192.168.1.20:47800`.
+* Friends type that address and press **JOIN**. Everyone appears in the
+  online lobby, and the host presses **START MATCH**.
+* Empty slots are filled with bots. A player who disconnects is taken over by
+  a bot.
+* On the same Wi-Fi/LAN this just works. Over the internet the host must
+  forward **TCP port 47800** on their router. Allow Python through the
+  Windows firewall when asked.
+* Dedicated server (no game window): `run_match_server.bat`, or
+  `python -m net.match_server --port 47800 --bots 19 [--players 4]`.
+
+**Shared social network.**
+
+* Start a server on one PC: `run_social_server.bat`, or
+  `python -m net.social_server --port 47801 --data server_data`.
+* In the short-video tab, everyone presses **Go online**, types that PC's
+  address, then **Create account** or **Sign in**.
+* Uploads, likes, comments, follows, privacy and blocks are then shared by
+  everyone on that server, and enforced server-side.
+* The password is sent to the server only. The server stores a salted PBKDF2
+  hash, and the game keeps only a session token.
+* If the server goes away, the tab falls back to this PC's local network.
+* The server speaks plain HTTP: run it on a trusted network, or put it
+  behind an HTTPS reverse proxy before exposing it to the internet.
+
 ## Architecture notes
 
 * `game/match.py` is an **authoritative simulation**. Each tick takes one
   `ControlInput` per combatant, and everything observable comes out as an
   event stream. The renderer, audio and tests only consume those events.
-  A future server can run the same class and stream events to clients.
-* `social/backend.py` defines the `SocialBackend` interface. The game uses
-  `LocalSocialBackend` (SQLite plus copied files). `RemoteSocialBackend` is
-  a documented placeholder that refuses to construct, so nothing can pretend
-  to be online.
+* `net/match_server.py` runs that simulation online at 30 Hz. Clients send
+  their input every tick and receive state diffs plus events (newline-JSON
+  over TCP, about 80 KB/s per player). `net/match_client.py`'s
+  `ClientMatch` is a mirror `MatchSim` built from the server's seed. It
+  applies those diffs, so the renderer is identical online and offline.
+  There is no client-side prediction, so it plays best on a LAN or a
+  low-latency connection.
+* `social/backend.py` defines the `SocialBackend` interface:
+  * `LocalSocialBackend` (SQLite plus copied files) is the offline network.
+  * `net/social_server.py` runs that same backend behind an HTTP/JSON API
+    with accounts and tokens.
+  * `net/social_client.py`'s `RemoteSocialBackend` implements the interface
+    against that server.
 * Bots use the same input path as the player, and server-side rules apply
   equally to both.
 

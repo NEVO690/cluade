@@ -25,7 +25,7 @@ class FriendsTab(Tab):
         for i, acc in enumerate(friends):
             y = -0.05 - i * 0.1
             frame(area.canvas, -1.64, -0.5, y - 0.04, y + 0.04, T.PANEL)
-            fol = self.svc.social.follower_count(acc.id)
+            fol = self.svc.local_social.follower_count(acc.id)
             text(area.canvas, acc.display_name, (-1.6, y + 0.005), 0.032, T.TEXT, "bold")
             text(area.canvas, f"@{acc.username}  •  {fol} {SOCIAL_NAME.title()} followers" + ("  •  DEMO" if acc.is_demo else ""),
                  (-1.6, y - 0.03), 0.022, T.TEXT_DIM, "semibold")

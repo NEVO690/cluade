@@ -87,6 +87,56 @@ def main():
     lobby.select("PROFILE")
     steps(2)
     assert app.services.social.profile(me, me).followers == 1
+    # online social: sign up through the dialog, then the server disappears -> graceful fallback
+    from net.social_server import SocialServer
+    srv = SocialServer(tmp / "social_server", "127.0.0.1", 0)
+    srv.serve_in_background()
+    lobby.select("TIKTOK")
+    steps(2)
+    tt = lobby.tab_obj
+    tt._online_dialog()
+    tt.o_server.set(f"127.0.0.1:{srv.port}")
+    tt.o_user.set("smoke_online")
+    tt.o_pass.set("pass1234")
+    tt._online(True)
+    steps(3)
+    assert app.services.online and app.settings.social_token
+    tt = lobby.tab_obj
+    assert tt.me == app.services.social.account["id"] and tt.videos, "online feed should show the server clips"
+    srv.stop()
+    tt.show_feed("for_you")                      # server gone: must not crash
+    steps(3)
+    assert not app.services.online, "should fall back to the local network"
+    lobby.select("PROFILE")
+    steps(2)
+    lobby.select("PLAY")
+    steps(2)
+    # online match: host from the PLAY tab and play a little (solo host + bots)
+    app.host_online()
+    steps(3)
+    assert app.online_lobby is not None
+    for _ in range(100):
+        steps(1)
+        if app.online_lobby.host:
+            break
+    app.online_lobby._start()
+    for _ in range(600):
+        steps(1)
+        if app.screen.__class__.__name__ == "MatchScreen":
+            break
+    om = app.screen
+    assert om.__class__.__name__ == "MatchScreen" and om.online
+    import time as _time
+    for _ in range(90):
+        steps(1)
+        _time.sleep(0.01)
+    assert om.sim.time > 0.5 and len(om.sim.items) > 50, (om.sim.time, len(om.sim.items))
+    server = om.sim.hosted_server
+    om._exit()
+    steps(5)
+    assert server.stopped.is_set()
+    assert app.screen.__class__.__name__ == "LobbyScreen"
+    lobby = app.screen
     lobby.select("PLAY")
     steps(2)
     before = app.services.wallet.balance(app.account.id)
@@ -105,7 +155,7 @@ def main():
     steps(5)
     stats = app.services.progression.stats(app.account.id)
     after = app.services.wallet.balance(app.account.id)
-    assert stats["matches"] == 1, stats
+    assert stats["matches"] == 2, stats
     assert after > before, (before, after)
     assert app.screen.__class__.__name__ == "LobbyScreen"
     print("SMOKE OK", stats["matches"], before, after)

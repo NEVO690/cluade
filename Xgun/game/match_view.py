@@ -11,6 +11,7 @@ from combat.weapons import WeaponInstance, direction
 from game.character_view import CharacterAvatar
 from game.effects import Effects
 from game.entities import ControlInput
+from game.loadouts import random_loadout
 from game.match import TICK, MatchSim
 from inventory.match_inventory import ConsumableStack
 from ui import theme as T
@@ -22,31 +23,19 @@ ADS_OFFSET = Vec3(0.6, -2.1, 0.22)
 AIR_OFFSET = Vec3(0.0, -7.0, 2.0)
 AVATAR_RANGE = 260.0
 
-PICKAXES = ["pickaxe_iron_pick", "pickaxe_spray_hook", "pickaxe_frostbite", "pickaxe_gearbreaker", "pickaxe_circuit_splitter",
-            "pickaxe_dragonfang"]
-OUTFITS = ["outfit_vex_runner", "outfit_tidal_drifter", "outfit_glitch_medic", "outfit_volt_brawler", "outfit_frost_warden",
-           "outfit_nova_sentinel", "outfit_ember_ronin"]
-BACKPACKS = ["backpack_daypack", "backpack_explorer_roll", "backpack_crystal_core", "backpack_boombox", "backpack_jet_canister",
-             "backpack_ember_quiver", None]
-GLIDERS = ["glider_wing_sail", "glider_patchwork", "glider_kite_ray", "glider_delta_jet", "glider_phoenix"]
-
-
-def random_loadout(rng: random.Random) -> dict:
-    """Bots wear random cosmetics — purely visual, no gameplay effect."""
-    return {"outfit": rng.choice(OUTFITS), "backpack": rng.choice(BACKPACKS), "pickaxe": rng.choice(PICKAXES),
-            "glider": rng.choice(GLIDERS)}
-
-
 class MatchScreen:
-    def __init__(self, app, loadout: dict, player_name: str, on_exit):
+    def __init__(self, app, loadout: dict, player_name: str, on_exit, sim=None):
         self.app = app
         self.loadout = loadout
         self.on_exit = on_exit
         s = app.settings
-        rng = random.Random()
-        bot_loadouts = [random_loadout(rng) for _ in range(s.bot_count)]
-        self.sim = MatchSim(bot_count=s.bot_count, difficulty=s.bot_difficulty, player_name=player_name,
-                            player_loadout=loadout, layout=app.island, bot_loadouts=bot_loadouts)
+        if sim is None:
+            rng = random.Random()
+            bot_loadouts = [random_loadout(rng) for _ in range(s.bot_count)]
+            sim = MatchSim(bot_count=s.bot_count, difficulty=s.bot_difficulty, player_name=player_name,
+                           player_loadout=loadout, layout=app.island, bot_loadouts=bot_loadouts)
+        self.sim = sim
+        self.online = getattr(sim, "networked", False)
         self.player = self.sim.player
         self.accum = 0.0
         self.cam_yaw = self.sim.ship.heading
@@ -163,7 +152,7 @@ class MatchScreen:
         if self.paused is None:
             self._mouse_look()
         inp = self._gather_input()
-        if self.paused is None and not self.sim.over:
+        if (self.paused is None or self.online) and not self.sim.over:
             self.accum += dt
             steps = 0
             while self.accum >= TICK and steps < 5:
@@ -204,6 +193,8 @@ class MatchScreen:
         cam = self.app.camera.getPos(self.app.render)
         self.app.world_view.update((cam.x, cam.y), self.app.settings.view_distance, self.effects.time)
         self._audio_loops()
+        if self.online and self.sim.lost and not self.result_shown:
+            self._show_death_panel(lost=True)
         if self.sim.over and not self.finished:
             self._finish()
         if not self.player.alive and not self.result_shown and self.sim.time - self.player.death_time > 2.5:
@@ -668,8 +659,10 @@ class MatchScreen:
         if self.paused is not None:
             return
         self._capture_mouse(False)
-        self.paused = Modal(self.app, "PAUSED", "Offline match against AI bots. The match keeps no history if you leave "
-                            "early — leaving counts as an elimination.",
+        body = ("Online match: the game keeps running while this menu is open. If you leave, a bot takes over your "
+                "character." if self.online else "Offline match against AI bots. The match keeps no history if you "
+                "leave early — leaving counts as an elimination.")
+        self.paused = Modal(self.app, "PAUSED", body,
                             [("Leave Match", self._leave, ()), ("Resume", self._resume, ())])
 
     def _resume(self):
@@ -687,17 +680,24 @@ class MatchScreen:
             self.player.placement = len(self.sim.alive)
         self._exit()
 
-    def _show_death_panel(self):
+    def _show_death_panel(self, lost: bool = False):
         self.result_shown = True
         self._capture_mouse(False)
         p = self.player
-        killer = self.sim.combatants[p.killer].name if p.killer is not None and p.killer != p.id else "the storm"
+        if getattr(self, "death_panel", None) is not None:
+            self.death_panel.removeNode()
         root = self.app.a2dBottomCenter.attachNewNode("death")
         root.setPos(0, 0, 0.35)
         frame(root, -0.7, 0.7, -0.16, 0.16, T.PANEL)
-        text(root, f"#{p.placement} of {len(self.sim.combatants)}", (0, 0.06), 0.06, T.TEXT, "black", "center")
-        text(root, f"Eliminated by {killer}  •  {p.stats.eliminations} eliminations  •  Spectating",
-             (0, -0.01), 0.032, T.TEXT_DIM, "semibold", "center")
+        if lost:
+            text(root, "DISCONNECTED", (0, 0.06), 0.06, T.RED, "black", "center")
+            text(root, "The connection to the match server was lost.", (0, -0.01), 0.032, T.TEXT_DIM, "semibold",
+                 "center")
+        else:
+            killer = self.sim.combatants[p.killer].name if p.killer is not None and p.killer != p.id else "the storm"
+            text(root, f"#{p.placement} of {len(self.sim.combatants)}", (0, 0.06), 0.06, T.TEXT, "black", "center")
+            text(root, f"Eliminated by {killer}  •  {p.stats.eliminations} eliminations  •  Spectating",
+                 (0, -0.01), 0.032, T.TEXT_DIM, "semibold", "center")
         self.death_panel = root
         Button(root, "RETURN TO LOBBY", self._exit, pos=(0, -0.09), size=(0.5, 0.08), color=T.PRIMARY, hover=T.PRIMARY_HOVER)
 
@@ -715,6 +715,8 @@ class MatchScreen:
             self.player.emote_timer = 30
 
     def _exit(self):
+        if self.online and self.player.alive and not self.sim.over and not self.player.placement:
+            self.player.placement = len(self.sim.alive)
         summary = self.sim.summary_for(self.player)
         self.on_exit(summary)
 
@@ -736,3 +738,8 @@ class MatchScreen:
         app.render.clearLight()
         app.render.clearFog()
         self.root.removeNode()
+        if self.online:
+            self.sim.close()
+            server = getattr(self.sim, "hosted_server", None)
+            if server is not None:
+                server.stop()

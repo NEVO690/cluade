@@ -2,9 +2,10 @@
 
 ``SocialBackend`` is the contract the UI talks to. ``LocalSocialBackend``
 stores everything in the local SQLite database and copies uploaded files
-into the user folder: nothing is published to the internet. An online
-service would implement the same interface (see ``RemoteSocialBackend``)
-with server-side storage, authentication and moderation.
+into the user folder: nothing is published to the internet. The online
+version (``net.social_client.RemoteSocialBackend``) implements the same
+interface against a shared server (``net.social_server``), which itself runs
+``LocalSocialBackend`` on its own database.
 """
 from __future__ import annotations
 
@@ -139,20 +140,9 @@ class SocialBackend(abc.ABC):
 
     is_online = False
 
-
-class RemoteSocialBackend(SocialBackend):  # pragma: no cover - placeholder for the online service
-    """Future online implementation.
-
-    Expected shape: HTTPS JSON API with token auth; uploads go to object
-    storage via pre-signed URLs; feeds, counts and moderation are computed
-    server-side. Every method maps 1:1 to an endpoint. Not available in the
-    offline build — constructing it raises immediately so nothing can
-    pretend to be online.
-    """
-    is_online = True
-
-    def __init__(self, *_args, **_kwargs):
-        raise NotImplementedError("Online social features aren't available in this offline build.")
+    def self_id(self, local_id: int) -> int:
+        """The id this network knows the local player by (an online server has its own accounts)."""
+        return local_id
 
 
 class LocalSocialBackend(SocialBackend):

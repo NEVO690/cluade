@@ -35,7 +35,8 @@ def configure_panda(settings: Settings, *, offscreen: bool = False) -> None:
         "notify-level-ffmpeg fatal",
     ]
     if offscreen:
-        prc.append("window-type offscreen")
+        # the software renderer used offscreen only takes power-of-two textures
+        prc += ["window-type offscreen", "textures-power-2 down"]
     loadPrcFileData("xgun", "\n".join(prc))
 
 
@@ -74,11 +75,13 @@ class XgunApp(ShowBase):
         self.services = services or Services(probe=_probe())
         self.account = self.services.ensure_player()
         self.toasts = Toasts(self)
+        self._resume_social()
         from video.thumbnails import ThumbnailMaker
         self.thumbs = ThumbnailMaker(self)
         self.island = None
         self.world_view = None
         self.screen = None
+        self.online_lobby = None
         self._bind_globals()
         self.autoplay = autoplay
         self.show_lobby()
@@ -117,12 +120,88 @@ class XgunApp(ShowBase):
             yield label, None
         yield "Dropping in", None
 
-    def _enter_match(self) -> None:
+    def _enter_match(self, online=None) -> None:
         from game.match_view import MatchScreen
         loadout = self.services.locker.equipped(self.account.id)
-        screen = MatchScreen(self, loadout, self.account.display_name, self.end_match)
+        sim = None
+        if online is not None:
+            from net.match_client import ClientMatch, ConnectionFailed
+            conn, start, server = online
+            try:
+                sim = ClientMatch(conn, start, self.island)
+            except ConnectionFailed as exc:
+                conn.close()
+                if server is not None:
+                    server.stop()
+                self.show_lobby()
+                self.toasts.show(str(exc), "error", 5)
+                return
+            sim.hosted_server = server
+        screen = MatchScreen(self, loadout, self.account.display_name, self.end_match, sim=sim)
         self._swap(screen)
         screen.start()
+
+    # ------------------------------------------------------------- online
+    def _resume_social(self) -> None:
+        """Sign back in to the online social server if a session was saved."""
+        st = self.settings
+        if not (st.social_server and st.social_token):
+            return
+        from net import social_client as SC
+        from social.errors import SocialError
+        try:
+            self.services.go_online(SC.resume(st.social_server, st.social_token))
+        except SocialError as exc:
+            log.info("Social server unavailable: %s", exc)
+            self.toasts.show("Couldn't reach the online social server. Using this PC's videos.", "error", 5)
+
+    def host_online(self) -> None:
+        from net.match_client import ConnectionFailed, MatchConnection
+        from net.match_server import MatchServer
+        from net import protocol as P
+        from ui.lobby.online import OnlineLobby
+        try:
+            server = MatchServer("0.0.0.0", P.DEFAULT_MATCH_PORT, bot_count=self.settings.bot_count,
+                                 difficulty=self.settings.bot_difficulty)
+        except OSError:
+            try:                                  # default port busy (another server running): any free port
+                server = MatchServer("0.0.0.0", 0, bot_count=self.settings.bot_count,
+                                     difficulty=self.settings.bot_difficulty)
+            except OSError as exc:
+                self.toasts.show(f"Couldn't open a server: {exc.strerror or exc}", "error", 5)
+                return
+        server.serve_in_background()
+        try:
+            conn = MatchConnection("127.0.0.1", server.port, self.account.display_name, self._online_loadout())
+        except ConnectionFailed as exc:
+            server.stop()
+            self.toasts.show(str(exc), "error", 5)
+            return
+        self.online_lobby = OnlineLobby(self, conn, server)
+
+    def join_online(self, address: str) -> None:
+        from net.match_client import ConnectionFailed, MatchConnection
+        from ui.lobby.online import OnlineLobby, parse_address
+        try:
+            host, port = parse_address(address)
+            conn = MatchConnection(host, port, self.account.display_name, self._online_loadout())
+        except (ValueError, ConnectionFailed) as exc:
+            self.toasts.show(str(exc), "error", 5)
+            return
+        self.settings.online_address = address.strip()
+        self.settings.save()
+        self.online_lobby = OnlineLobby(self, conn)
+
+    def _online_loadout(self) -> dict:
+        lo = self.services.locker.equipped(self.account.id)
+        return {k: v for k, v in lo.items() if k in ("outfit", "backpack", "pickaxe", "glider", "wrap") and v}
+
+    def start_online_match(self, conn, start: dict, server=None) -> None:
+        from ui.loading import LoadingScreen
+        self._swap(None)
+        players = len(start["humans"])
+        self.screen = LoadingScreen(self, self._load_match_steps(), lambda: self._enter_match((conn, start, server)),
+                                    subtitle=f"ONLINE  •  {players} PLAYER{'S' if players != 1 else ''} + {start['bots']} BOTS")
 
     def end_match(self, summary) -> None:
         rewards = self.services.progression.apply_match(self.account.id, summary)

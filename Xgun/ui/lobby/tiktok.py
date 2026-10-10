@@ -1,11 +1,13 @@
-"""TIKTOK tab: local, offline short-video network inside the lobby.
+"""TIKTOK tab: the short-video network inside the lobby.
 
-Everything shown here is stored on this PC. Uploads are copied into the
-user folder and are visible only to the local accounts on this computer.
+Offline (default) everything is stored on this PC and visible only to the
+local accounts. After signing in to an Xgun social server ("Go online") the
+same screens talk to that shared server instead.
 """
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import hashlib
 from pathlib import Path
 
@@ -20,7 +22,25 @@ from ui.widgets import Button, Entry, Modal, ScrollArea, frame, image, text
 from video.player import VideoPlayer, pick_video_file
 
 FEEDS = [("for_you", "For You"), ("following", "Following"), ("saved", "Saved"), ("liked", "Liked")]
-OFFLINE_NOTE = "Offline network: videos, likes and follows are stored on this PC only and are never published online."
+OFFLINE_NOTE = "Offline: videos, likes and follows are stored on this PC only."
+
+
+def net_safe(method):
+    """If the social server stops answering, fall back to this PC's network instead of crashing."""
+    @functools.wraps(method)
+    def run(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except SocialError as exc:
+            if not self.svc.online:
+                raise
+            self.svc.go_offline()
+            self.social, self.me = self.svc.social, self.account.id
+            TikTokTab.view = ("feed", "for_you")
+            self.app.toasts.show(f"{exc} Showing this PC's videos.", "error", 5)
+            self.app.taskMgr.doMethodLater(0, lambda t: self.rebuild(), "tiktok-rebuild")
+            return None
+    return run
 
 
 def _count(n: int) -> str:
@@ -42,7 +62,7 @@ class TikTokTab(Tab):
     def build(self):
         r = self.root
         self.social = self.svc.social
-        self.me = self.account.id
+        self.me = self.social.self_id(self.account.id)
         self.player = None
         self.videos = []
         self.index = 0
@@ -62,6 +82,7 @@ class TikTokTab(Tab):
             self.app.accept(key, fn_)
 
     # ------------------------------------------------------------ chrome
+    @net_safe
     def _sidebar(self):
         r = self.root
         text(r, SOCIAL_NAME, (-1.62, 0.68), 0.075, T.TEXT, "black")
@@ -88,7 +109,15 @@ class TikTokTab(Tab):
             y -= 0.055
             Button(r, f"#{tag}", self.show_search, pos=(-1.42, y), size=(0.44, 0.05), text_scale=0.026, align="left",
                    color=(0, 0, 0, 0), hover=(1, 1, 1, 0.08), text_color=T.ACCENT, extra_args=("#" + tag,))
-        text(r, OFFLINE_NOTE, (-1.62, -0.84), 0.022, T.TEXT_MUTED, "regular", wrap=19)
+        if self.svc.online:
+            Button(r, "Online  •  Sign out", self._sign_out, pos=(-1.42, -0.72), size=(0.44, 0.065), text_scale=0.026,
+                   color=T.PANEL, text_color=T.GREEN)
+            text(r, f"Connected to {self.social.server_label} as @{self.social.account['username']}. Posts are shared "
+                 "with everyone on that server.", (-1.62, -0.8), 0.021, T.TEXT_MUTED, "regular", wrap=20)
+        else:
+            Button(r, "Go online", self._online_dialog, pos=(-1.42, -0.72), size=(0.44, 0.065), text_scale=0.026,
+                   color=T.PANEL, text_color=T.ACCENT)
+            text(r, OFFLINE_NOTE, (-1.62, -0.8), 0.021, T.TEXT_MUTED, "regular", wrap=20)
 
     def _clear(self):
         if self.player is not None:
@@ -103,6 +132,7 @@ class TikTokTab(Tab):
     def _goto_feed(self, key):
         self.show_feed(key)
 
+    @net_safe
     def show_feed(self, kind: str, start_id: str | None = None, videos=None):
         self._clear()
         TikTokTab.view = ("feed", kind)
@@ -128,6 +158,7 @@ class TikTokTab(Tab):
             return
         self._load_current()
 
+    @net_safe
     def _load_current(self):
         v = self.videos[self.index]
         try:
@@ -144,6 +175,7 @@ class TikTokTab(Tab):
             err = None
         self._draw_overlay(v, err)
 
+    @net_safe
     def _draw_overlay(self, v, err=None):
         self.overlay.removeNode()
         self.overlay = self.dynamic.attachNewNode("overlay")
@@ -196,6 +228,7 @@ class TikTokTab(Tab):
             img.setColorScale(*color)
         text(parent, label, (x, y - 0.075), 0.022, T.TEXT_DIM, "bold", "center")
 
+    @net_safe
     def _comments(self, v):
         o = self.overlay
         frame(o, 0.38, 1.65, -0.86, 0.66, T.PANEL)
@@ -223,6 +256,7 @@ class TikTokTab(Tab):
             Button(o, "Post", self._post_comment, pos=(1.55, -0.775), size=(0.15, 0.06), color=T.PINK, text_scale=0.026)
 
     # -- actions -------------------------------------------------------------
+    @net_safe
     def _refresh_current(self):
         try:
             self.current = self.social.get_video(self.me, self.current.id)
@@ -231,9 +265,9 @@ class TikTokTab(Tab):
             pass
         self._draw_overlay(self.current, self.player.error)
 
-    def _guard(self, fn_, *args):
+    def _guard(self, fn_, *args, **kwargs):
         try:
-            fn_(*args)
+            fn_(*args, **kwargs)
         except SocialError as exc:
             self.app.toasts.show(str(exc), "error")
             return False
@@ -251,6 +285,7 @@ class TikTokTab(Tab):
             self.app.toasts.show("Saved to your collection" if not v.saved else "Removed from saved", "success")
             self._refresh_current()
 
+    @net_safe
     def _toggle_follow(self, account_id):
         prof = self.social.profile(self.me, account_id)
         if self._guard(self.social.set_follow, self.me, account_id, not prof.is_following):
@@ -355,6 +390,7 @@ class TikTokTab(Tab):
         else:
             self.prev()
 
+    @net_safe
     def update(self, dt_):
         # refresh the gallery when thumbnails finish extracting
         if TikTokTab.view[0] == "profile" and getattr(self, "_pending_thumbs", False):
@@ -378,6 +414,7 @@ class TikTokTab(Tab):
         return None
 
     # ------------------------------------------------------------ profile
+    @net_safe
     def show_profile(self, account_id: int):
         self._clear()
         TikTokTab.view = ("profile", account_id)
@@ -459,7 +496,11 @@ class TikTokTab(Tab):
             self.show_profile(account_id)
 
     def _edit_profile(self):
-        acc = self.svc.accounts.get(self.me)
+        if self.svc.online:
+            from types import SimpleNamespace
+            acc = SimpleNamespace(**self.social.account)
+        else:
+            acc = self.svc.accounts.get(self.me)
         m = Modal(self.app, "EDIT PROFILE", "", [("Cancel", None, ()), ("Save", self._save_profile, ())], width=1.4, height=1.0)
         text(m.box, "Display name", (-0.62, 0.3), 0.028, T.TEXT_DIM, "bold")
         self.e_name = Entry(m.box, pos=(-0.62, 0.22), width=1.24, initial=acc.display_name, scale=0.03, max_chars=24)
@@ -489,6 +530,11 @@ class TikTokTab(Tab):
         name, bio = self.e_name.get(), self.e_bio.get()
         if contains_blocked_language(name + " " + bio):
             self.app.toasts.show("Please remove offensive language.", "error")
+            return
+        if self.svc.online:
+            self._guard(self.social.update_profile, self.me, display_name=name, bio=bio,
+                        private_account=self.e_private, allow_comments=self.e_comments)
+            self.show_profile(self.me)
             return
         acc = self.svc.accounts.update_profile(self.me, display_name=name, bio=bio, private_account=self.e_private,
                                                allow_comments=self.e_comments)
@@ -554,11 +600,13 @@ class TikTokTab(Tab):
             self.u_status.setText(str(exc))
             self.app.audio.play("ui_error")
             return
-        self.app.toasts.show("Video posted to your local profile!", "success")
+        self.app.toasts.show("Video posted online!" if self.svc.online else "Video posted to your local profile!",
+                             "success")
         self.app.audio.play("ui_purchase")
         self.show_feed("mine", v.id, self.social.profile_videos(self.me, self.me))
 
     # ------------------------------------------------------------ search
+    @net_safe
     def show_search(self, query: str):
         query = (query or "").strip()
         if not query:
@@ -583,7 +631,60 @@ class TikTokTab(Tab):
         if not res["videos"]:
             text(d, "No videos found.", (0.05, 0.43), 0.028, T.TEXT_DIM)
 
+    def rebuild(self):
+        if self.player is not None:
+            self.player.destroy()
+            self.player = None
+        super().rebuild()
+
+    # ------------------------------------------------------------ online
+    def _online_dialog(self):
+        st = self.app.settings
+        m = Modal(self.app, "GO ONLINE", "", [("Cancel", None, ()), ("Create account", self._online, (True,)),
+                                               ("Sign in", self._online, (False,))], width=1.4, height=0.95)
+        text(m.box, "Sign in to an Xgun social server to share videos, likes, comments and follows with other players. "
+             "Anyone can run one:  python -m net.social_server", (0, 0.33), 0.026, T.TEXT_DIM, "regular", "center", wrap=50)
+        labels = (("Server address", "o_server", st.social_server or "", "e.g. 192.168.1.20 or social.example.com", False),
+                  ("Username", "o_user", st.social_username or self.account.username, "3-16 letters, numbers or _", False),
+                  ("Password", "o_pass", "", "At least 6 characters", True))
+        for i, (label, attr, initial, hint, secret) in enumerate(labels):
+            y = 0.2 - i * 0.14
+            text(m.box, label, (-0.62, y), 0.026, T.TEXT_DIM, "bold")
+            setattr(self, attr, Entry(m.box, pos=(-0.62, y - 0.075), width=1.24, initial=initial, placeholder=hint,
+                                      scale=0.03, max_chars=120, obscured=secret))
+        text(m.box, "Your password is sent to that server only and is never saved on this PC.", (0, -0.28), 0.022,
+             T.TEXT_MUTED, "regular", "center")
+
+    def _online(self, create: bool):
+        from net import social_client as SC
+        url, user, pw = self.o_server.get(), self.o_user.get().strip(), self.o_pass.get()
+        try:
+            remote = (SC.register(url, user, pw, self.account.display_name) if create else SC.login(url, user, pw))
+        except SocialError as exc:
+            self.app.toasts.show(str(exc), "error", 5)
+            self.app.audio.play("ui_error")
+            return
+        st = self.app.settings
+        st.social_server, st.social_username, st.social_token = remote.base, user, remote.token
+        st.save()
+        self.svc.go_online(remote)
+        self.lobby.refresh_wallet()
+        TikTokTab.view = ("feed", "for_you")
+        self.app.toasts.show(f"Online as @{remote.account['username']} on {remote.server_label}", "success")
+        self.rebuild()
+
+    def _sign_out(self):
+        st = self.app.settings
+        st.social_token = ""
+        st.save()
+        self.svc.go_offline()
+        self.lobby.refresh_wallet()
+        TikTokTab.view = ("feed", "for_you")
+        self.app.toasts.show("Signed out. Showing this PC's videos.", "info")
+        self.rebuild()
+
     def destroy(self):
+        self.app.taskMgr.remove("tiktok-rebuild")
         for key in ("arrow_down", "arrow_up", "space"):
             self.app.ignore(key)
         if self.player is not None:

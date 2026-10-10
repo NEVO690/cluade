@@ -219,6 +219,78 @@ def main():
         m.cam_yaw, m.cam_pitch = 200, -12
         steps(20)
         shot("build_ghost")
+    if scenario == "online":
+        # host from the PLAY tab, a second (headless) player joins over TCP
+        from game.entities import ControlInput
+        from game.match import TICK
+        from net.match_client import ClientMatch, MatchConnection
+        from world.island import build_island
+        app.host_online()
+        steps(10)
+        friend = MatchConnection("127.0.0.1", app.online_lobby.server.port, "RemoteFriend", {"outfit": "outfit_ember_ronin"})
+        steps(20, 0.02)
+        shot("online_lobby")
+        app.online_lobby._start()
+        start = friend.wait_for("start")
+        fsim = ClientMatch(friend, start, build_island(7))
+        for _ in range(600):
+            steps(1)
+            if app.screen.__class__.__name__ == "MatchScreen":
+                break
+        m = app.screen
+        t_end = time.time() + 30
+        while time.time() < t_end:
+            m.pressed.add("space")
+            fsim.step(TICK, {fsim.player.id: ControlInput(deploy=True, yaw=m.cam_yaw, move_y=0.0)})
+            fsim.drain_events()
+            steps(1, 0.01)
+            if m.player.state == "glide" and fsim.player.state == "glide":
+                break
+        m.cam_pitch = -25
+        steps(30, 0.02)
+        print("server players:", [c.name for c in m.sim.combatants if not c.is_bot],
+              "me", m.player.state, "friend", m.sim.combatants[1].state, round(m.sim.combatants[1].z), flush=True)
+        shot("online_match")
+        fsim.close()
+        m._exit()
+        steps(40)
+        shot("online_results")
+    if scenario == "social":
+        # a shared social server with a second player who posts; we sign in through the dialog
+        from net import social_client as SC
+        from net.social_server import SocialServer
+        srv = SocialServer(out / "server", "127.0.0.1", 0)
+        srv.serve_in_background()
+        url = f"127.0.0.1:{srv.port}"
+        other = SC.register(url, "neon_friend", "pass1234", "Neon Friend")
+        clip = ROOT / "assets" / "videos" / "samples" / "robot_sentinel.mp4"
+        posted = other.upload(0, clip, "Posted from another PC #online", "hello from the server")
+        app.screen.select("TIKTOK")
+        steps(20)
+        tab = app.screen.tab_obj
+        tab._online_dialog()
+        tab.o_server.set(url)
+        tab.o_user.set("player_one")
+        tab.o_pass.set("pass1234")
+        steps(10)
+        shot("social_signin")
+        for m in list(app.aspect2d.findAllMatches("**/modal")):
+            m.removeNode()
+        tab._online(True)
+        steps(10)
+        tab = app.screen.tab_obj
+        tab.show_search("online")
+        steps(10)
+        shot("social_search")
+        tab.show_feed("search", posted.id, tab.social.search(tab.me, "online")["videos"])
+        tab._toggle_like()
+        steps(60, 0.03)
+        shot("social_online_feed")
+        print("likes on server:", other.get_video(0, posted.id).likes, flush=True)
+        tab.show_profile(other.account["id"])
+        steps(80, 0.03)
+        shot("social_online_profile")
+        srv.stop()
     if scenario == "results":
         app.start_match()
         for _ in range(400):

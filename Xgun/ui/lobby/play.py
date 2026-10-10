@@ -5,7 +5,7 @@ from direct.gui.DirectGui import DirectFrame
 
 from ui import theme as T
 from ui.lobby.common import Tab
-from ui.widgets import Button, ProgressBar, frame, text
+from ui.widgets import Button, Entry, ProgressBar, frame, text
 
 DIFFICULTIES = ["Easy", "Normal", "Hard"]
 BOT_COUNTS = [9, 19, 29, 39]
@@ -61,10 +61,31 @@ class PlayTab(Tab):
             text(panel, q.text, (1.0, y), 0.026, T.GREEN if q.complete else T.TEXT, "semibold", wrap=22)
             pb = ProgressBar(panel, (1.0, y - 0.035), (0.6, 0.01), T.GREEN if q.complete else T.ACCENT)
             pb.set(q.progress / q.target)
+        online = frame(r, 0.95, 1.65, -0.78, -0.22, T.PANEL)
+        text(online, "PLAY ONLINE", (1.0, -0.29), 0.034, T.TEXT, "black")
+        text(online, "Friends + bots on one server. Host here or join a host.", (1.0, -0.34), 0.023, T.TEXT_DIM,
+             wrap=29)
+        self.address = Entry(online, pos=(1.0, -0.47), width=0.6, initial=s.online_address,
+                             placeholder="Host address (e.g. 192.168.1.20)", scale=0.03, max_chars=60)
+        Button(online, "HOST", self.app.host_online, pos=(1.14, -0.6), size=(0.29, 0.075), text_scale=0.03,
+               color=T.PRIMARY, hover=T.PRIMARY_HOVER)
+        Button(online, "JOIN", self._join, pos=(1.46, -0.6), size=(0.29, 0.075), text_scale=0.03)
+        text(online, "Uses your opponent settings for the bots.", (1.0, -0.71), 0.021, T.TEXT_MUTED)
         stats = prog.stats(acc)
         text(r, f"{stats.get('wins', 0)} WINS   •   {stats.get('matches', 0)} MATCHES   •   {stats.get('eliminations', 0)} ELIMS",
              (1.3, -0.12), 0.028, T.TEXT_DIM, "bold", "center")
-        self.app.accept("enter", self.app.start_match)
+        self.app.accept("enter", self._enter)
+
+    def _enter(self):
+        if self.address.node["focus"] or getattr(self.app, "online_lobby", None) is not None:
+            return
+        self.app.start_match()
+
+    def _join(self):
+        if not self.address.get().strip():
+            self.app.toasts.show("Type the host's address first.", "error")
+            return
+        self.app.join_online(self.address.get())
 
     def _set_count(self, n):
         self.app.settings.bot_count = n
