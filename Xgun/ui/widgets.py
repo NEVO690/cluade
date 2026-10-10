@@ -72,7 +72,7 @@ class Button:
         self.hover_color = hover
         self.selected = False
         f = getattr(UI.fonts, font) if UI.fonts else None
-        tx = {"center": 0, "left": -w / 2 + 0.03, "right": w / 2 - 0.03}[align]
+        tx = {"center": 0, "left": -w / 2 + 0.03 + (h * 0.8 if icon is not None else 0), "right": w / 2 - 0.03}[align]
         self.node = DirectButton(parent=parent, frameSize=(-w / 2, w / 2, -h / 2, h / 2), pos=(pos[0], 0, pos[1]),
                                  frameColor=(color, _shade(color, 0.8), hover, _shade(color, 0.5)), relief=DGG.FLAT,
                                  text=label, text_font=f, text_scale=text_scale, text_fg=text_color,
@@ -190,7 +190,11 @@ class ScrollArea:
         self.node.setCanvasSize()
 
     def contains_mouse(self) -> bool:
-        if UI.app is None or not UI.app.mouseWatcherNode.hasMouse() or self.node.isEmpty() or self.node.isHidden():
+        if self.node.isEmpty() or self.node.getTop() != UI.app.render2d:
+            if self in UI.scroll_areas:   # parent was removed without destroy()
+                UI.scroll_areas.remove(self)
+            return False
+        if UI.app is None or not UI.app.mouseWatcherNode.hasMouse() or self.node.isHidden():
             return False
         m = UI.app.mouseWatcherNode.getMouse()
         p = self.node.getRelativePoint(UI.app.render2d, (m.x, 0, m.y))
@@ -207,11 +211,12 @@ class ScrollArea:
         self.node.destroy()
 
 
-def wheel(direction: int) -> None:
-    for area in reversed(UI.scroll_areas):
+def wheel(direction: int) -> bool:
+    for area in reversed(list(UI.scroll_areas)):
         if area.contains_mouse():
-            area.scroll(direction)
-            return
+            area.scroll(-direction)
+            return True
+    return False
 
 
 class ProgressBar:

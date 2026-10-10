@@ -76,10 +76,7 @@ class XgunApp(ShowBase):
         self.island = None
         self.world_view = None
         self.screen = None
-        self.accept("wheel_up", wheel, [1])
-        self.accept("wheel_down", wheel, [-1])
-        self.accept("f12", self.screenshot_to_user)
-        self.accept("window-event", self._window_event)
+        self._bind_globals()
         self.autoplay = autoplay
         self.show_lobby()
 
@@ -96,6 +93,7 @@ class XgunApp(ShowBase):
         from ui.lobby.lobby import LobbyScreen
         self._swap(None)
         self._drop_world()
+        self._bind_globals()
         self.screen = LobbyScreen(self, tab)
         if results is not None:
             self.screen.show_results(*results)
@@ -139,7 +137,21 @@ class XgunApp(ShowBase):
         self.account = self.services.accounts.set_active(account_id)
         self.show_lobby("PROFILE")
 
+    def _bind_globals(self) -> None:
+        self.accept("wheel_up", self._wheel, [1])
+        self.accept("wheel_down", self._wheel, [-1])
+        self.accept("f12", self.screenshot_to_user)
+        self.accept("window-event", self._window_event)
+
     # ------------------------------------------------------------- misc
+    def _wheel(self, direction: int) -> None:
+        from ui.widgets import wheel
+        if wheel(direction):
+            return
+        tab = getattr(self.screen, "tab_obj", None)
+        if tab is not None and hasattr(tab, "wheel"):
+            tab.wheel(direction)
+
     def apply_settings(self) -> None:
         self.settings.save()
         self.audio.refresh_volume()

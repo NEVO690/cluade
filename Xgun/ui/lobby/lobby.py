@@ -15,7 +15,7 @@ from ui.widgets import Button, Modal, ScrollArea, frame, image, text
 TABS = ["PLAY", "LOCKER", "XON SHOP", "BATTLE PASS", "TIKTOK", "FRIENDS", "PROFILE", "QUESTS", "SETTINGS"]
 # avatar framing per tab: (camera x offset, distance, show avatar, dim backdrop)
 FRAMING = {"PLAY": (0.55, 6.2, True, 0.0), "LOCKER": (1.25, 6.6, True, 0.0), "XON SHOP": (1.6, 6.6, False, 0.6),
-           "BATTLE PASS": (1.5, 7.2, True, 0.35), "TIKTOK": (0, 6, False, 0.85), "FRIENDS": (1.6, 7.2, True, 0.55),
+           "BATTLE PASS": (1.5, 7.2, False, 0.45), "TIKTOK": (0, 6, False, 0.85), "FRIENDS": (1.6, 7.2, True, 0.55),
            "PROFILE": (1.35, 6.8, True, 0.3), "QUESTS": (1.6, 7.2, True, 0.5), "SETTINGS": (0, 6, False, 0.8)}
 
 

@@ -43,6 +43,18 @@ def icon(name: str):
     return UI.app.assets.texture(paths.ICONS / f"{name}.png", mipmap=True)
 
 
+def item_thumb(item):
+    """Best preview image for a cosmetic: Cycles render, banner icon, wrap swatch or emote glyph."""
+    thumb = UI.app.assets.thumb(item.id)
+    if thumb is None and item.type == "banner":
+        thumb = UI.app.assets.texture(paths.ICONS / item.extra.get("icon", "banner_x.png"))
+    if thumb is None and item.type == "wrap" and item.extra.get("texture"):
+        thumb = UI.app.assets.texture(paths.TEXTURES / "wraps" / item.extra["texture"])
+    if thumb is None:
+        thumb = icon("play" if item.type == "emote" else "check")
+    return thumb
+
+
 class ItemCard:
     """A cosmetic card: rarity gradient, Cycles-rendered thumbnail, name and status line."""
 
@@ -61,24 +73,16 @@ class ItemCard:
             f = i / 6
             DirectFrame(parent=self.node, frameSize=(-w / 2, w / 2, -h / 2 + h * f * 0.5, -h / 2 + h * (f + 1 / 6) * 0.5),
                         frameColor=(rar[0], rar[1], rar[2], 0.35 * (1 - f)))
-        thumb = UI.app.assets.thumb(item.id)
-        if thumb is None and item.type == "banner":
-            thumb = UI.app.assets.texture(paths.ICONS / item.extra.get("icon", "banner_x.png"))
-        if thumb is None and item.type == "wrap" and item.extra.get("texture"):
-            thumb = UI.app.assets.texture(paths.TEXTURES / "wraps" / item.extra["texture"])
-        if thumb is None and item.type == "emote":
-            thumb = icon("play")
-        image(self.node, thumb, (0, h * 0.1), (w * 0.86, h * 0.62))
+        image(self.node, item_thumb(item), (0, h * 0.1), (w * 0.86, h * 0.62))
         DirectFrame(parent=self.node, frameSize=(-w / 2, w / 2, -h / 2, -h / 2 + 0.11), frameColor=(0.02, 0.03, 0.07, 0.82))
         DirectFrame(parent=self.node, frameSize=(-w / 2, w / 2, -h / 2 + 0.11, -h / 2 + 0.116), frameColor=rar)
         text(self.node, item.name.upper(), (-w / 2 + 0.02, -h / 2 + 0.062), min(0.03, 0.9 * w / max(8, len(item.name)) * 1.6),
              T.TEXT, "black")
-        line = status
         if price is not None:
             image(self.node, UI.app.assets.texture(paths.ICONS / "xon.png"), (-w / 2 + 0.035, -h / 2 + 0.03), (0.032, 0.032))
-            line = f"   {price:,}"
-            status_color = T.GOLD
-        text(self.node, line or item.type_label, (-w / 2 + 0.02, -h / 2 + 0.02), 0.024, status_color, "bold")
+            text(self.node, f"{price:,}", (-w / 2 + 0.06, -h / 2 + 0.02), 0.026, T.GOLD, "black")
+        else:
+            text(self.node, status or item.type_label, (-w / 2 + 0.02, -h / 2 + 0.02), 0.024, status_color, "bold")
         if selected:
             for fs in ((-w / 2, w / 2, h / 2 - 0.006, h / 2), (-w / 2, w / 2, -h / 2, -h / 2 + 0.006),
                        (-w / 2, -w / 2 + 0.006, -h / 2, h / 2), (w / 2 - 0.006, w / 2, -h / 2, h / 2)):
