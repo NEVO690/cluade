@@ -174,6 +174,13 @@ run_tests.bat        :: or: .venv\Scripts\python -m pytest -q tests
 
 `tools/screenshots/drive.py` drives the real game and captures screenshots.
 
+## Browser version
+
+`web/xgun_web.html` is a three.js port of the match that runs in a web browser, with no install.
+It uses the same models, sounds, weapon stats, loot tables, storm, bots and building rules.
+Build it with `python web/build_web.py` (output in `web/dist/`; serve that folder over HTTP).
+The browser version has no lobby economy, social tab or online play.
+
 ## Online play
 
 **Matches (host or join from the PLAY tab).**
