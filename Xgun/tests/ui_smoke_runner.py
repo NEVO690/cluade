@@ -45,7 +45,8 @@ def main():
             break
     from panda3d.core import PNMImage
     from video.thumbnails import thumb_path
-    img = PNMImage(str(thumb_path(vid.id)))
+    from game.assets import fn
+    img = PNMImage(fn(thumb_path(vid.id)))
     assert (img.getXSize(), img.getYSize()) == (180, 320)
     assert img.getAverageGray() > 0.03, "thumbnail is black"
     tt.next()
