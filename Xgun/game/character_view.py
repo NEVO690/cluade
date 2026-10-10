@@ -35,6 +35,7 @@ class CharacterAvatar:
         self.outfit = outfit
         self.info = assets.info(outfit)
         self.actor = Actor(fn(path))
+        assets.prepare(self.actor)
         self.actor.reparentTo(self.root)
         self.actor.makeSubpart("upper", ["spine"])
         self.actor.makeSubpart("lower", ["root"], ["spine"])

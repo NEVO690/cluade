@@ -32,6 +32,7 @@ def configure_panda(settings: Settings, *, offscreen: bool = False) -> None:
         "model-cache-dir",
         "notify-level-glgsg error",
         "notify-level-device fatal",
+        "notify-level-ffmpeg fatal",
     ]
     if offscreen:
         prc.append("window-type offscreen")

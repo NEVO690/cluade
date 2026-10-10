@@ -46,8 +46,19 @@ class AssetLibrary:
             if node is None:
                 self.missing.add(asset_id)
                 node = self._placeholder()
+            self.prepare(node)
             self._models[asset_id] = node
         return self._models[asset_id].copyTo(NodePath(asset_id))
+
+    def prepare(self, node: NodePath) -> NodePath:
+        """Adapt loaded models to the renderer: basic (no-shader) pipes can't use sRGB textures."""
+        if getattr(self.base, "shaders_ok", True):
+            return node
+        for tex in node.findAllTextures():
+            fmt = tex.getFormat()
+            if fmt in (Texture.F_srgb, Texture.F_srgb_alpha, Texture.F_sluminance, Texture.F_sluminance_alpha):
+                tex.setFormat(Texture.F_rgba if fmt in (Texture.F_srgb_alpha, Texture.F_sluminance_alpha) else Texture.F_rgb)
+        return node
 
     def _placeholder(self) -> NodePath:
         from panda3d.core import CardMaker
