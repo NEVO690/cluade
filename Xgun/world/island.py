@@ -48,6 +48,12 @@ class Entrance:
     building: int
     footprint: tuple[float, float, float, float]   # x0, y0, x1, y1
     door: tuple[float, float]
+    base_z: float = 0.0
+    routes: list = field(default_factory=list)      # [(floor_z_world, [(x, y), ...])] door -> upper floor
+
+    def contains(self, x: float, y: float, margin: float = 0.0) -> bool:
+        x0, y0, x1, y1 = self.footprint
+        return x0 - margin < x < x1 + margin and y0 - margin < y < y1 + margin
 
 
 @dataclass
@@ -61,6 +67,7 @@ class IslandLayout:
     crate_spots: list[tuple[float, float, float]] = field(default_factory=list)
     ammo_spots: list[tuple[float, float, float]] = field(default_factory=list)
     entrances: list[Entrance] = field(default_factory=list)
+    footprints: list[tuple[float, float, float, float]] = field(default_factory=list)
     collision: CollisionWorld | None = None
 
 
@@ -116,7 +123,8 @@ def build_island(seed: int = 7, manifest: dict | None = None) -> IslandLayout:
     for road in layout.roads:
         terrain.smooth_path(road)
     for p in pois:
-        p.height = terrain.flatten(p.x, p.y, p.radius * 0.85, 30.0)
+        # wide plateau: every building (and its doorway) must sit on level ground
+        p.height = terrain.flatten(p.x, p.y, p.radius + 12.0, 30.0)
 
     collision = CollisionWorld(terrain)
     layout.collision = collision
@@ -140,12 +148,28 @@ def build_island(seed: int = 7, manifest: dict | None = None) -> IslandLayout:
     for p in pois:
         assets = BUILDING_SETS[p.kind]
         n = len(assets)
+        footprints: list[tuple[float, float, float, float]] = []
         for i, asset in enumerate(assets):
-            ang = 2 * math.pi * i / n + rng.uniform(-0.15, 0.15)
-            dist = p.radius * (0.42 if i % 2 == 0 else 0.68)
-            bx, by = p.x + math.cos(ang) * dist, p.y + math.sin(ang) * dist
-            # face the POI centre (nearest 90 degrees)
-            heading = int(round((math.degrees(math.atan2(p.y - by, p.x - bx)) - 90) / 90.0)) * 90 % 360
+            b = manifest.get(asset, {}).get("bounds", {"min": [-5, -5, 0], "max": [5, 5, 5]})
+            spot = None
+            for attempt in range(60):
+                ring = (0.42 if i % 2 == 0 else 0.68) + 0.05 * (attempt // 12)
+                ang = 2 * math.pi * i / n + rng.uniform(-0.15, 0.15) + (attempt % 12) * 0.21
+                bx, by = p.x + math.cos(ang) * p.radius * ring, p.y + math.sin(ang) * p.radius * ring
+                heading = int(round((math.degrees(math.atan2(p.y - by, p.x - bx)) - 90) / 90.0)) * 90 % 360
+                ax0, ay0 = _rot(b["min"][0], b["min"][1], heading)
+                ax1, ay1 = _rot(b["max"][0], b["max"][1], heading)
+                fp = (bx + min(ax0, ax1), by + min(ay0, ay1), bx + max(ax0, ax1), by + max(ay0, ay1))
+                corners_ok = all(math.hypot(cx - p.x, cy - p.y) < p.radius + 8 for cx in fp[0::2] for cy in fp[1::2])
+                clear = all(fp[2] + 4 < o[0] or o[2] + 4 < fp[0] or fp[3] + 4 < o[1] or o[3] + 4 < fp[1] for o in footprints)
+                if corners_ok and clear:
+                    spot = (bx, by, heading, fp)
+                    break
+            if spot is None:
+                continue          # no room left at this location
+            bx, by, heading, fp = spot
+            footprints.append(fp)
+            layout.footprints.append(fp)
             pl = place(asset, bx, by, heading, p.name, z=p.height)
             info = manifest.get(asset, {})
             for lx, ly, lz in info.get("loot_spots", []):
@@ -159,22 +183,34 @@ def build_island(seed: int = 7, manifest: dict | None = None) -> IslandLayout:
                 x0, y0 = _rot(b["min"][0], b["min"][1], heading)
                 x1, y1 = _rot(b["max"][0], b["max"][1], heading)
                 door = _rot(*DOORS.get(asset, (0.0, 0.0)), heading)
+                routes = []
+                for r in info.get("nav_routes", []):
+                    pts = [_rot(px, py, heading) for px, py in r["points"]]
+                    routes.append((p.height + r["to_z"], [(bx + px, by + py) for px, py in pts]))
                 layout.entrances.append(Entrance(p.name, len(layout.placements) - 1,
                                                  (bx + min(x0, x1), by + min(y0, y1), bx + max(x0, x1), by + max(y0, y1)),
-                                                 (bx + door[0], by + door[1])))
+                                                 (bx + door[0], by + door[1]), p.height, routes))
         # street props
         for k in range(4):
             ang = rng.uniform(0, 2 * math.pi)
             d = rng.uniform(8, p.radius * 0.3)
             x, y = p.x + math.cos(ang) * d, p.y + math.sin(ang) * d
+            if any(f[0] - 6 < x < f[2] + 6 and f[1] - 6 < y < f[3] + 6 for f in layout.footprints):
+                continue          # never block a doorway
             choice = rng.choice(["env_car", "env_barrel", "env_streetlamp", "env_car"])
             place(choice, x, y, rng.choice((0, 90, 180, 270)), p.name, z=p.height)
+        def outside_buildings(x, y):
+            return not any(f[0] - 2 < x < f[2] + 2 and f[1] - 2 < y < f[3] + 2 for f in layout.footprints)
         for k in range(3):
             ang = rng.uniform(0, 2 * math.pi)
             d = rng.uniform(10, p.radius * 0.9)
-            layout.crate_spots.append((p.x + math.cos(ang) * d, p.y + math.sin(ang) * d, p.height))
+            x, y = p.x + math.cos(ang) * d, p.y + math.sin(ang) * d
+            if outside_buildings(x, y):
+                layout.crate_spots.append((x, y, p.height))
             ang2 = rng.uniform(0, 2 * math.pi)
-            layout.ammo_spots.append((p.x + math.cos(ang2) * d * 0.8, p.y + math.sin(ang2) * d * 0.8, p.height))
+            x, y = p.x + math.cos(ang2) * d * 0.8, p.y + math.sin(ang2) * d * 0.8
+            if outside_buildings(x, y):
+                layout.ammo_spots.append((x, y, p.height))
 
     # lamps and fences along roads
     for road in layout.roads:

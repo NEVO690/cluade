@@ -26,6 +26,7 @@ class Kit:
         self.colliders = []
         self.loot = []
         self.chests = []
+        self.routes = []     # bot navigation: [{"to_z": floor height, "points": [(x, y), ...]}] door -> upper floor
 
     def box(self, name, size, loc, mat, collide=True, bevel=0.0, rot=(0, 0, 0)):
         self.parts.append(core.box(name, size, loc, rot, mat, bevel=bevel))
@@ -150,11 +151,12 @@ def env_house_b():
         k.wall("x", y0, x0, x1, z, H, brick, [(-3.0, -1.8, 1.0, 2.2), (1.8, 3.0, 1.0, 2.2)], glass=glass)
         k.wall("y", x0, y0 + WALL_T / 2, y1 - WALL_T / 2, z, H, brick, [(-1.0, 1.0, 1.0, 2.2)], glass=glass)
         k.wall("y", x1, y0 + WALL_T / 2, y1 - WALL_T / 2, z, H, brick, [(-1.0, 1.0, 1.0, 2.2)], glass=glass)
-    # upper floor with a stair opening
+    # upper floor with a stair opening over x 0.8..4.5, y 1.0..2.4
     k.floor(x0, x1, y0, 1.0, 0.2 + H, floor)
-    k.floor(x0, 1.0, 1.0, y1, 0.2 + H, floor)
-    # stairs climb toward -Y inside the floor opening and land on the upper floor at y < 1
-    k.stairs(3.2, 4.3, 1.0, 0.2, 0.2 + H, 1.4, floor)
+    k.floor(x0, 0.8, 1.0, y1, 0.2 + H, floor)
+    k.floor(0.8, x1, 2.4, y1, 0.2 + H, floor)
+    # stairs climb toward +X along the opening; step off the top toward -Y onto the upper floor
+    k.stairs(1.7, 1.1, 4.3, 0.2, 0.2 + H, 1.3, floor, axis="x")
     # flat roof with parapet
     k.floor(x0, x1, y0, y1, 0.2 + 2 * H + 0.2, concrete)
     for (ax, fixed, a0, a1) in (("x", y1, x0, x1), ("x", y0, x0, x1), ("y", x0, y0, y1), ("y", x1, y0, y1)):
@@ -165,7 +167,8 @@ def env_house_b():
         k.box(f"baluster{i}", (0.05, 0.05, 1.0), (-1.4 + i * 0.466, y1 + 1.35, 0.2 + H + 0.5), rail, collide=False)
     k.box("handrail", (3.0, 0.08, 0.08), (0, y1 + 1.35, 0.2 + H + 1.0), rail)
     k.loot += [(-3.0, -3.0, 0.2), (-2.0, 3.0, 0.2), (-3.0, -2.5, 0.2 + H), (2.0, -3.0, 0.2 + H)]
-    k.chests += [(-3.5, 3.4, 0.2 + H, 90), (0.0, 0.0, 0.2 + 2 * H + 0.2, 0)]
+    k.chests += [(-3.5, 3.4, 0.2 + H, 90)]
+    k.routes.append({"to_z": 0.2 + H, "points": [(0.0, 6.2), (0.0, 3.6), (0.2, 1.7), (0.7, 1.7), (4.1, 1.7), (4.0, 0.3), (2.5, 0.0)]})
     return k
 
 
@@ -199,6 +202,8 @@ def env_warehouse():
     k.stairs(x0 + 1.4, y1 - 1.0, y0 + 2.4, 0.15, 3.6, 1.6, metal)
     k.loot += [(-6, 3, 0.15), (6, 3, 0.15), (0, -2, 0.15), (-5, y0 + 1.3, 3.7), (5, y0 + 1.3, 3.7)]
     k.chests += [(8.5, -5.5, 0.15, 180), (0, y0 + 1.3, 3.7, 0)]
+    k.routes.append({"to_z": 3.6, "points": [(-4.5, 9.2), (-4.5, 6.6), (-7.4, 6.5), (x0 + 1.4, 6.2), (x0 + 1.4, -4.4),
+                                              (-7.0, y0 + 1.3)]})
     return k
 
 
@@ -261,6 +266,8 @@ def env_tower():
         k.box(f"step_b{i}", (1.2, 0.42, 0.25), (-3.4, 3.2 - i * 0.42, h - 0.12), wood)
     k.loot += [(0, 0, P)]
     k.chests += [(1.5, 1.5, P, 225)]
+    k.routes.append({"to_z": P, "points": [(-4.6, -4.5), (-4.6, -3.2), (-4.6, 2.9), (-4.0, 3.8), (-3.4, 3.3), (-3.4, -2.2),
+                                            (-2.0, -2.1)]})
     return k
 
 
@@ -589,7 +596,8 @@ def build_env(asset_id, fn, render=True) -> dict:
     obj = core.finalize(kit.parts, asset_id, uv_scale=1.0)
     entry = core.export("environment", asset_id, [obj])
     entry.update({"type": "environment", "bounds": core.bounds([obj]), "colliders": kit.colliders,
-                  "loot_spots": [list(p) for p in kit.loot], "chest_spots": [list(p) for p in kit.chests]})
+                  "loot_spots": [list(p) for p in kit.loot], "chest_spots": [list(p) for p in kit.chests],
+                  "nav_routes": [{"to_z": r["to_z"], "points": [list(p) for p in r["points"]]} for r in kit.routes]})
     if render:
         from xgb.previews import render_preview
         entry["thumb"] = render_preview(asset_id, [obj], **PREVIEW.get(asset_id, dict(yaw=35, pitch=25)))

@@ -74,6 +74,8 @@ class BotBrain:
         self.goal_since = 0.0
         self.pulse = False
         self.stuck_count = 0
+        self.route: list = []
+        self._route_goal = None
 
     # ---------------------------------------------------------- helpers
     def _pick_drop_point(self):
@@ -197,17 +199,22 @@ class BotBrain:
             r = tr * 0.5
             self.goal = (cx + math.cos(a) * r, cy + math.sin(a) * r, 0.0)
             self.goal_kind = "storm"
+            self._set_route(self.goal)
             return
         # 2. loot nearby
         best, best_d = None, 70.0 if len(self._weapons()) < 3 else 35.0
         for k in sim.containers:
-            if k.opened or k.kind == "crate" or abs(k.z - me.z) > 1.6 or ("container", k.id) in self.ignore:
+            if k.opened or k.kind == "crate" or ("container", k.id) in self.ignore:
                 continue
             d = abs(k.x - me.x) + abs(k.y - me.y)
+            if d >= best_d or not self._reachable(k.x, k.y, k.z):
+                continue
             if d < best_d:
                 best, best_d = ("container", k), d
         for it in sim.items.values():
-            if it.kind == "ammo" or abs(it.z - me.z) > 1.6 or ("item", it.id) in self.ignore:
+            if it.kind == "ammo" or ("item", it.id) in self.ignore:
+                continue
+            if abs(it.x - me.x) + abs(it.y - me.y) >= best_d or not self._reachable(it.x, it.y, it.z):
                 continue
             if it.kind == "weapon" and not self._wants_weapon(it.payload):
                 continue
@@ -220,7 +227,7 @@ class BotBrain:
             kind, ref = best
             self.goal = (ref.x, ref.y, ref.z)
             self.goal_kind, self.goal_ref = kind, ref
-            self.door_via = self._door_for(ref.x, ref.y)
+            self._set_route(self.goal)
             return
         # 3. wander toward the safe zone / a POI
         if self.wander is None or math.hypot(self.wander[0] - me.x, self.wander[1] - me.y) < 6:
@@ -237,7 +244,63 @@ class BotBrain:
                 self.wander = (cx, cy)
         self.goal = (self.wander[0], self.wander[1], 0.0)
         self.goal_kind = "wander"
-        self.door_via = None
+        self._set_route(self.goal)
+
+    # -- multi-floor navigation --------------------------------------------
+    def _floor_of(self, x: float, y: float, z: float):
+        """(entrance, route floor z) when (x, y, z) is on an upper floor of a building, else (None, None)."""
+        for e in self.sim.layout.entrances:
+            if z > e.base_z + 1.5 and e.contains(x, y, 0.5):
+                for floor_z, _ in e.routes:
+                    if abs(floor_z - z) < 1.3:
+                        return e, floor_z
+                return e, None          # upper level without a known route (roof etc.)
+        return None, None
+
+    def _plan(self, tx: float, ty: float, tz: float):
+        """Waypoints to reach a target, descending/ascending building routes. None = unreachable."""
+        me = self.me
+        my_b, my_floor = self._floor_of(me.x, me.y, me.z)
+        tg_b, tg_floor = self._floor_of(tx, ty, tz)
+        if my_b is not None and my_b is tg_b and my_floor is not None and my_floor == tg_floor:
+            return []                                   # same upper floor
+        path = []
+        if my_b is not None:
+            if my_floor is None:
+                return None
+            pts = next(p for fz, p in my_b.routes if fz == my_floor)
+            path += list(reversed(pts))                 # walk back down and out
+        if tg_b is not None:
+            if tg_floor is None:
+                return None
+            pts = next(p for fz, p in tg_b.routes if fz == tg_floor)
+            path += list(pts)
+        elif tz - (me.z if my_b is None else self.sim.terrain.ground(tx, ty)) > 1.6:
+            return None                                 # raised spot we have no route for
+        return path
+
+    def _committed(self) -> bool:
+        """Mid-route toward a still-valid loot goal: keep going (heights on stairs match no floor)."""
+        if not self.route or self.goal_kind not in ("item", "container"):
+            return False
+        ref = self.goal_ref
+        valid = (not ref.opened) if self.goal_kind == "container" else ref.id in self.sim.items
+        if not valid:
+            self.route = []
+        return valid
+
+    def _reachable(self, x, y, z) -> bool:
+        return self._plan(x, y, z) is not None
+
+    def _set_route(self, goal) -> None:
+        key = tuple(round(v, 1) for v in goal) if goal else None
+        if key == self._route_goal:
+            return                      # keep progress along the current route
+        self._route_goal = key
+        plan = self._plan(*goal) if goal else None
+        self.route = list(plan or [])
+        # ground-floor interiors still go through the front door
+        self.door_via = None if self.route else self._door_for(goal[0], goal[1])
 
     def _door_for(self, x: float, y: float):
         me = self.me
@@ -280,7 +343,7 @@ class BotBrain:
         if self.decide_timer <= 0:
             self.decide_timer = 0.25
             self._scan()
-            if not engage:
+            if not engage and not self._committed():
                 self._choose_goal()
                 key = (self.goal_kind, getattr(self.goal_ref, "id", None)) if self.goal_kind in ("item", "container") else None
                 if key != self.goal_key:
@@ -319,6 +382,12 @@ class BotBrain:
         if self.goal is None:
             return
         gx, gy, _ = self.goal
+        while self.route and math.hypot(self.route[0][0] - me.x, self.route[0][1] - me.y) < 0.8:
+            self.route.pop(0)
+        if self.route:
+            self._steer(inp, self.route[0][0], self.route[0][1], dt, stop_dist=0.3)
+            inp.sprint = False
+            return
         if self.door_via is not None:
             if math.hypot(self.door_via[0] - me.x, self.door_via[1] - me.y) < 2.0:
                 self.door_via = None

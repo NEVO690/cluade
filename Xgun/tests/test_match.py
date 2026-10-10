@@ -27,10 +27,10 @@ def fresh(layout, bots=3, **kw):
     return sim
 
 
-def land(sim, c, x, y):
+def land(sim, c, x, y, z_hint=200.0):
     c.state = "ground"
     c.x, c.y = x, y
-    c.z = sim.collision.floor_height(x, y, 200, 0.4)
+    c.z = sim.collision.floor_height(x, y, z_hint, 0.4)
     c.on_ground = True
     c.prev = (c.x, c.y, c.z)
 
@@ -214,3 +214,64 @@ def test_bots_loot_weapons_and_keep_moving(layout):
     still = sum(1 for c in alive if math.hypot(c.x - pos[c.id][0], c.y - pos[c.id][1]) < 1.0)
     assert armed >= 0.6 * len(alive), (armed, len(alive))
     assert still <= max(2, len(alive) // 4), (still, len(alive))
+
+
+def test_every_building_route_is_physically_walkable(layout):
+    """Door -> stairs -> upper floor routes must work for players and bots alike."""
+    from bots.brain import yaw_to
+    sim = fresh(layout, 0)
+    p = sim.player
+    checked = 0
+    for e in sim.layout.entrances:
+        for floor_z, pts in e.routes:
+            land(sim, p, *pts[0], z_hint=e.base_z + 1.0)
+            i = 1
+            for _ in range(int(40 / TICK)):
+                tx, ty = pts[i]
+                if math.hypot(tx - p.x, ty - p.y) < 0.6:
+                    i += 1
+                    if i >= len(pts):
+                        break
+                    continue
+                sim.step(TICK, {p.id: ControlInput(move_y=1, yaw=yaw_to(tx - p.x, ty - p.y))})
+            asset = sim.layout.placements[e.building].asset
+            assert i >= len(pts) and abs(p.z - floor_z) < 0.5, f"{asset} at {e.poi}: stuck at waypoint {i}"
+            checked += 1
+    assert checked >= 10
+
+
+def test_bots_loot_upper_floors_and_come_back_down(layout):
+    import copy
+    from game.entities import Container
+    sim0 = copy.deepcopy(layout)
+    targets = {}
+    for e in sim0.entrances:
+        if e.routes:
+            targets.setdefault(sim0.placements[e.building].asset, e)
+    assert {"env_house_b", "env_warehouse", "env_tower"} <= set(targets)
+    for asset, e in targets.items():
+        sim = MatchSim(seed=2, bot_count=2, player_name=None, layout=copy.deepcopy(layout))
+        bot, other = sim.combatants
+        other.health = 1e9
+        sim.brains.pop(other.id)
+        other.x, other.y, other.z, other.state = 400, 400, 50, "ground"
+        sim.containers, sim.items = [], {}
+        floor_z, pts = next(r for r in sim.layout.entrances if r.footprint == e.footprint).routes[0]
+        chest = Container(0, "chest", pts[-1][0], pts[-1][1], floor_z, 0)
+        sim.containers.append(chest)
+        land(sim, bot, *e.door, z_hint=e.base_z + 1.0)   # at the door, not on the balcony above it
+        sim.ship.t = sim.ship.duration
+        t0 = sim.time
+        while not chest.opened and sim.time - t0 < 45:
+            sim.step(TICK, {})
+            sim.drain_events()
+        assert chest.opened, f"bot never reached the upper chest in {asset}"
+        sim.items.clear()
+        w = WeaponInstance(sim.armory.weapons["longshot_sniper"], "legendary", 4)
+        gx = e.door[0] + (6 if e.door[0] > (e.footprint[0] + e.footprint[2]) / 2 else -6)
+        sim.drop(("weapon", w), gx, e.door[1], e.base_z + 0.5)
+        t1 = sim.time
+        while sim.time - t1 < 45 and not any(s is w for s in bot.inventory.slots):
+            sim.step(TICK, {})
+            sim.drain_events()
+        assert any(s is w for s in bot.inventory.slots), f"bot stayed upstairs in {asset}"
