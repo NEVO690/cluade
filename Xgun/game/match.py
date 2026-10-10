@@ -344,7 +344,9 @@ class MatchSim:
         item = inv.current
         if c.reload_timer > 0:
             c.reload_timer -= dt
-            if c.reload_timer <= 0 and isinstance(item, WeaponInstance):
+            if c.reload_timer <= 0:
+                c.reload_timer = 0.0
+            if c.reload_timer == 0 and isinstance(item, WeaponInstance):
                 need = item.wdef.magazine - item.in_mag
                 have = inv.ammo.get(item.wdef.ammo, 0)
                 n = min(need, have)
@@ -363,6 +365,7 @@ class MatchSim:
         if c.use_timer > 0:
             c.use_timer -= dt
             if c.use_timer <= 0:
+                c.use_timer = 0.0
                 self._finish_consumable(c)
         elif isinstance(item, ConsumableStack) and inp.fire_pressed:
             cdef = self.armory.consumables[item.cid]

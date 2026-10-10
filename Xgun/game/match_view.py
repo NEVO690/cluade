@@ -130,17 +130,24 @@ class MatchScreen:
     def _press(self, name):
         self.pressed.add(name)
 
+    def _window(self):
+        from panda3d.core import GraphicsWindow
+        win = self.app.win
+        return win if isinstance(win, GraphicsWindow) else None   # offscreen buffers have no mouse
+
     def _capture_mouse(self, capture: bool):
+        self.mouse_captured = capture
+        win = self._window()
+        if win is None:
+            return
         props = WindowProperties()
         props.setCursorHidden(capture)
         props.setMouseMode(WindowProperties.M_confined if capture else WindowProperties.M_absolute)
-        if self.app.win is not None and self.app.win.getProperties().getForeground() or not capture:
-            self.app.win.requestProperties(props)
-        self.mouse_captured = capture
+        win.requestProperties(props)
         self._center_mouse()
 
     def _center_mouse(self):
-        win = self.app.win
+        win = self._window()
         if win is None:
             return
         self.cx, self.cy = win.getXSize() // 2, win.getYSize() // 2
@@ -192,7 +199,7 @@ class MatchScreen:
         return task.cont
 
     def _mouse_look(self):
-        win = self.app.win
+        win = self._window()
         if win is None or not self.mouse_captured:
             return
         md = win.getPointer(0)
