@@ -41,6 +41,8 @@ class CharacterAvatar:
         self.anims = set(self.actor.getAnimNames())
         self._current = {"upper": None, "lower": None}
         self._oneshot = None
+        self._spine = None
+        self._spine_p = 0.0
         # joint conversion: glTF bones are rotated -90 degrees about X relative to Blender's bone frame
         fix = Quat()
         fix.setHpr((0, 90, 0))
@@ -127,6 +129,18 @@ class CharacterAvatar:
                 self.actor.loop(name, partName=part)
             else:
                 self.actor.play(name, partName=part)
+
+    def aim_pitch(self, degrees: float | None) -> None:
+        """Bend the upper body toward the aim direction (None releases the spine to the animation)."""
+        if degrees is None:
+            if self._spine is not None:
+                self.actor.releaseJoint("modelRoot", "spine")
+                self._spine = None
+            return
+        if self._spine is None:
+            self._spine = self.actor.controlJoint(None, "modelRoot", "spine")
+            self._spine_p = self._spine.getP()
+        self._spine.setP(self._spine_p + max(-60.0, min(60.0, degrees)) * 0.75)
 
     def set_lower(self, name: str, rate: float = 1.0) -> None:
         self._loop_part("lower", name, rate)

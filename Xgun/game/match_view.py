@@ -322,6 +322,8 @@ class MatchScreen:
             av.root.setPos(x, y, z)
             av.root.setH(c.yaw)
             av.root.setP(0)
+            aiming_pose = c.state == "ground" and c.alive and not c.emote and c.use_timer <= 0
+            av.aim_pitch(c.pitch if aiming_pose else None)
             if c.state == "dead":
                 if av._current["lower"] != "death":
                     av.hold(None)
