@@ -37,6 +37,8 @@ def make_video(tmp_path):
                             f"testsrc=size={size}:rate=15", "-t", str(seconds), "-pix_fmt", "yuv420p",
                             "-c:v", "libx264", str(out)], check=True)
         else:
-            out.write_bytes(b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 4096)
+            # no ffmpeg (e.g. a fresh Windows PC): reuse a bundled, known-good vertical clip
+            from config import paths
+            shutil.copyfile(paths.SAMPLE_VIDEOS / "phoenix_glide.mp4", out)
         return out
     return _make

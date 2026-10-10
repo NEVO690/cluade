@@ -1,0 +1,45 @@
+name: Xgun (Windows)
+
+on:
+  push:
+    paths: ["Xgun/**", ".github/workflows/xgun-windows.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: Xgun
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: Xgun/requirements.txt
+      - name: Install (same steps as install.bat)
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python -m pip install --upgrade pip
+          .venv\Scripts\python -m pip install -r requirements.txt
+      - name: Test suite
+        env:
+          XGUN_NO_AUDIO: "1"
+        run: .venv\Scripts\python -m pytest -q tests -p no:cacheprovider
+      - name: Launch main.py for 20 seconds (offscreen software renderer)
+        shell: pwsh
+        env:
+          XGUN_NO_AUDIO: "1"
+          XGUN_USER_DIR: ${{ runner.temp }}\xgun_user
+          XGUN_OFFSCREEN: "1"
+        run: |
+          $p = Start-Process -FilePath .venv\Scripts\python.exe -ArgumentList "main.py","--windowed" -PassThru -NoNewWindow `
+               -RedirectStandardOutput out.txt -RedirectStandardError err.txt
+          Start-Sleep -Seconds 20
+          if ($p.HasExited) { Get-Content out.txt, err.txt; throw "main.py exited early with code $($p.ExitCode)" }
+          Stop-Process -Id $p.Id
+          $log = Get-Content "$env:XGUN_USER_DIR\logs\xgun.log" -Raw -ErrorAction SilentlyContinue
+          if ($log -match "CRITICAL|Traceback") { $log; throw "errors in xgun.log" }
+          "main.py ran 20 s without errors"
