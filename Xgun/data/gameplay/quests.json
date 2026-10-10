@@ -1,0 +1,23 @@
+{
+  "daily_count": 4,
+  "daily": [
+    {"id": "d_play",      "stat": "matches",      "target": 2,   "xp": 400, "xon": 50,  "text": "Play {target} matches"},
+    {"id": "d_elims",     "stat": "eliminations", "target": 3,   "xp": 500, "xon": 75,  "text": "Eliminate {target} opponents"},
+    {"id": "d_chests",    "stat": "chests",       "target": 5,   "xp": 400, "xon": 50,  "text": "Open {target} loot chests"},
+    {"id": "d_damage",    "stat": "damage",       "target": 500, "xp": 500, "xon": 75,  "text": "Deal {target} damage to opponents"},
+    {"id": "d_top10",     "stat": "top10",        "target": 1,   "xp": 500, "xon": 75,  "text": "Place top 10 in a match"},
+    {"id": "d_survive",   "stat": "survive_secs", "target": 600, "xp": 400, "xon": 50,  "text": "Survive {target} seconds in total"},
+    {"id": "d_heal",      "stat": "healed",       "target": 100, "xp": 300, "xon": 40,  "text": "Restore {target} health or shield"},
+    {"id": "d_pickaxe",   "stat": "pickaxe_hits", "target": 15,  "xp": 300, "xon": 40,  "text": "Smash {target} supply crates or props with a pickaxe"},
+    {"id": "d_glide",     "stat": "glide_secs",   "target": 30,  "xp": 250, "xon": 30,  "text": "Glide for {target} seconds"},
+    {"id": "d_sniper",    "stat": "sniper_hits",  "target": 3,   "xp": 400, "xon": 60,  "text": "Land {target} hits with a sniper rifle"}
+  ],
+  "milestones": [
+    {"id": "m_first_win",   "stat": "wins",          "target": 1,  "reward": {"type": "item", "item_id": "banner_crown"},       "text": "Win your first match"},
+    {"id": "m_three_wins",  "stat": "wins",          "target": 3,  "reward": {"type": "item", "item_id": "pickaxe_dragonfang"}, "text": "Win 3 matches"},
+    {"id": "m_25_elims",    "stat": "eliminations",  "target": 25, "reward": {"type": "item", "item_id": "wrap_gold_rush"},     "text": "Reach 25 total eliminations"},
+    {"id": "m_10_quests",   "stat": "quests_done",   "target": 10, "reward": {"type": "item", "item_id": "backpack_crystal_core"}, "text": "Complete 10 daily quests"},
+    {"id": "m_10_matches",  "stat": "matches",       "target": 10, "reward": {"type": "xon", "amount": 500},                "text": "Play 10 matches"},
+    {"id": "m_50_chests",   "stat": "chests_opened", "target": 50, "reward": {"type": "xon", "amount": 500},                "text": "Open 50 chests"}
+  ]
+}

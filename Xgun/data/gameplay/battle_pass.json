@@ -1,0 +1,28 @@
+{
+  "season": "s1",
+  "name": "Season 1: Neon Tide",
+  "xp_per_tier": 1000,
+  "note": "The Season 1 pass is completely free. Every tier is earned by playing.",
+  "tiers": [
+    {"tier": 1,  "reward": {"type": "xon", "amount": 150}},
+    {"tier": 2,  "reward": {"type": "item", "item_id": "banner_wave"}},
+    {"tier": 3,  "reward": {"type": "xon", "amount": 200}},
+    {"tier": 4,  "reward": {"type": "item", "item_id": "wrap_neon_grid"}},
+    {"tier": 5,  "reward": {"type": "xon", "amount": 250}},
+    {"tier": 6,  "reward": {"type": "item", "item_id": "emote_victory_flex"}},
+    {"tier": 7,  "reward": {"type": "xon", "amount": 250}},
+    {"tier": 8,  "reward": {"type": "item", "item_id": "outfit_volt_brawler"}},
+    {"tier": 9,  "reward": {"type": "xon", "amount": 300}},
+    {"tier": 10, "reward": {"type": "item", "item_id": "glider_kite_ray"}},
+    {"tier": 11, "reward": {"type": "xon", "amount": 300}},
+    {"tier": 12, "reward": {"type": "item", "item_id": "banner_flame"}},
+    {"tier": 13, "reward": {"type": "xon", "amount": 350}},
+    {"tier": 14, "reward": {"type": "item", "item_id": "pickaxe_gearbreaker"}},
+    {"tier": 15, "reward": {"type": "xon", "amount": 400}},
+    {"tier": 16, "reward": {"type": "xon", "amount": 400}},
+    {"tier": 17, "reward": {"type": "item", "item_id": "backpack_jet_canister"}},
+    {"tier": 18, "reward": {"type": "xon", "amount": 450}},
+    {"tier": 19, "reward": {"type": "xon", "amount": 500}},
+    {"tier": 20, "reward": {"type": "item", "item_id": "outfit_nova_sentinel"}}
+  ]
+}

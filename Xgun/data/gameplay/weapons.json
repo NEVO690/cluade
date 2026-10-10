@@ -1,0 +1,73 @@
+{
+  "rarity_multipliers": {
+    "common":    {"damage": 1.00, "reload": 1.00},
+    "uncommon":  {"damage": 1.05, "reload": 0.96},
+    "rare":      {"damage": 1.10, "reload": 0.92},
+    "epic":      {"damage": 1.16, "reload": 0.88},
+    "legendary": {"damage": 1.22, "reload": 0.84}
+  },
+  "weapons": {
+    "striker_ar": {
+      "name": "Striker AR", "category": "assault_rifle", "model": "weapons/weapon_striker_ar.glb",
+      "damage": 30, "fire_rate": 5.5, "automatic": true, "magazine": 30, "reload_time": 2.2, "ammo": "medium",
+      "pellets": 1, "spread_hip": 2.4, "spread_ads": 0.5, "bloom": 0.35, "bloom_max": 3.0,
+      "range": 240, "falloff_start": 70, "min_falloff": 0.6, "headshot": 1.5, "zoom": 1.5,
+      "recoil": 0.6, "sound": "shot_ar", "tracer": [1.0, 0.85, 0.45],
+      "rarities": ["common", "uncommon", "rare", "epic", "legendary"]
+    },
+    "hornet_smg": {
+      "name": "Hornet SMG", "category": "smg", "model": "weapons/weapon_hornet_smg.glb",
+      "damage": 17, "fire_rate": 12.0, "automatic": true, "magazine": 30, "reload_time": 2.0, "ammo": "light",
+      "pellets": 1, "spread_hip": 3.0, "spread_ads": 1.5, "bloom": 0.15, "bloom_max": 2.5,
+      "range": 110, "falloff_start": 25, "min_falloff": 0.55, "headshot": 1.5, "zoom": 1.3,
+      "recoil": 0.35, "sound": "shot_smg", "tracer": [1.0, 0.9, 0.55],
+      "rarities": ["common", "uncommon", "rare", "epic"]
+    },
+    "breacher_shotgun": {
+      "name": "Breacher", "category": "shotgun", "model": "weapons/weapon_breacher_shotgun.glb",
+      "damage": 10, "fire_rate": 1.1, "automatic": false, "magazine": 5, "reload_time": 3.8, "ammo": "shells",
+      "pellets": 10, "spread_hip": 6.5, "spread_ads": 4.8, "bloom": 0.0, "bloom_max": 0.0,
+      "range": 45, "falloff_start": 8, "min_falloff": 0.3, "headshot": 1.6, "zoom": 1.2,
+      "recoil": 3.0, "sound": "shot_shotgun", "tracer": [1.0, 0.75, 0.4],
+      "rarities": ["common", "uncommon", "rare", "epic", "legendary"]
+    },
+    "longshot_sniper": {
+      "name": "Longshot", "category": "sniper", "model": "weapons/weapon_longshot_sniper.glb",
+      "damage": 100, "fire_rate": 0.55, "automatic": false, "magazine": 4, "reload_time": 3.0, "ammo": "heavy",
+      "pellets": 1, "spread_hip": 7.0, "spread_ads": 0.0, "bloom": 0.0, "bloom_max": 0.0,
+      "range": 600, "falloff_start": 600, "min_falloff": 1.0, "headshot": 2.5, "zoom": 4.0,
+      "recoil": 4.0, "sound": "shot_sniper", "tracer": [0.9, 0.95, 1.0],
+      "rarities": ["rare", "epic", "legendary"]
+    },
+    "sidekick_pistol": {
+      "name": "Sidekick", "category": "pistol", "model": "weapons/weapon_sidekick_pistol.glb",
+      "damage": 24, "fire_rate": 6.5, "automatic": false, "magazine": 16, "reload_time": 1.4, "ammo": "light",
+      "pellets": 1, "spread_hip": 1.8, "spread_ads": 0.7, "bloom": 0.4, "bloom_max": 2.4,
+      "range": 120, "falloff_start": 30, "min_falloff": 0.6, "headshot": 1.75, "zoom": 1.25,
+      "recoil": 0.9, "sound": "shot_pistol", "tracer": [1.0, 0.9, 0.6],
+      "rarities": ["common", "uncommon", "rare"]
+    },
+    "ion_lance": {
+      "name": "Ion Lance", "category": "special", "model": "weapons/weapon_ion_lance.glb",
+      "damage": 38, "fire_rate": 3.0, "automatic": true, "magazine": 15, "reload_time": 2.6, "ammo": "energy",
+      "pellets": 1, "spread_hip": 1.2, "spread_ads": 0.2, "bloom": 0.2, "bloom_max": 1.5,
+      "range": 280, "falloff_start": 120, "min_falloff": 0.75, "headshot": 1.6, "zoom": 2.0,
+      "recoil": 1.2, "sound": "shot_ion", "tracer": [0.3, 0.9, 1.0],
+      "rarities": ["epic", "legendary"]
+    }
+  },
+  "ammo": {
+    "light":  {"name": "Light Rounds",  "pickup": 30, "max": 300, "color": [0.55, 0.75, 1.0]},
+    "medium": {"name": "Medium Rounds", "pickup": 30, "max": 300, "color": [0.45, 0.9, 0.5]},
+    "heavy":  {"name": "Heavy Rounds",  "pickup": 6,  "max": 40,  "color": [1.0, 0.45, 0.4]},
+    "shells": {"name": "Shells",        "pickup": 8,  "max": 60,  "color": [1.0, 0.8, 0.3]},
+    "energy": {"name": "Energy Cells",  "pickup": 20, "max": 120, "color": [0.4, 1.0, 1.0]}
+  },
+  "consumables": {
+    "bandage_roll": {"name": "Bandage Roll", "model": "items/item_bandage_roll.glb", "heal": 15, "cap": 75,  "shield": 0,  "use_time": 3.0, "stack": 15, "pickup": 5, "rarity": "common"},
+    "medkit":       {"name": "Medkit",       "model": "items/item_medkit.glb",       "heal": 100, "cap": 100, "shield": 0, "use_time": 7.0, "stack": 3,  "pickup": 1, "rarity": "uncommon"},
+    "shield_cell":  {"name": "Shield Cell",  "model": "items/item_shield_cell.glb",  "heal": 0, "cap": 50,  "shield": 25, "use_time": 2.0, "stack": 6,  "pickup": 3, "rarity": "uncommon"},
+    "shield_keg":   {"name": "Shield Keg",   "model": "items/item_shield_keg.glb",   "heal": 0, "cap": 100, "shield": 50, "use_time": 5.0, "stack": 3,  "pickup": 1, "rarity": "rare"}
+  },
+  "pickaxe": {"damage": 20, "rate": 1.8, "range": 2.4, "prop_damage": 50}
+}

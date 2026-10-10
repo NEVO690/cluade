@@ -1,0 +1,11 @@
+{
+  "rarity_weights": {
+    "floor": {"common": 45, "uncommon": 30, "rare": 17, "epic": 6, "legendary": 2},
+    "chest": {"common": 20, "uncommon": 34, "rare": 28, "epic": 13, "legendary": 5},
+    "supply": {"rare": 30, "epic": 45, "legendary": 25}
+  },
+  "weapon_weights": {"striker_ar": 26, "hornet_smg": 20, "breacher_shotgun": 20, "sidekick_pistol": 16, "longshot_sniper": 9, "ion_lance": 9},
+  "consumable_weights": {"bandage_roll": 34, "shield_cell": 30, "medkit": 18, "shield_keg": 18},
+  "floor_mix": {"weapon": 40, "consumable": 30, "ammo": 30},
+  "chest_open_time": 0.6
+}
