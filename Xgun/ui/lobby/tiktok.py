@@ -356,6 +356,13 @@ class TikTokTab(Tab):
             self.prev()
 
     def update(self, dt_):
+        # refresh the gallery when thumbnails finish extracting
+        if TikTokTab.view[0] == "profile" and getattr(self, "_pending_thumbs", False):
+            if self.app.thumbs.version != getattr(self, "_thumb_version", -1) and not self.app.thumbs.queue \
+                    and self.app.thumbs._current is None:
+                self._thumb_version = self.app.thumbs.version
+                self._pending_thumbs = False
+                self.show_profile(TikTokTab.view[1])
         if self.player is not None and self.player.tex is not None:
             self.player.update()
             if not self.player.paused:
@@ -374,6 +381,8 @@ class TikTokTab(Tab):
     def show_profile(self, account_id: int):
         self._clear()
         TikTokTab.view = ("profile", account_id)
+        self._pending_thumbs = False
+        self._thumb_version = self.app.thumbs.version
         d = self.dynamic
         try:
             prof = self.social.profile(self.me, account_id)
@@ -429,7 +438,13 @@ class TikTokTab(Tab):
         c = ((hue >> 16 & 255) / 255 * 0.5 + 0.15, (hue >> 8 & 255) / 255 * 0.4 + 0.1, (hue & 255) / 255 * 0.6 + 0.25, 1)
         b = Button(parent, "", self.show_feed, pos=(x, y), size=(w, h), color=c, hover=(c[0] * 1.3, c[1] * 1.3, c[2] * 1.3, 1),
                    extra_args=("profile", v.id, videos))
-        image(b.node, icon("play"), (0, 0.04), (0.1, 0.1))
+        thumb = self.app.thumbs.get(v)
+        if thumb is not None:
+            image(b.node, self.app.assets.texture(thumb, mipmap=False), (0, 0), (w, h))
+            DirectFrame(parent=b.node, frameSize=(-w / 2, w / 2, -h / 2, -h / 2 + 0.13), frameColor=(0, 0, 0, 0.55))
+        else:
+            self._pending_thumbs = True
+        image(b.node, icon("play"), (0, 0.04), (0.08, 0.08)).setAlphaScale(0.85)
         text(b.node, v.title, (-w / 2 + 0.02, -h / 2 + 0.09), 0.024, T.TEXT, "bold", wrap=14)
         text(b.node, f"{_count(v.views)} views  •  {_count(v.likes)} likes", (-w / 2 + 0.02, -h / 2 + 0.025), 0.02, T.TEXT_DIM, "bold")
         if v.status != "active":

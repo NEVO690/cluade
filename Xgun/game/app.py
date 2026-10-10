@@ -74,6 +74,8 @@ class XgunApp(ShowBase):
         self.services = services or Services(probe=_probe())
         self.account = self.services.ensure_player()
         self.toasts = Toasts(self)
+        from video.thumbnails import ThumbnailMaker
+        self.thumbs = ThumbnailMaker(self)
         self.island = None
         self.world_view = None
         self.screen = None

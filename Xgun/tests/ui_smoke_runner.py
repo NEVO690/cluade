@@ -36,6 +36,18 @@ def main():
     tt = lobby.tab_obj
     assert tt.videos, "feed should contain the bundled sample clips"
     assert tt.player.tex is not None or tt.player.error is not None
+    # in-game thumbnail extraction (no ffmpeg on players' PCs)
+    vid = tt.videos[0]
+    assert app.thumbs.get(vid) is None or True
+    for _ in range(40):
+        steps(1)
+        if app.thumbs.get(vid) is not None:
+            break
+    from panda3d.core import PNMImage
+    from video.thumbnails import thumb_path
+    img = PNMImage(str(thumb_path(vid.id)))
+    assert (img.getXSize(), img.getYSize()) == (180, 320)
+    assert img.getAverageGray() > 0.03, "thumbnail is black"
     tt.next()
     tt._toggle_like()
     steps(2)

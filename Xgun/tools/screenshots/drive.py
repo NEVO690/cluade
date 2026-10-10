@@ -176,6 +176,15 @@ def main():
                 print("nearest bot", t.name, round(_m.hypot(t.x - p.x, t.y - p.y), 1), "m", t.state, "target",
                       getattr(sim.brains.get(t.id), "target", None) is p, flush=True)
             shot(f"fight{i}")
+    if scenario == "thumbs":
+        app.screen.select("TIKTOK")
+        steps(5)
+        tab = app.screen.tab_obj
+        acc = app.services.accounts.find_by_username("glide_guru")
+        tab.show_profile(acc.id)
+        steps(80)
+        print("thumbs written", app.thumbs.version, "failed", len(app.thumbs.failed), flush=True)
+        shot("social_profile_thumbs")
     if scenario == "results":
         app.start_match()
         for _ in range(400):
