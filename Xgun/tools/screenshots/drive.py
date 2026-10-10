@@ -122,6 +122,79 @@ def main():
         shot("match_map")
         m._press("m")
         steps(3)
+    if scenario == "midmatch":
+        app.start_match()
+        for _ in range(400):
+            steps(1)
+            if app.screen.__class__.__name__ == "MatchScreen":
+                break
+        m = app.screen
+        sim = m.sim
+        from game.match import TICK
+        p = sim.player
+        # fast-forward 70 s of simulation (bots drop, loot and start fighting)
+        while sim.time < 70:
+            sim.step(TICK, {p.id: m._gather_input()} if p.alive else {})
+            m._events(sim.drain_events())
+        poi = max(sim.layout.pois, key=lambda q: sum(1 for c in sim.alive if (c.x - q.x) ** 2 + (c.y - q.y) ** 2 < q.radius ** 2))
+        p.state, p.on_ground = "ground", True
+        p.health = 1e6
+        p.x, p.y = poi.x + 3, poi.y + 3
+        p.z = sim.collision.floor_height(p.x, p.y, 200, 0.4)
+        p.prev = (p.x, p.y, p.z)
+        w = sim.armory.roll_weapon(sim.rng, "supply")
+        p.inventory.add_weapon(w)
+        p.inventory.add_ammo(w.wdef.ammo, 200)
+        near = sorted(sim.alive, key=lambda c: (c.x - p.x) ** 2 + (c.y - p.y) ** 2)
+        tgt = near[1] if len(near) > 1 else near[0]
+        import math as _m
+        m.cam_yaw = _m.degrees(_m.atan2(-(tgt.x - p.x), tgt.y - p.y))
+        m.cam_pitch = -6
+        t0 = time.perf_counter()
+        n = 90
+        for _ in range(n):
+            steps(1)
+        dt = (time.perf_counter() - t0) / n
+        print(f"avg frame {dt * 1000:.1f} ms (render on CPU llvmpipe included), alive {len(sim.alive)}", flush=True)
+        import cProfile, pstats, io
+        pr = cProfile.Profile()
+        pr.enable()
+        for _ in range(30):
+            m._task(type("T", (), {"cont": 0})())
+        pr.disable()
+        st = io.StringIO()
+        pstats.Stats(pr, stream=st).sort_stats("cumulative").print_stats(12)
+        print(st.getvalue()[:2500])
+        shot("mid_view")
+        # let nearby bots engage the (invulnerable) player in real time
+        for i in range(4):
+            steps(20, 0.03)
+            near = sorted((c for c in sim.alive if c is not p), key=lambda c: (c.x - p.x) ** 2 + (c.y - p.y) ** 2)
+            if near:
+                t = near[0]
+                m.cam_yaw = _m.degrees(_m.atan2(-(t.x - p.x), t.y - p.y))
+                print("nearest bot", t.name, round(_m.hypot(t.x - p.x, t.y - p.y), 1), "m", t.state, "target",
+                      getattr(sim.brains.get(t.id), "target", None) is p, flush=True)
+            shot(f"fight{i}")
+    if scenario == "results":
+        app.start_match()
+        for _ in range(400):
+            steps(1)
+            if app.screen.__class__.__name__ == "MatchScreen":
+                break
+        m = app.screen
+        sim = m.sim
+        from game.match import TICK
+        p = sim.player
+        p.inventory.add_weapon(sim.armory.roll_weapon(sim.rng, "chest"))
+        while p.alive and not sim.over and sim.time < 1500:      # passive player: the storm or a bot gets us
+            sim.step(TICK, {p.id: m._gather_input()} if p.alive else {})
+            m._events(sim.drain_events())
+        steps(100)
+        shot("death_panel")
+        m._exit()
+        steps(40)
+        shot("results")
     app.destroy() if hasattr(app, "destroy") else None
 
 

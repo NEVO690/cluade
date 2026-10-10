@@ -197,3 +197,20 @@ def test_cosmetic_loadouts_do_not_change_gameplay(layout):
         a.step(TICK, {})
         b.step(TICK, {})
     assert [(round(c.x, 3), round(c.health, 3)) for c in a.combatants] == [(round(c.x, 3), round(c.health, 3)) for c in b.combatants]
+
+
+def test_bots_loot_weapons_and_keep_moving(layout):
+    import copy
+    sim = MatchSim(seed=4, bot_count=15, player_name=None, layout=copy.deepcopy(layout))
+    while sim.time < 100:
+        sim.step(TICK, {})
+        sim.drain_events()
+    pos = {c.id: (c.x, c.y) for c in sim.alive}
+    while sim.time < 115:
+        sim.step(TICK, {})
+        sim.drain_events()
+    alive = [c for c in sim.alive if c.id in pos]
+    armed = sum(1 for c in alive if c.inventory.weapons())
+    still = sum(1 for c in alive if math.hypot(c.x - pos[c.id][0], c.y - pos[c.id][1]) < 1.0)
+    assert armed >= 0.6 * len(alive), (armed, len(alive))
+    assert still <= max(2, len(alive) // 4), (still, len(alive))

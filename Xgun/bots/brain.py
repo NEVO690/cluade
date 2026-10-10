@@ -69,6 +69,11 @@ class BotBrain:
         self.fire_toggle = False
         self.wander = None
         self.door_via = None
+        self.ignore: set = set()          # goals that proved unreachable
+        self.goal_key = None
+        self.goal_since = 0.0
+        self.pulse = False
+        self.stuck_count = 0
 
     # ---------------------------------------------------------- helpers
     def _pick_drop_point(self):
@@ -107,9 +112,22 @@ class BotBrain:
         sx, sy, st = self.stuck_check
         if self.sim.time - st > 1.0:
             if math.hypot(me.x - sx, me.y - sy) < 1.2 and me.on_ground:
-                self.detour = self.rng.choice((-1, 1)) * self.rng.uniform(55, 100)
-                self.detour_timer = self.rng.uniform(0.8, 1.6)
+                # escalate: wider and longer detours, then give up on the destination
+                self.stuck_count += 1
+                n = min(self.stuck_count, 4)
+                side = 1 if self.stuck_count % 2 else -1
+                self.detour = side * (60 + 25 * n)
+                self.detour_timer = 0.8 + 0.6 * n
                 inp.jump = True
+                if self.stuck_count >= 5:
+                    if self.goal_key is not None:
+                        self.ignore.add(self.goal_key)
+                    self.goal = None
+                    self.wander = None
+                    self.door_via = None
+                    self.stuck_count = 0
+            elif math.hypot(me.x - sx, me.y - sy) > 3.0:
+                self.stuck_count = 0
             self.stuck_check = (me.x, me.y, self.sim.time)
         return dist
 
@@ -183,13 +201,13 @@ class BotBrain:
         # 2. loot nearby
         best, best_d = None, 70.0 if len(self._weapons()) < 3 else 35.0
         for k in sim.containers:
-            if k.opened or k.kind == "crate" or abs(k.z - me.z) > 1.6:
+            if k.opened or k.kind == "crate" or abs(k.z - me.z) > 1.6 or ("container", k.id) in self.ignore:
                 continue
             d = abs(k.x - me.x) + abs(k.y - me.y)
             if d < best_d:
                 best, best_d = ("container", k), d
         for it in sim.items.values():
-            if it.kind == "ammo" or abs(it.z - me.z) > 1.6:
+            if it.kind == "ammo" or abs(it.z - me.z) > 1.6 or ("item", it.id) in self.ignore:
                 continue
             if it.kind == "weapon" and not self._wants_weapon(it.payload):
                 continue
@@ -255,16 +273,23 @@ class BotBrain:
             return inp
 
         self.decide_timer -= dt
-        if self.decide_timer <= 0:
-            self.decide_timer = 0.25
-            self._scan()
-            if self.target is None:
-                self._choose_goal()
-
         engage = self.target is not None and self.target.alive
         if engage and not self._weapons():
             # unarmed: only brawl when cornered, otherwise keep looting
             engage = math.hypot(self.target.x - me.x, self.target.y - me.y) < 6 or sim.time - me.last_damage_time < 1.5
+        if self.decide_timer <= 0:
+            self.decide_timer = 0.25
+            self._scan()
+            if not engage:
+                self._choose_goal()
+                key = (self.goal_kind, getattr(self.goal_ref, "id", None)) if self.goal_kind in ("item", "container") else None
+                if key != self.goal_key:
+                    self.goal_key, self.goal_since = key, sim.time
+                elif key is not None and sim.time - self.goal_since > 12.0:
+                    self.ignore.add(key)          # unreachable (walls, other floors): try something else
+                    self.goal = None
+                    self.goal_key = None
+        engage = engage and self.target is not None and self.target.alive
         if engage:
             self._fight(inp, dt)
         else:
@@ -302,7 +327,11 @@ class BotBrain:
         dist = self._steer(inp, gx, gy, dt, stop_dist=1.4 if self.goal_kind in ("item", "container") else 4.0)
         if self.goal_kind in ("item", "container") and dist < 2.2 and self.door_via is None:
             inp.move_y = 0.0
-            inp.interact = True
+            if self.goal_kind == "container":
+                inp.interact = True                   # chests need a steady hold
+            else:
+                self.pulse = not self.pulse           # items are one pickup per press
+                inp.interact = self.pulse
             ref = self.goal_ref
             if (self.goal_kind == "container" and ref.opened) or (self.goal_kind == "item" and ref.id not in sim.items):
                 self.goal = None
