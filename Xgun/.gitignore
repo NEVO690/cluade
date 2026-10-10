@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 *.blend1
 server_data/
+Xgun_code.zip
+Xgun_assets.zip

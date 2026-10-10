@@ -35,8 +35,7 @@ def configure_panda(settings: Settings, *, offscreen: bool = False) -> None:
         "notify-level-ffmpeg fatal",
     ]
     if offscreen:
-        # the software renderer used offscreen only takes power-of-two textures
-        prc += ["window-type offscreen", "textures-power-2 down"]
+        prc.append("window-type offscreen")
     loadPrcFileData("xgun", "\n".join(prc))
 
 

@@ -1,22 +1,24 @@
 """Video thumbnails extracted in-game (no ffmpeg needed on the player's PC).
 
-A MovieTexture only decodes while it is being drawn, so each queued video is
-shown on an invisible card for a few frames, then one frame is copied out,
-letterboxed to 9:16 and cached as a PNG in the user folder.
+Frames are read straight from Panda3D's FFmpeg decoder (no rendering, so it
+works the same on every GPU and in the software renderer). One frame per
+game frame is tried until a non-black one turns up; it is letterboxed to
+9:16 and cached as a PNG in the user folder.
 """
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
-from panda3d.core import CardMaker, MovieTexture, PNMImage, TransparencyAttrib
+from panda3d.core import Filename, MovieVideo, PNMImage, Texture
 
 from config import paths
 from game.assets import fn
 
 log = logging.getLogger(__name__)
 THUMB_W, THUMB_H = 180, 320
-FRAMES_TO_WAIT = 4
+MAX_TRIES = 60
+MIN_BRIGHTNESS = 0.02
 
 
 def thumb_path(video_id: str) -> Path:
@@ -49,51 +51,46 @@ class ThumbnailMaker:
             if not self.queue:
                 return task.cont
             video_id, source = self.queue.pop(0)
-            tex = MovieTexture("thumb")
             try:
-                ok = tex.read(fn(source)) and tex.getVideoWidth() > 0
+                cursor = MovieVideo.get(Filename.from_os_specific(str(source))).open()
             except Exception:
-                ok = False
-            if not ok:
+                cursor = None
+            if cursor is None or cursor.size_x() <= 0:
                 self.failed.add(video_id)
                 return task.cont
-            tex.setLoop(False)
-            tex.setTime(min(1.0, tex.getVideoLength() * 0.3))
-            tex.play()
-            cm = CardMaker("thumb-card")
-            cm.setFrame(-0.001, 0.001, -0.001, 0.001)
-            card = self.app.render2d.attachNewNode(cm.generate())
-            card.setTexture(tex)
-            card.setTransparency(TransparencyAttrib.M_alpha)
-            card.setAlphaScale(0.0)           # drawn (so it decodes) but invisible
-            self._current = [video_id, tex, card, 0]
+            tex = Texture("thumb")
+            tex.setup2dTexture(cursor.size_x(), cursor.size_y(), Texture.T_unsigned_byte,
+                               Texture.F_rgba if cursor.getNumComponents() == 4 else Texture.F_rgb)
+            length = cursor.length() if cursor.length() > 0 else 3.0
+            # [video id, cursor, texture, seek time, step, tries]
+            self._current = [video_id, cursor, tex, min(1.0, length * 0.3), max(0.1, length / 30), 0]
             return task.cont
-        self._current[3] += 1
-        video_id, tex, card, waited = self._current
-        if waited < FRAMES_TO_WAIT:
-            return task.cont
+        cur = self._current
+        video_id, cursor, tex, t, step, tries = cur
+        cur[5] += 1
         try:
-            frame = PNMImage()
-            if tex.store(frame) and frame.getXSize() > 0:
-                self._write(video_id, frame, tex.getVideoWidth(), tex.getVideoHeight())
-                self.version += 1
-            else:
-                self.failed.add(video_id)
+            cursor.setTime(t, 0)
+            buf = cursor.fetchBuffer()        # decoding is threaded: may need a frame or two
+            if buf is not None:
+                cursor.applyToTexture(buf, tex, 0)
+                frame = PNMImage()
+                if tex.store(frame) and frame.getAverageGray() > MIN_BRIGHTNESS:
+                    self._write(video_id, frame)
+                    self.version += 1
+                    self._current = None
+                    return task.cont
+                cur[3] = t + step             # first frame after a seek can be blank: move on
         except Exception as exc:
             log.info("Thumbnail failed for %s: %s", video_id, exc)
+            cur[5] = MAX_TRIES
+        if cur[5] >= MAX_TRIES:
             self.failed.add(video_id)
-        tex.stop()
-        card.removeNode()
-        self._current = None
+            self._current = None
         return task.cont
 
     @staticmethod
-    def _write(video_id: str, frame: PNMImage, vw: int, vh: int) -> None:
-        # the texture may be padded to a power of two: crop to the real picture
-        if frame.getXSize() != vw or frame.getYSize() != vh:
-            crop = PNMImage(vw, vh)
-            crop.copySubImage(frame, 0, 0, 0, frame.getYSize() - vh, vw, vh)
-            frame = crop
+    def _write(video_id: str, frame: PNMImage) -> None:
+        vw, vh = frame.getXSize(), frame.getYSize()
         out = PNMImage(THUMB_W, THUMB_H)
         out.fill(0, 0, 0)
         scale = min(THUMB_W / vw, THUMB_H / vh)
