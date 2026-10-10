@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,7 +21,11 @@ def main(argv: list[str]) -> int:
     settings = Settings.load()
     if "--windowed" in argv:
         settings.fullscreen = False
-    app = XgunApp(settings)
+    offscreen = bool(os.environ.get("XGUN_OFFSCREEN"))   # CI / headless smoke runs (software renderer)
+    if offscreen:
+        from panda3d.core import loadPrcFileData
+        loadPrcFileData("offscreen", "load-display p3tinydisplay")
+    app = XgunApp(settings, offscreen=offscreen)
     app.run()
     return 0
 
