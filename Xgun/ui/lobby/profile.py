@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from direct.gui.DirectGui import DirectFrame
 
+from config.branding import SOCIAL_NAME
 from social.accounts import AccountError
 from ui import theme as T
 from ui.lobby.common import Tab, header, icon, item_thumb
@@ -40,10 +41,10 @@ class ProfileTab(Tab):
         if img is not None:
             img.setColorScale(*T.PINK)
         text(card, f"{social.followers:,}", (-1.48, 0.17), 0.06, T.TEXT, "black")
-        text(card, "TIKTOK FOLLOWERS", (-1.48, 0.12), 0.024, T.PINK, "bold")
+        text(card, f"{SOCIAL_NAME} FOLLOWERS", (-1.48, 0.12), 0.024, T.PINK, "bold")
         text(card, f"{social.following:,} following   •   {social.total_likes:,} likes   •   {social.video_count} videos",
              (-0.9, 0.2), 0.024, T.TEXT_DIM, "semibold")
-        Button(card, "OPEN TIKTOK PROFILE", self._open_social, pos=(-0.58, 0.135), size=(0.62, 0.065), color=T.PINK,
+        Button(card, f"OPEN {SOCIAL_NAME} PROFILE", self._open_social, pos=(-0.58, 0.135), size=(0.62, 0.065), color=T.PINK,
                hover=(1, 0.45, 0.6, 1), text_scale=0.026, extra_args=(target,))
         # stats
         st = prog.stats(target)

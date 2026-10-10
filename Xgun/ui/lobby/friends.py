@@ -1,6 +1,7 @@
 """FRIENDS tab: friend list, requests and finding local players."""
 from __future__ import annotations
 
+from config.branding import SOCIAL_NAME
 from social.friends import FriendError
 from ui import theme as T
 from ui.lobby.common import Tab, header, icon
@@ -26,7 +27,7 @@ class FriendsTab(Tab):
             frame(area.canvas, -1.64, -0.5, y - 0.04, y + 0.04, T.PANEL)
             fol = self.svc.social.follower_count(acc.id)
             text(area.canvas, acc.display_name, (-1.6, y + 0.005), 0.032, T.TEXT, "bold")
-            text(area.canvas, f"@{acc.username}  •  {fol} TikTok followers" + ("  •  DEMO" if acc.is_demo else ""),
+            text(area.canvas, f"@{acc.username}  •  {fol} {SOCIAL_NAME.title()} followers" + ("  •  DEMO" if acc.is_demo else ""),
                  (-1.6, y - 0.03), 0.022, T.TEXT_DIM, "semibold")
             Button(area.canvas, "Profile", self._profile, pos=(-0.82, y), size=(0.17, 0.055), text_scale=0.024,
                    extra_args=(acc.id,))

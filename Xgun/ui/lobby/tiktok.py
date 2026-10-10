@@ -11,6 +11,7 @@ from pathlib import Path
 
 from direct.gui.DirectGui import DirectFrame
 
+from config.branding import SOCIAL_NAME
 from social.backend import SocialError, VISIBILITIES
 from social.moderation import REPORT_REASONS
 from ui import theme as T
@@ -63,7 +64,7 @@ class TikTokTab(Tab):
     # ------------------------------------------------------------ chrome
     def _sidebar(self):
         r = self.root
-        text(r, "TIKTOK", (-1.62, 0.68), 0.075, T.TEXT, "black")
+        text(r, SOCIAL_NAME, (-1.62, 0.68), 0.075, T.TEXT, "black")
         DirectFrame(parent=r, frameSize=(-1.62, -1.3, 0.645, 0.652), frameColor=T.PINK)
         self.side_buttons = {}
         y = 0.55

@@ -8,6 +8,7 @@ from direct.gui.DirectGui import DirectFrame
 from direct.interval.IntervalGlobal import LerpColorScaleInterval, LerpPosInterval, Parallel
 from panda3d.core import AmbientLight, DirectionalLight, PointLight, Vec3
 
+from config.branding import SOCIAL_NAME
 from game.character_view import CharacterAvatar
 from ui import theme as T
 from ui.widgets import Button, Modal, ScrollArea, frame, image, text
@@ -144,8 +145,9 @@ class LobbyScreen:
         self.tab_buttons = {}
         x = 0.34
         for name in TABS:
-            w = 0.04 + len(name) * 0.024
-            b = Button(bar, name, self.select, pos=(x + w / 2, -0.07), size=(w, 0.08), color=(0, 0, 0, 0),
+            w = 0.04 + len(SOCIAL_NAME if name == "TIKTOK" else name) * 0.024
+            label = SOCIAL_NAME if name == "TIKTOK" else name
+            b = Button(bar, label, self.select, pos=(x + w / 2, -0.07), size=(w, 0.08), color=(0, 0, 0, 0),
                        hover=(1, 1, 1, 0.08), text_scale=0.032, extra_args=(name,), border=(0, 0, 0, 0))
             self.tab_buttons[name] = b
             x += w + 0.01
