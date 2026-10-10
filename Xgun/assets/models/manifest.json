@@ -1,0 +1,5375 @@
+{
+ "backpack_boombox": {
+  "model": "backpacks/backpack_boombox.glb",
+  "blend": "assets/blender/backpacks/backpack_boombox.blend",
+  "triangles": 2760,
+  "bytes": 201468,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.21,
+    -0.1825,
+    -0.18
+   ],
+   "max": [
+    0.21,
+    0.018,
+    0.294
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_boombox.png"
+ },
+ "backpack_crystal_core": {
+  "model": "backpacks/backpack_crystal_core.glb",
+  "blend": "assets/blender/backpacks/backpack_crystal_core.blend",
+  "triangles": 1180,
+  "bytes": 93124,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.12,
+    -0.242,
+    -0.22
+   ],
+   "max": [
+    0.12,
+    0.018,
+    0.23
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_crystal_core.png"
+ },
+ "backpack_daypack": {
+  "model": "backpacks/backpack_daypack.glb",
+  "blend": "assets/blender/backpacks/backpack_daypack.blend",
+  "triangles": 1092,
+  "bytes": 178808,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.15,
+    -0.226,
+    -0.2
+   ],
+   "max": [
+    0.15,
+    0.018,
+    0.273
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_daypack.png"
+ },
+ "backpack_ember_quiver": {
+  "model": "backpacks/backpack_ember_quiver.glb",
+  "blend": "assets/blender/backpacks/backpack_ember_quiver.blend",
+  "triangles": 1148,
+  "bytes": 182872,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.2734,
+    -0.2003,
+    -0.2566
+   ],
+   "max": [
+    0.1793,
+    0.018,
+    0.4193
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_ember_quiver.png"
+ },
+ "backpack_explorer_roll": {
+  "model": "backpacks/backpack_explorer_roll.glb",
+  "blend": "assets/blender/backpacks/backpack_explorer_roll.blend",
+  "triangles": 1972,
+  "bytes": 264656,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.229,
+    -0.2348,
+    -0.255
+   ],
+   "max": [
+    0.229,
+    0.018,
+    0.39
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_explorer_roll.png"
+ },
+ "backpack_jet_canister": {
+  "model": "backpacks/backpack_jet_canister.glb",
+  "blend": "assets/blender/backpacks/backpack_jet_canister.blend",
+  "triangles": 2820,
+  "bytes": 201632,
+  "type": "backpack",
+  "sockets": {
+   "back": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.185,
+    -0.205,
+    -0.267
+   ],
+   "max": [
+    0.185,
+    0.018,
+    0.236
+   ]
+  },
+  "thumb": "ui/thumbs/backpack_jet_canister.png"
+ },
+ "env_ammo_box": {
+  "model": "environment/env_ammo_box.glb",
+  "blend": "assets/blender/environment/env_ammo_box.blend",
+  "triangles": 724,
+  "bytes": 62512,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.31,
+    -0.16,
+    0.0
+   ],
+   "max": [
+    0.31,
+    0.16,
+    0.422
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.15
+    ],
+    "size": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_ammo_box.png"
+ },
+ "env_barrel": {
+  "model": "environment/env_barrel.glb",
+  "blend": "assets/blender/environment/env_barrel.blend",
+  "triangles": 812,
+  "bytes": 50036,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.445,
+    -0.445,
+    0.0
+   ],
+   "max": [
+    0.445,
+    0.445,
+    1.2
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.6
+    ],
+    "size": [
+     0.84,
+     0.84,
+     1.2
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_barrel.png"
+ },
+ "env_bush": {
+  "model": "environment/env_bush.glb",
+  "blend": "assets/blender/environment/env_bush.blend",
+  "triangles": 560,
+  "bytes": 77212,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -1.0326,
+    -1.0417,
+    -0.3528
+   ],
+   "max": [
+    1.1235,
+    0.7921,
+    1.3005
+   ]
+  },
+  "colliders": [],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_bush.png"
+ },
+ "env_car": {
+  "model": "environment/env_car.glb",
+  "blend": "assets/blender/environment/env_car.blend",
+  "triangles": 1652,
+  "bytes": 126164,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -1.1,
+    -2.295,
+    0.0055
+   ],
+   "max": [
+    1.1,
+    2.275,
+    1.55
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.8
+    ],
+    "size": [
+     1.9,
+     4.4,
+     1.6
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_car.png"
+ },
+ "env_dropship": {
+  "model": "environment/env_dropship.glb",
+  "blend": "assets/blender/environment/env_dropship.blend",
+  "triangles": 2976,
+  "bytes": 167220,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -8.85,
+    -8.045,
+    -2.64
+   ],
+   "max": [
+    8.85,
+    7.36,
+    4.6
+   ]
+  },
+  "colliders": [],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_dropship.png"
+ },
+ "env_fence": {
+  "model": "environment/env_fence.glb",
+  "blend": "assets/blender/environment/env_fence.blend",
+  "triangles": 60,
+  "bytes": 72448,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -2.1,
+    -0.075,
+    0.0
+   ],
+   "max": [
+    2.1,
+    0.075,
+    1.3
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.6
+    ],
+    "size": [
+     4.2,
+     0.2,
+     1.2
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_fence.png"
+ },
+ "env_gas_station": {
+  "model": "environment/env_gas_station.glb",
+  "blend": "assets/blender/environment/env_gas_station.blend",
+  "triangles": 780,
+  "bytes": 231552,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -8.0,
+    -6.2,
+    0.0
+   ],
+   "max": [
+    8.0,
+    6.0,
+    5.6
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.1
+    ],
+    "size": [
+     16,
+     12,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     0,
+     1.0,
+     5.3
+    ],
+    "size": [
+     10,
+     7,
+     0.6
+    ]
+   },
+   {
+    "center": [
+     -3.5,
+     -1.0,
+     2.6
+    ],
+    "size": [
+     0.4,
+     0.4,
+     5.0
+    ]
+   },
+   {
+    "center": [
+     -3.5,
+     3.0,
+     2.6
+    ],
+    "size": [
+     0.4,
+     0.4,
+     5.0
+    ]
+   },
+   {
+    "center": [
+     3.5,
+     -1.0,
+     2.6
+    ],
+    "size": [
+     0.4,
+     0.4,
+     5.0
+    ]
+   },
+   {
+    "center": [
+     3.5,
+     3.0,
+     2.6
+    ],
+    "size": [
+     0.4,
+     0.4,
+     5.0
+    ]
+   },
+   {
+    "center": [
+     -1.5,
+     1.0,
+     0.32
+    ],
+    "size": [
+     1.2,
+     4.0,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -1.5,
+     0.0,
+     1.25
+    ],
+    "size": [
+     0.7,
+     0.5,
+     1.6
+    ]
+   },
+   {
+    "center": [
+     -1.5,
+     2.0,
+     1.25
+    ],
+    "size": [
+     0.7,
+     0.5,
+     1.6
+    ]
+   },
+   {
+    "center": [
+     1.5,
+     1.0,
+     0.32
+    ],
+    "size": [
+     1.2,
+     4.0,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     1.5,
+     0.0,
+     1.25
+    ],
+    "size": [
+     0.7,
+     0.5,
+     1.6
+    ]
+   },
+   {
+    "center": [
+     1.5,
+     2.0,
+     1.25
+    ],
+    "size": [
+     0.7,
+     0.5,
+     1.6
+    ]
+   },
+   {
+    "center": [
+     -3.75,
+     -3.0,
+     1.7
+    ],
+    "size": [
+     0.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -2.0,
+     -3.0,
+     0.65
+    ],
+    "size": [
+     3.0,
+     0.25,
+     0.9
+    ]
+   },
+   {
+    "center": [
+     -2.0,
+     -3.0,
+     2.9
+    ],
+    "size": [
+     3.0,
+     0.25,
+     0.6
+    ]
+   },
+   {
+    "center": [
+     0.25,
+     -3.0,
+     1.7
+    ],
+    "size": [
+     1.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     1.6,
+     -3.0,
+     2.85
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     3.1,
+     -3.0,
+     1.7
+    ],
+    "size": [
+     1.8,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -6.0,
+     1.7
+    ],
+    "size": [
+     8.0,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.0,
+     -4.5,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.0,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     4.0,
+     -4.5,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.0,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0,
+     -4.5,
+     3.3
+    ],
+    "size": [
+     8.4,
+     3.4,
+     0.25
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    -2.0,
+    -4.5,
+    0.2
+   ],
+   [
+    0.0,
+    1.0,
+    0.45
+   ]
+  ],
+  "chest_spots": [
+   [
+    3.2,
+    -5.3,
+    0.2,
+    180
+   ]
+  ],
+  "thumb": "ui/thumbs/env_gas_station.png"
+ },
+ "env_house_a": {
+  "model": "environment/env_house_a.glb",
+  "blend": "assets/blender/environment/env_house_a.blend",
+  "triangles": 532,
+  "bytes": 319508,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -5.4,
+    -4.4313,
+    -0.15
+   ],
+   "max": [
+    5.4,
+    5.6996,
+    6.3
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.0,
+     0.0,
+     0.2
+    ],
+    "size": [
+     10.0,
+     8.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -4.1,
+     4.0,
+     1.9
+    ],
+    "size": [
+     1.8,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     -2.5,
+     4.0,
+     0.8
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.5,
+     4.0,
+     2.95
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     -1.2,
+     4.0,
+     1.9
+    ],
+    "size": [
+     1.2,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     4.0,
+     3.05
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.9
+    ]
+   },
+   {
+    "center": [
+     1.2,
+     4.0,
+     1.9
+    ],
+    "size": [
+     1.2,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     2.5,
+     4.0,
+     0.8
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     2.5,
+     4.0,
+     2.95
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     4.1,
+     4.0,
+     1.9
+    ],
+    "size": [
+     1.8,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     -4.0,
+     -4.0,
+     1.9
+    ],
+    "size": [
+     2.0,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     -2.3,
+     -4.0,
+     0.8
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.3,
+     -4.0,
+     2.95
+    ],
+    "size": [
+     1.4,
+     0.25,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     -0.1,
+     -4.0,
+     1.9
+    ],
+    "size": [
+     3.0,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     2.0,
+     -4.0,
+     3.05
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.9
+    ]
+   },
+   {
+    "center": [
+     3.8,
+     -4.0,
+     1.9
+    ],
+    "size": [
+     2.4,
+     0.25,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     -5.0,
+     -2.438,
+     1.9
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     -5.0,
+     0.0,
+     0.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -5.0,
+     0.0,
+     2.95
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     -5.0,
+     2.438,
+     1.9
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     5.0,
+     -2.438,
+     1.9
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     5.0,
+     0.0,
+     0.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     5.0,
+     0.0,
+     2.95
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     5.0,
+     2.438,
+     1.9
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     1.0,
+     -2.188,
+     1.9
+    ],
+    "size": [
+     0.15,
+     3.375,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     1.0,
+     0.0,
+     3.05
+    ],
+    "size": [
+     0.15,
+     1.0,
+     0.9
+    ]
+   },
+   {
+    "center": [
+     1.0,
+     2.188,
+     1.9
+    ],
+    "size": [
+     0.15,
+     3.375,
+     3.2
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     0.0,
+     4.49
+    ],
+    "size": [
+     10.0,
+     8.0,
+     1.9800000000000002
+    ]
+   },
+   {
+    "center": [
+     0,
+     4.8,
+     0.125
+    ],
+    "size": [
+     3.2,
+     1.6,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     1.5,
+     5.5,
+     1.55
+    ],
+    "size": [
+     0.16,
+     0.16,
+     2.6
+    ]
+   },
+   {
+    "center": [
+     -1.5,
+     5.5,
+     1.55
+    ],
+    "size": [
+     0.16,
+     0.16,
+     2.6
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    -3.0,
+    1.5,
+    0.3
+   ],
+   [
+    3.0,
+    2.5,
+    0.3
+   ],
+   [
+    -1.5,
+    -2.5,
+    0.3
+   ]
+  ],
+  "chest_spots": [
+   [
+    3.6,
+    -2.8,
+    0.3,
+    180
+   ]
+  ],
+  "thumb": "ui/thumbs/env_house_a.png"
+ },
+ "env_house_b": {
+  "model": "environment/env_house_b.glb",
+  "blend": "assets/blender/environment/env_house_b.blend",
+  "triangles": 1044,
+  "bytes": 247748,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -4.65,
+    -4.65,
+    0.0
+   ],
+   "max": [
+    4.65,
+    5.9,
+    7.1
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.0,
+     0.0,
+     0.1
+    ],
+    "size": [
+     9.0,
+     9.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -4.05,
+     4.5,
+     1.7
+    ],
+    "size": [
+     0.9,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -2.8,
+     4.5,
+     0.7
+    ],
+    "size": [
+     1.6,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.8,
+     4.5,
+     2.8
+    ],
+    "size": [
+     1.6,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     -1.3,
+     4.5,
+     1.7
+    ],
+    "size": [
+     1.4,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     4.5,
+     2.85
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     1.3,
+     4.5,
+     1.7
+    ],
+    "size": [
+     1.4,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     2.8,
+     4.5,
+     0.7
+    ],
+    "size": [
+     1.6,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     2.8,
+     4.5,
+     2.8
+    ],
+    "size": [
+     1.6,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     4.05,
+     4.5,
+     1.7
+    ],
+    "size": [
+     0.9,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -3.75,
+     -4.5,
+     1.7
+    ],
+    "size": [
+     1.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -2.4,
+     -4.5,
+     0.7
+    ],
+    "size": [
+     1.2,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.4,
+     -4.5,
+     2.8
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -4.5,
+     1.7
+    ],
+    "size": [
+     3.6,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     2.4,
+     -4.5,
+     0.7
+    ],
+    "size": [
+     1.2,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     2.4,
+     -4.5,
+     2.8
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     3.75,
+     -4.5,
+     1.7
+    ],
+    "size": [
+     1.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     -2.688,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     0.0,
+     0.7
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     0.0,
+     2.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     2.688,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     -2.688,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     0.0,
+     0.7
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     0.0,
+     2.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     2.688,
+     1.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.05,
+     4.5,
+     4.7
+    ],
+    "size": [
+     0.9,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -2.8,
+     4.5,
+     3.7
+    ],
+    "size": [
+     1.6,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.8,
+     4.5,
+     5.8
+    ],
+    "size": [
+     1.6,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     -1.3,
+     4.5,
+     4.7
+    ],
+    "size": [
+     1.4,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     4.5,
+     5.85
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     1.3,
+     4.5,
+     4.7
+    ],
+    "size": [
+     1.4,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     2.8,
+     4.5,
+     3.7
+    ],
+    "size": [
+     1.6,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     2.8,
+     4.5,
+     5.8
+    ],
+    "size": [
+     1.6,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     4.05,
+     4.5,
+     4.7
+    ],
+    "size": [
+     0.9,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -3.75,
+     -4.5,
+     4.7
+    ],
+    "size": [
+     1.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -2.4,
+     -4.5,
+     3.7
+    ],
+    "size": [
+     1.2,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -2.4,
+     -4.5,
+     5.8
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -4.5,
+     4.7
+    ],
+    "size": [
+     3.6,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     2.4,
+     -4.5,
+     3.7
+    ],
+    "size": [
+     1.2,
+     0.25,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     2.4,
+     -4.5,
+     5.8
+    ],
+    "size": [
+     1.2,
+     0.25,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     3.75,
+     -4.5,
+     4.7
+    ],
+    "size": [
+     1.5,
+     0.25,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     -2.688,
+     4.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     0.0,
+     3.7
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     0.0,
+     5.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     2.688,
+     4.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     -2.688,
+     4.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     0.0,
+     3.7
+    ],
+    "size": [
+     0.25,
+     2.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     0.0,
+     5.8
+    ],
+    "size": [
+     0.25,
+     2.0,
+     0.8
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     2.688,
+     4.7
+    ],
+    "size": [
+     0.25,
+     3.375,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -1.75,
+     3.1
+    ],
+    "size": [
+     9.0,
+     5.5,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -1.75,
+     2.75,
+     3.1
+    ],
+    "size": [
+     5.5,
+     3.5,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     4.135,
+     0.35
+    ],
+    "size": [
+     1.4,
+     0.33,
+     0.3
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     3.805,
+     0.5
+    ],
+    "size": [
+     1.4,
+     0.33,
+     0.6
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     3.475,
+     0.65
+    ],
+    "size": [
+     1.4,
+     0.33,
+     0.9
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     3.145,
+     0.8
+    ],
+    "size": [
+     1.4,
+     0.33,
+     1.2
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     2.815,
+     0.95
+    ],
+    "size": [
+     1.4,
+     0.33,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     2.485,
+     1.1
+    ],
+    "size": [
+     1.4,
+     0.33,
+     1.8
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     2.155,
+     1.25
+    ],
+    "size": [
+     1.4,
+     0.33,
+     2.1
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     1.825,
+     1.4
+    ],
+    "size": [
+     1.4,
+     0.33,
+     2.4
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     1.495,
+     1.55
+    ],
+    "size": [
+     1.4,
+     0.33,
+     2.7
+    ]
+   },
+   {
+    "center": [
+     3.2,
+     1.165,
+     1.7
+    ],
+    "size": [
+     1.4,
+     0.33,
+     3.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     0.0,
+     6.3
+    ],
+    "size": [
+     9.0,
+     9.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     4.5,
+     6.75
+    ],
+    "size": [
+     9.0,
+     0.3,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -4.5,
+     6.75
+    ],
+    "size": [
+     9.0,
+     0.3,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     0.0,
+     6.75
+    ],
+    "size": [
+     0.3,
+     9.0,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     0.0,
+     6.75
+    ],
+    "size": [
+     0.3,
+     9.0,
+     0.7
+    ]
+   },
+   {
+    "center": [
+     0,
+     5.2,
+     3.1
+    ],
+    "size": [
+     3.0,
+     1.4,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     0,
+     5.85,
+     4.2
+    ],
+    "size": [
+     3.0,
+     0.08,
+     0.08
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    -3.0,
+    -3.0,
+    0.2
+   ],
+   [
+    -2.0,
+    3.0,
+    0.2
+   ],
+   [
+    -3.0,
+    -2.5,
+    3.2
+   ],
+   [
+    2.0,
+    -3.0,
+    3.2
+   ]
+  ],
+  "chest_spots": [
+   [
+    -3.5,
+    3.4,
+    3.2,
+    90
+   ],
+   [
+    0.0,
+    0.0,
+    6.4,
+    0
+   ]
+  ],
+  "thumb": "ui/thumbs/env_house_b.png"
+ },
+ "env_lobby_stage": {
+  "model": "environment/env_lobby_stage.glb",
+  "blend": "assets/blender/environment/env_lobby_stage.blend",
+  "triangles": 2754,
+  "bytes": 144356,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -5.4879,
+    -7.1,
+    -0.5
+   ],
+   "max": [
+    5.4879,
+    4.0118,
+    5.5
+   ]
+  },
+  "colliders": [],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_lobby_stage.png"
+ },
+ "env_loot_chest": {
+  "model": "environment/env_loot_chest.glb",
+  "blend": "assets/blender/environment/env_loot_chest.blend",
+  "triangles": 444,
+  "bytes": 93816,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.5,
+    -0.31,
+    -0.009
+   ],
+   "max": [
+    0.5,
+    0.335,
+    0.461
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.225
+    ],
+    "size": [
+     1.0,
+     0.6,
+     0.45
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_loot_chest.png"
+ },
+ "env_loot_chest_lid": {
+  "model": "environment/env_loot_chest_lid.glb",
+  "blend": "assets/blender/environment/env_loot_chest_lid.blend",
+  "triangles": 338,
+  "bytes": 75024,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.5,
+    -0.025,
+    -0.0
+   ],
+   "max": [
+    0.5,
+    0.625,
+    0.325
+   ]
+  },
+  "colliders": [],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_loot_chest_lid.png"
+ },
+ "env_rock_a": {
+  "model": "environment/env_rock_a.glb",
+  "blend": "assets/blender/environment/env_rock_a.blend",
+  "triangles": 340,
+  "bytes": 89456,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -2.0946,
+    -1.7055,
+    -0.5944
+   ],
+   "max": [
+    2.3609,
+    1.741,
+    2.0266
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.3,
+     0.1,
+     0.8
+    ],
+    "size": [
+     3.6,
+     2.6,
+     1.6
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_rock_a.png"
+ },
+ "env_rock_b": {
+  "model": "environment/env_rock_b.glb",
+  "blend": "assets/blender/environment/env_rock_b.blend",
+  "triangles": 340,
+  "bytes": 87300,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -1.2378,
+    -1.0634,
+    -0.7042
+   ],
+   "max": [
+    1.867,
+    1.5724,
+    3.9894
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.1,
+     0.0,
+     1.6
+    ],
+    "size": [
+     2.2,
+     2.0,
+     3.2
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_rock_b.png"
+ },
+ "env_shop": {
+  "model": "environment/env_shop.glb",
+  "blend": "assets/blender/environment/env_shop.blend",
+  "triangles": 408,
+  "bytes": 223408,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -6.2,
+    -4.7,
+    0.0
+   ],
+   "max": [
+    6.2,
+    6.012,
+    5.1
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.0,
+     0.0,
+     0.1
+    ],
+    "size": [
+     12.0,
+     9.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -5.5,
+     4.5,
+     2.0
+    ],
+    "size": [
+     1.0,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     -3.1,
+     4.5,
+     0.45
+    ],
+    "size": [
+     3.8,
+     0.25,
+     0.5
+    ]
+   },
+   {
+    "center": [
+     -3.1,
+     4.5,
+     3.5
+    ],
+    "size": [
+     3.8,
+     0.25,
+     0.6
+    ]
+   },
+   {
+    "center": [
+     -1.0,
+     4.5,
+     2.0
+    ],
+    "size": [
+     0.4,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     4.5,
+     3.25
+    ],
+    "size": [
+     1.6,
+     0.25,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     1.0,
+     4.5,
+     2.0
+    ],
+    "size": [
+     0.4,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     3.1,
+     4.5,
+     0.45
+    ],
+    "size": [
+     3.8,
+     0.25,
+     0.5
+    ]
+   },
+   {
+    "center": [
+     3.1,
+     4.5,
+     3.5
+    ],
+    "size": [
+     3.8,
+     0.25,
+     0.6
+    ]
+   },
+   {
+    "center": [
+     5.5,
+     4.5,
+     2.0
+    ],
+    "size": [
+     1.0,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     -1.5,
+     -4.5,
+     2.0
+    ],
+    "size": [
+     9.0,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     3.6,
+     -4.5,
+     3.2
+    ],
+    "size": [
+     1.2,
+     0.25,
+     1.2
+    ]
+   },
+   {
+    "center": [
+     5.1,
+     -4.5,
+     2.0
+    ],
+    "size": [
+     1.8,
+     0.25,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     -6.0,
+     -2.938,
+     2.0
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     -6.0,
+     0.0,
+     0.7
+    ],
+    "size": [
+     0.25,
+     3.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -6.0,
+     0.0,
+     3.3
+    ],
+    "size": [
+     0.25,
+     3.0,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -6.0,
+     2.938,
+     2.0
+    ],
+    "size": [
+     0.25,
+     2.875,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     6.0,
+     0.0,
+     2.0
+    ],
+    "size": [
+     0.25,
+     8.75,
+     3.6
+    ]
+   },
+   {
+    "center": [
+     0,
+     0,
+     3.95
+    ],
+    "size": [
+     12.4,
+     9.4,
+     0.3
+    ]
+   },
+   {
+    "center": [
+     0,
+     4.7,
+     4.6
+    ],
+    "size": [
+     8.0,
+     0.3,
+     1.0
+    ]
+   },
+   {
+    "center": [
+     -3.5,
+     -1.5,
+     1.1
+    ],
+    "size": [
+     2.4,
+     0.6,
+     1.8
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -1.5,
+     1.1
+    ],
+    "size": [
+     2.4,
+     0.6,
+     1.8
+    ]
+   },
+   {
+    "center": [
+     3.5,
+     -1.5,
+     1.1
+    ],
+    "size": [
+     2.4,
+     0.6,
+     1.8
+    ]
+   },
+   {
+    "center": [
+     -3.5,
+     2.6,
+     0.75
+    ],
+    "size": [
+     3.0,
+     0.8,
+     1.1
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    -3.5,
+    -0.6,
+    0.2
+   ],
+   [
+    3.5,
+    -0.6,
+    0.2
+   ],
+   [
+    0,
+    2.0,
+    0.2
+   ],
+   [
+    4.5,
+    3.0,
+    0.2
+   ]
+  ],
+  "chest_spots": [
+   [
+    -5.2,
+    -3.6,
+    0.2,
+    90
+   ]
+  ],
+  "thumb": "ui/thumbs/env_shop.png"
+ },
+ "env_streetlamp": {
+  "model": "environment/env_streetlamp.glb",
+  "blend": "assets/blender/environment/env_streetlamp.blend",
+  "triangles": 220,
+  "bytes": 15176,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.09,
+    -0.15,
+    0.0
+   ],
+   "max": [
+    1.7,
+    0.15,
+    6.1476
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     3.0
+    ],
+    "size": [
+     0.25,
+     0.25,
+     6.0
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_streetlamp.png"
+ },
+ "env_supply_crate": {
+  "model": "environment/env_supply_crate.glb",
+  "blend": "assets/blender/environment/env_supply_crate.blend",
+  "triangles": 300,
+  "bytes": 94640,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.57,
+    -0.57,
+    -0.02
+   ],
+   "max": [
+    0.57,
+    0.57,
+    1.12
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     0.55
+    ],
+    "size": [
+     1.1,
+     1.1,
+     1.1
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_supply_crate.png"
+ },
+ "env_tower": {
+  "model": "environment/env_tower.glb",
+  "blend": "assets/blender/environment/env_tower.blend",
+  "triangles": 654,
+  "bytes": 233724,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -5.2,
+    -4.0,
+    0.0
+   ],
+   "max": [
+    4.0,
+    4.6,
+    14.2
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     2.2,
+     2.2,
+     5.0
+    ],
+    "size": [
+     0.4,
+     0.4,
+     10.0
+    ]
+   },
+   {
+    "center": [
+     2.2,
+     -2.2,
+     5.0
+    ],
+    "size": [
+     0.4,
+     0.4,
+     10.0
+    ]
+   },
+   {
+    "center": [
+     -2.2,
+     2.2,
+     5.0
+    ],
+    "size": [
+     0.4,
+     0.4,
+     10.0
+    ]
+   },
+   {
+    "center": [
+     -2.2,
+     -2.2,
+     5.0
+    ],
+    "size": [
+     0.4,
+     0.4,
+     10.0
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     0.0,
+     9.9
+    ],
+    "size": [
+     5.6,
+     5.6,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     2.75,
+     10.55
+    ],
+    "size": [
+     5.6,
+     0.15,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     0.0,
+     -2.75,
+     10.55
+    ],
+    "size": [
+     5.6,
+     0.15,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     2.75,
+     0.0,
+     10.55
+    ],
+    "size": [
+     0.15,
+     5.6,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     -2.75,
+     0.7,
+     10.55
+    ],
+    "size": [
+     0.15,
+     4.2,
+     1.1
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -2.824,
+     0.147
+    ],
+    "size": [
+     1.2,
+     0.353,
+     0.294
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -2.471,
+     0.294
+    ],
+    "size": [
+     1.2,
+     0.353,
+     0.588
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -2.118,
+     0.441
+    ],
+    "size": [
+     1.2,
+     0.353,
+     0.882
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -1.765,
+     0.588
+    ],
+    "size": [
+     1.2,
+     0.353,
+     1.176
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -1.412,
+     0.735
+    ],
+    "size": [
+     1.2,
+     0.353,
+     1.471
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -1.059,
+     0.882
+    ],
+    "size": [
+     1.2,
+     0.353,
+     1.765
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -0.706,
+     1.029
+    ],
+    "size": [
+     1.2,
+     0.353,
+     2.059
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     -0.353,
+     1.176
+    ],
+    "size": [
+     1.2,
+     0.353,
+     2.353
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     0.0,
+     1.324
+    ],
+    "size": [
+     1.2,
+     0.353,
+     2.647
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     0.353,
+     1.471
+    ],
+    "size": [
+     1.2,
+     0.353,
+     2.941
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     0.706,
+     1.618
+    ],
+    "size": [
+     1.2,
+     0.353,
+     3.235
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     1.059,
+     1.765
+    ],
+    "size": [
+     1.2,
+     0.353,
+     3.529
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     1.412,
+     1.912
+    ],
+    "size": [
+     1.2,
+     0.353,
+     3.824
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     1.765,
+     2.059
+    ],
+    "size": [
+     1.2,
+     0.353,
+     4.118
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     2.118,
+     2.206
+    ],
+    "size": [
+     1.2,
+     0.353,
+     4.412
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     2.471,
+     2.353
+    ],
+    "size": [
+     1.2,
+     0.353,
+     4.706
+    ]
+   },
+   {
+    "center": [
+     -4.6,
+     2.824,
+     2.5
+    ],
+    "size": [
+     1.2,
+     0.353,
+     5.0
+    ]
+   },
+   {
+    "center": [
+     -4.0,
+     3.8,
+     4.9
+    ],
+    "size": [
+     2.4,
+     1.6,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     3.2,
+     5.237
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     2.78,
+     5.594
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     2.36,
+     5.951
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     1.94,
+     6.309
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     1.52,
+     6.666
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     1.1,
+     7.023
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     0.68,
+     7.38
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     0.26,
+     7.737
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -0.16,
+     8.094
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -0.58,
+     8.451
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -1.0,
+     8.809
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -1.42,
+     9.166
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -1.84,
+     9.523
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   },
+   {
+    "center": [
+     -3.4,
+     -2.26,
+     9.88
+    ],
+    "size": [
+     1.2,
+     0.42,
+     0.25
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    0,
+    0,
+    10.0
+   ]
+  ],
+  "chest_spots": [
+   [
+    1.5,
+    1.5,
+    10.0,
+    225
+   ]
+  ],
+  "thumb": "ui/thumbs/env_tower.png"
+ },
+ "env_tree_oak": {
+  "model": "environment/env_tree_oak.glb",
+  "blend": "assets/blender/environment/env_tree_oak.blend",
+  "triangles": 2044,
+  "bytes": 307652,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -2.9132,
+    -2.7219,
+    0.0
+   ],
+   "max": [
+    3.1374,
+    2.8334,
+    8.1694
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     2.25
+    ],
+    "size": [
+     0.7,
+     0.7,
+     4.5
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_tree_oak.png"
+ },
+ "env_tree_palm": {
+  "model": "environment/env_tree_palm.glb",
+  "blend": "assets/blender/environment/env_tree_palm.blend",
+  "triangles": 1492,
+  "bytes": 177936,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -0.9461,
+    -2.5461,
+    -0.0423
+   ],
+   "max": [
+    4.1461,
+    2.5461,
+    5.8681
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.5,
+     0,
+     2.5
+    ],
+    "size": [
+     0.8,
+     0.6,
+     5.0
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_tree_palm.png"
+ },
+ "env_tree_pine": {
+  "model": "environment/env_tree_pine.glb",
+  "blend": "assets/blender/environment/env_tree_pine.blend",
+  "triangles": 196,
+  "bytes": 183112,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -2.4723,
+    -2.539,
+    0.0
+   ],
+   "max": [
+    2.5081,
+    2.6619,
+    9.4851
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0,
+     0,
+     3.0
+    ],
+    "size": [
+     0.6,
+     0.6,
+     6.0
+    ]
+   }
+  ],
+  "loot_spots": [],
+  "chest_spots": [],
+  "thumb": "ui/thumbs/env_tree_pine.png"
+ },
+ "env_warehouse": {
+  "model": "environment/env_warehouse.glb",
+  "blend": "assets/blender/environment/env_warehouse.blend",
+  "triangles": 1128,
+  "bytes": 301328,
+  "type": "environment",
+  "bounds": {
+   "min": [
+    -10.3,
+    -7.3,
+    -0.05
+   ],
+   "max": [
+    10.3,
+    7.35,
+    7.6
+   ]
+  },
+  "colliders": [
+   {
+    "center": [
+     0.0,
+     0.0,
+     0.05
+    ],
+    "size": [
+     20.0,
+     14.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -8.5,
+     7.0,
+     3.65
+    ],
+    "size": [
+     3.0,
+     0.3,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     -4.5,
+     7.0,
+     5.9
+    ],
+    "size": [
+     5.0,
+     0.3,
+     2.5
+    ]
+   },
+   {
+    "center": [
+     0.5,
+     7.0,
+     3.65
+    ],
+    "size": [
+     5.0,
+     0.3,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     3.7,
+     7.0,
+     4.85
+    ],
+    "size": [
+     1.4,
+     0.3,
+     4.6
+    ]
+   },
+   {
+    "center": [
+     7.2,
+     7.0,
+     3.65
+    ],
+    "size": [
+     5.6,
+     0.3,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     -4.0,
+     -7.0,
+     3.65
+    ],
+    "size": [
+     12.0,
+     0.3,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     4.5,
+     -7.0,
+     5.9
+    ],
+    "size": [
+     5.0,
+     0.3,
+     2.5
+    ]
+   },
+   {
+    "center": [
+     8.5,
+     -7.0,
+     3.65
+    ],
+    "size": [
+     3.0,
+     0.3,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     -10.0,
+     -4.0,
+     3.65
+    ],
+    "size": [
+     0.3,
+     6.0,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     -10.0,
+     0.0,
+     4.85
+    ],
+    "size": [
+     0.3,
+     2.0,
+     4.6
+    ]
+   },
+   {
+    "center": [
+     -10.0,
+     4.0,
+     3.65
+    ],
+    "size": [
+     0.3,
+     6.0,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     10.0,
+     0.0,
+     3.65
+    ],
+    "size": [
+     0.3,
+     14.0,
+     7.0
+    ]
+   },
+   {
+    "center": [
+     0,
+     0,
+     7.3
+    ],
+    "size": [
+     20.6,
+     14.6,
+     0.3
+    ]
+   },
+   {
+    "center": [
+     -4.223,
+     -3.968,
+     0.9
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     -0.338,
+     -4.099,
+     0.75
+    ],
+    "size": [
+     1.2,
+     1.2,
+     1.2
+    ]
+   },
+   {
+    "center": [
+     -1.575,
+     4.18,
+     0.75
+    ],
+    "size": [
+     1.2,
+     1.2,
+     1.2
+    ]
+   },
+   {
+    "center": [
+     -4.449,
+     0.367,
+     0.9
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     4.476,
+     3.269,
+     0.9
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     -4.57,
+     4.275,
+     0.9
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     4.807,
+     -3.066,
+     0.9
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   {
+    "center": [
+     0,
+     -5.7,
+     3.6
+    ],
+    "size": [
+     19.0,
+     2.0,
+     0.2
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     5.558,
+     0.294
+    ],
+    "size": [
+     1.6,
+     0.883,
+     0.288
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     4.675,
+     0.438
+    ],
+    "size": [
+     1.6,
+     0.883,
+     0.575
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     3.792,
+     0.581
+    ],
+    "size": [
+     1.6,
+     0.883,
+     0.863
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     2.908,
+     0.725
+    ],
+    "size": [
+     1.6,
+     0.883,
+     1.15
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     2.025,
+     0.869
+    ],
+    "size": [
+     1.6,
+     0.883,
+     1.438
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     1.142,
+     1.013
+    ],
+    "size": [
+     1.6,
+     0.883,
+     1.725
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     0.258,
+     1.156
+    ],
+    "size": [
+     1.6,
+     0.883,
+     2.013
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     -0.625,
+     1.3
+    ],
+    "size": [
+     1.6,
+     0.883,
+     2.3
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     -1.508,
+     1.444
+    ],
+    "size": [
+     1.6,
+     0.883,
+     2.587
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     -2.392,
+     1.587
+    ],
+    "size": [
+     1.6,
+     0.883,
+     2.875
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     -3.275,
+     1.731
+    ],
+    "size": [
+     1.6,
+     0.883,
+     3.163
+    ]
+   },
+   {
+    "center": [
+     -8.6,
+     -4.158,
+     1.875
+    ],
+    "size": [
+     1.6,
+     0.883,
+     3.45
+    ]
+   }
+  ],
+  "loot_spots": [
+   [
+    -6,
+    3,
+    0.15
+   ],
+   [
+    6,
+    3,
+    0.15
+   ],
+   [
+    0,
+    -2,
+    0.15
+   ],
+   [
+    -5,
+    -5.7,
+    3.7
+   ],
+   [
+    5,
+    -5.7,
+    3.7
+   ]
+  ],
+  "chest_spots": [
+   [
+    8.5,
+    -5.5,
+    0.15,
+    180
+   ],
+   [
+    0,
+    -5.7,
+    3.7,
+    0
+   ]
+  ],
+  "thumb": "ui/thumbs/env_warehouse.png"
+ },
+ "glider_delta_jet": {
+  "model": "gliders/glider_delta_jet.glb",
+  "blend": "assets/blender/gliders/glider_delta_jet.blend",
+  "triangles": 2268,
+  "bytes": 123440,
+  "type": "glider",
+  "sockets": {
+   "handle": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -1.295,
+    -0.8959,
+    -0.019
+   ],
+   "max": [
+    1.295,
+    0.75,
+    1.28
+   ]
+  },
+  "thumb": "ui/thumbs/glider_delta_jet.png"
+ },
+ "glider_kite_ray": {
+  "model": "gliders/glider_kite_ray.glb",
+  "blend": "assets/blender/gliders/glider_kite_ray.blend",
+  "triangles": 1144,
+  "bytes": 121472,
+  "type": "glider",
+  "sockets": {
+   "handle": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -1.5,
+    -1.8011,
+    -0.019
+   ],
+   "max": [
+    1.5,
+    0.5,
+    1.17
+   ]
+  },
+  "thumb": "ui/thumbs/glider_kite_ray.png"
+ },
+ "glider_patchwork": {
+  "model": "gliders/glider_patchwork.glb",
+  "blend": "assets/blender/gliders/glider_patchwork.blend",
+  "triangles": 1524,
+  "bytes": 484280,
+  "type": "glider",
+  "sockets": {
+   "handle": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -1.5257,
+    -0.45,
+    -0.019
+   ],
+   "max": [
+    1.5257,
+    0.45,
+    1.9308
+   ]
+  },
+  "thumb": "ui/thumbs/glider_patchwork.png"
+ },
+ "glider_phoenix": {
+  "model": "gliders/glider_phoenix.glb",
+  "blend": "assets/blender/gliders/glider_phoenix.blend",
+  "triangles": 968,
+  "bytes": 120736,
+  "type": "glider",
+  "sockets": {
+   "handle": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -1.7181,
+    -0.3673,
+    -0.019
+   ],
+   "max": [
+    1.7181,
+    0.3542,
+    1.4577
+   ]
+  },
+  "thumb": "ui/thumbs/glider_phoenix.png"
+ },
+ "glider_wing_sail": {
+  "model": "gliders/glider_wing_sail.glb",
+  "blend": "assets/blender/gliders/glider_wing_sail.blend",
+  "triangles": 248,
+  "bytes": 139668,
+  "type": "glider",
+  "sockets": {
+   "handle": [
+    0,
+    0,
+    0
+   ]
+  },
+  "bounds": {
+   "min": [
+    -1.4,
+    -0.35,
+    -0.019
+   ],
+   "max": [
+    1.4,
+    0.65,
+    1.118
+   ]
+  },
+  "thumb": "ui/thumbs/glider_wing_sail.png"
+ },
+ "item_bandage_roll": {
+  "model": "items/item_bandage_roll.glb",
+  "blend": "assets/blender/items/item_bandage_roll.blend",
+  "triangles": 580,
+  "bytes": 89800,
+  "type": "item",
+  "bounds": {
+   "min": [
+    -0.0645,
+    -0.0645,
+    -0.001
+   ],
+   "max": [
+    0.0676,
+    0.0799,
+    0.091
+   ]
+  },
+  "thumb": "ui/thumbs/item_bandage_roll.png"
+ },
+ "item_medkit": {
+  "model": "items/item_medkit.glb",
+  "blend": "assets/blender/items/item_medkit.blend",
+  "triangles": 904,
+  "bytes": 81596,
+  "type": "item",
+  "bounds": {
+   "min": [
+    -0.1525,
+    -0.0625,
+    0.0
+   ],
+   "max": [
+    0.1525,
+    0.067,
+    0.265
+   ]
+  },
+  "thumb": "ui/thumbs/item_medkit.png"
+ },
+ "item_shield_cell": {
+  "model": "items/item_shield_cell.glb",
+  "blend": "assets/blender/items/item_shield_cell.blend",
+  "triangles": 840,
+  "bytes": 34684,
+  "type": "item",
+  "bounds": {
+   "min": [
+    -0.051,
+    -0.051,
+    -0.0005
+   ],
+   "max": [
+    0.051,
+    0.051,
+    0.1925
+   ]
+  },
+  "thumb": "ui/thumbs/item_shield_cell.png"
+ },
+ "item_shield_keg": {
+  "model": "items/item_shield_keg.glb",
+  "blend": "assets/blender/items/item_shield_keg.blend",
+  "triangles": 1284,
+  "bytes": 78776,
+  "type": "item",
+  "bounds": {
+   "min": [
+    -0.104,
+    -0.104,
+    0.0
+   ],
+   "max": [
+    0.104,
+    0.12,
+    0.26
+   ]
+  },
+  "thumb": "ui/thumbs/item_shield_keg.png"
+ },
+ "outfit_ember_ronin": {
+  "model": "characters/outfit_ember_ronin.glb",
+  "blend": "assets/blender/characters/outfit_ember_ronin.blend",
+  "triangles": 13830,
+  "bytes": 1796492,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.865,
+  "thumb": "ui/thumbs/outfit_ember_ronin.png"
+ },
+ "outfit_frost_warden": {
+  "model": "characters/outfit_frost_warden.glb",
+  "blend": "assets/blender/characters/outfit_frost_warden.blend",
+  "triangles": 16736,
+  "bytes": 1894372,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.873,
+  "thumb": "ui/thumbs/outfit_frost_warden.png"
+ },
+ "outfit_glitch_medic": {
+  "model": "characters/outfit_glitch_medic.glb",
+  "blend": "assets/blender/characters/outfit_glitch_medic.blend",
+  "triangles": 14040,
+  "bytes": 1718476,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.8,
+  "thumb": "ui/thumbs/outfit_glitch_medic.png"
+ },
+ "outfit_nova_sentinel": {
+  "model": "characters/outfit_nova_sentinel.glb",
+  "blend": "assets/blender/characters/outfit_nova_sentinel.blend",
+  "triangles": 15104,
+  "bytes": 1533692,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.889,
+  "thumb": "ui/thumbs/outfit_nova_sentinel.png"
+ },
+ "outfit_tidal_drifter": {
+  "model": "characters/outfit_tidal_drifter.glb",
+  "blend": "assets/blender/characters/outfit_tidal_drifter.blend",
+  "triangles": 13264,
+  "bytes": 1606700,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.807,
+  "thumb": "ui/thumbs/outfit_tidal_drifter.png"
+ },
+ "outfit_vex_runner": {
+  "model": "characters/outfit_vex_runner.glb",
+  "blend": "assets/blender/characters/outfit_vex_runner.blend",
+  "triangles": 14572,
+  "bytes": 1755100,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.825,
+  "thumb": "ui/thumbs/outfit_vex_runner.png"
+ },
+ "outfit_volt_brawler": {
+  "model": "characters/outfit_volt_brawler.glb",
+  "blend": "assets/blender/characters/outfit_volt_brawler.blend",
+  "triangles": 13056,
+  "bytes": 1656720,
+  "type": "character",
+  "animations": {
+   "idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "lobby_idle": {
+    "frames": 91,
+    "loop": true
+   },
+   "walk": {
+    "frames": 37,
+    "loop": true
+   },
+   "run": {
+    "frames": 21,
+    "loop": true
+   },
+   "sprint": {
+    "frames": 17,
+    "loop": true
+   },
+   "crouch_idle": {
+    "frames": 61,
+    "loop": true
+   },
+   "crouch_walk": {
+    "frames": 33,
+    "loop": true
+   },
+   "jump": {
+    "frames": 11,
+    "loop": false
+   },
+   "fall": {
+    "frames": 21,
+    "loop": true
+   },
+   "skydive": {
+    "frames": 31,
+    "loop": true
+   },
+   "glide": {
+    "frames": 41,
+    "loop": true
+   },
+   "death": {
+    "frames": 25,
+    "loop": false
+   },
+   "hold_rifle": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pistol": {
+    "frames": 61,
+    "loop": true
+   },
+   "hold_pickaxe": {
+    "frames": 61,
+    "loop": true
+   },
+   "fire_rifle": {
+    "frames": 5,
+    "loop": false
+   },
+   "reload_rifle": {
+    "frames": 41,
+    "loop": false
+   },
+   "reload_pistol": {
+    "frames": 31,
+    "loop": false
+   },
+   "pickaxe_swing": {
+    "frames": 19,
+    "loop": false
+   },
+   "use_item": {
+    "frames": 21,
+    "loop": true
+   },
+   "emote_wave": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_groove": {
+    "frames": 33,
+    "loop": true
+   },
+   "emote_flex": {
+    "frames": 61,
+    "loop": true
+   },
+   "emote_robot": {
+    "frames": 41,
+    "loop": true
+   },
+   "emote_bounce": {
+    "frames": 25,
+    "loop": true
+   }
+  },
+  "hold_frames": {
+   "rifle": {
+    "pos": [
+     0.15057,
+     0.3715,
+     1.22834
+    ],
+    "quat": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "pistol": {
+    "pos": [
+     0.07832,
+     0.51398,
+     1.33389
+    ],
+    "quat": [
+     0.990969,
+     0.115657,
+     -0.045493,
+     -0.050342
+    ]
+   },
+   "pickaxe": {
+    "pos": [
+     0.27,
+     0.28464,
+     1.07803
+    ],
+    "quat": [
+     0.929992,
+     0.317368,
+     0.154335,
+     -0.102822
+    ]
+   }
+  },
+  "sockets": {
+   "weapon": "socket_weapon",
+   "back": "socket_back"
+  },
+  "height": 1.83,
+  "thumb": "ui/thumbs/outfit_volt_brawler.png"
+ },
+ "pickaxe_circuit_splitter": {
+  "model": "pickaxes/pickaxe_circuit_splitter.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_circuit_splitter.blend",
+  "triangles": 1936,
+  "bytes": 113972,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.36,
+    0.62
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.046,
+    -0.3288,
+    -0.21
+   ],
+   "max": [
+    0.046,
+    0.3889,
+    0.6499
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_circuit_splitter.png"
+ },
+ "pickaxe_dragonfang": {
+  "model": "pickaxes/pickaxe_dragonfang.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_dragonfang.blend",
+  "triangles": 2356,
+  "bytes": 229504,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.4,
+    0.65
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.028,
+    -0.1837,
+    -0.2015
+   ],
+   "max": [
+    0.049,
+    0.4171,
+    0.6509
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_dragonfang.png"
+ },
+ "pickaxe_frostbite": {
+  "model": "pickaxes/pickaxe_frostbite.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_frostbite.blend",
+  "triangles": 1812,
+  "bytes": 153552,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.3,
+    0.6
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.0307,
+    -0.2335,
+    -0.21
+   ],
+   "max": [
+    0.0312,
+    0.3155,
+    0.7784
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_frostbite.png"
+ },
+ "pickaxe_gearbreaker": {
+  "model": "pickaxes/pickaxe_gearbreaker.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_gearbreaker.blend",
+  "triangles": 2084,
+  "bytes": 154804,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.33,
+    0.62
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.082,
+    -0.16,
+    -0.21
+   ],
+   "max": [
+    0.06,
+    0.3667,
+    0.723
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_gearbreaker.png"
+ },
+ "pickaxe_iron_pick": {
+  "model": "pickaxes/pickaxe_iron_pick.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_iron_pick.blend",
+  "triangles": 1764,
+  "bytes": 226580,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.3,
+    0.55
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.03,
+    -0.2965,
+    -0.21
+   ],
+   "max": [
+    0.03,
+    0.2965,
+    0.6
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_iron_pick.png"
+ },
+ "pickaxe_spray_hook": {
+  "model": "pickaxes/pickaxe_spray_hook.glb",
+  "blend": "assets/blender/pickaxes/pickaxe_spray_hook.blend",
+  "triangles": 1636,
+  "bytes": 193772,
+  "type": "pickaxe",
+  "sockets": {
+   "grip": [
+    0,
+    0,
+    0
+   ],
+   "head": [
+    0,
+    0.27,
+    0.62
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.065,
+    -0.12,
+    -0.205
+   ],
+   "max": [
+    0.065,
+    0.3044,
+    0.812
+   ]
+  },
+  "thumb": "ui/thumbs/pickaxe_spray_hook.png"
+ },
+ "prop_boombox": {
+  "model": "props/prop_boombox.glb",
+  "blend": "assets/blender/props/prop_boombox.blend",
+  "triangles": 2544,
+  "bytes": 187272,
+  "type": "prop",
+  "sockets": {},
+  "bounds": {
+   "min": [
+    -0.21,
+    -0.1825,
+    -0.14
+   ],
+   "max": [
+    0.21,
+    -0.02,
+    0.294
+   ]
+  },
+  "thumb": "ui/thumbs/prop_boombox.png"
+ },
+ "weapon_breacher_shotgun": {
+  "model": "weapons/weapon_breacher_shotgun.glb",
+  "blend": "assets/blender/weapons/weapon_breacher_shotgun.blend",
+  "triangles": 2408,
+  "bytes": 216088,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    0.68,
+    0.085
+   ],
+   "grip_l": [
+    0,
+    0.33,
+    0.02
+   ],
+   "sight": [
+    0,
+    0.1,
+    0.125
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.034,
+    -0.365,
+    -0.1067
+   ],
+   "max": [
+    0.044,
+    0.68,
+    0.115
+   ]
+  },
+  "hold": "rifle",
+  "thumb": "ui/thumbs/weapon_breacher_shotgun.png"
+ },
+ "weapon_hornet_smg": {
+  "model": "weapons/weapon_hornet_smg.glb",
+  "blend": "assets/blender/weapons/weapon_hornet_smg.blend",
+  "triangles": 1656,
+  "bytes": 139004,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    0.42,
+    0.065
+   ],
+   "grip_l": [
+    0,
+    0.26,
+    -0.03
+   ],
+   "sight": [
+    0,
+    0.065,
+    0.135
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.0333,
+    -0.26,
+    -0.1808
+   ],
+   "max": [
+    0.0333,
+    0.42,
+    0.163
+   ]
+  },
+  "hold": "rifle",
+  "thumb": "ui/thumbs/weapon_hornet_smg.png"
+ },
+ "weapon_ion_lance": {
+  "model": "weapons/weapon_ion_lance.glb",
+  "blend": "assets/blender/weapons/weapon_ion_lance.blend",
+  "triangles": 2496,
+  "bytes": 169516,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    0.8,
+    0.07
+   ],
+   "grip_l": [
+    0,
+    0.3,
+    0.035
+   ],
+   "sight": [
+    0,
+    0.02,
+    0.17
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.039,
+    -0.3176,
+    -0.1167
+   ],
+   "max": [
+    0.039,
+    0.798,
+    0.1575
+   ]
+  },
+  "hold": "rifle",
+  "thumb": "ui/thumbs/weapon_ion_lance.png"
+ },
+ "weapon_longshot_sniper": {
+  "model": "weapons/weapon_longshot_sniper.glb",
+  "blend": "assets/blender/weapons/weapon_longshot_sniper.blend",
+  "triangles": 2252,
+  "bytes": 143636,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    1.02,
+    0.065
+   ],
+   "grip_l": [
+    0,
+    0.3,
+    0.03
+   ],
+   "sight": [
+    0,
+    -0.12,
+    0.15
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.034,
+    -0.3988,
+    -0.1167
+   ],
+   "max": [
+    0.094,
+    1.02,
+    0.195
+   ]
+  },
+  "hold": "rifle",
+  "thumb": "ui/thumbs/weapon_longshot_sniper.png"
+ },
+ "weapon_sidekick_pistol": {
+  "model": "weapons/weapon_sidekick_pistol.glb",
+  "blend": "assets/blender/weapons/weapon_sidekick_pistol.blend",
+  "triangles": 740,
+  "bytes": 98964,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    0.195,
+    0.06
+   ],
+   "grip_l": [
+    0,
+    -0.005,
+    -0.04
+   ],
+   "sight": [
+    0,
+    -0.02,
+    0.09
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.017,
+    -0.055,
+    -0.1161
+   ],
+   "max": [
+    0.017,
+    0.19,
+    0.087
+   ]
+  },
+  "hold": "pistol",
+  "thumb": "ui/thumbs/weapon_sidekick_pistol.png"
+ },
+ "weapon_striker_ar": {
+  "model": "weapons/weapon_striker_ar.glb",
+  "blend": "assets/blender/weapons/weapon_striker_ar.blend",
+  "triangles": 2076,
+  "bytes": 222940,
+  "type": "weapon",
+  "sockets": {
+   "muzzle": [
+    0,
+    0.72,
+    0.07
+   ],
+   "grip_l": [
+    0,
+    0.33,
+    0.035
+   ],
+   "sight": [
+    0,
+    0.07,
+    0.145
+   ]
+  },
+  "bounds": {
+   "min": [
+    -0.0333,
+    -0.325,
+    -0.139
+   ],
+   "max": [
+    0.04,
+    0.71,
+    0.173
+   ]
+  },
+  "hold": "rifle",
+  "thumb": "ui/thumbs/weapon_striker_ar.png"
+ }
+}
