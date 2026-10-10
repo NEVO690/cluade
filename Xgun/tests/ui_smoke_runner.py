@@ -40,6 +40,43 @@ def main():
     tt._toggle_like()
     steps(2)
     assert tt.current.liked
+    # upload flow through the real UI: a broken file is rejected, a real clip is posted
+    import shutil
+    import tempfile
+    from config import paths
+    tmp = Path(tempfile.mkdtemp())
+    bad = tmp / "broken.mp4"
+    bad.write_bytes(b"not a video" * 500)
+    tt.show_upload()
+    steps(2)
+    tt.u_path.set(str(bad))
+    tt.u_title.set("Broken clip")
+    tt._do_upload()
+    assert "video" in tt.u_status.getText().lower(), tt.u_status.getText()
+    good = tmp / "my_clip.mp4"
+    shutil.copyfile(paths.SAMPLE_VIDEOS / "groove_check.mp4", good)
+    tt.u_path.set(str(good))
+    tt.u_title.set("My first drop #xgun")
+    tt._do_upload()
+    steps(2)
+    mine = app.services.social.profile_videos(app.account.id, app.account.id)
+    assert len(mine) == 1 and mine[0].title == "My first drop #xgun"
+    assert Path(mine[0].file_path).exists() and paths.user_dir() in Path(mine[0].file_path).parents
+    # friends between two local accounts, then follow -> follower count on the profile
+    me = app.account.id
+    other = app.services.accounts.create("second_player", "Second")
+    lobby.select("FRIENDS")
+    steps(2)
+    lobby.tab_obj._add(other.id)
+    req = app.services.friends.incoming(other.id)[0]
+    app.services.friends.accept(req.id, other.id)
+    assert app.services.friends.are_friends(me, other.id)
+    app.services.social.set_follow(other.id, me, True)
+    lobby.select("PROFILE")
+    steps(2)
+    assert app.services.social.profile(me, me).followers == 1
+    lobby.select("PLAY")
+    steps(2)
     before = app.services.wallet.balance(app.account.id)
     app.start_match()
     for _ in range(300):
