@@ -31,6 +31,9 @@ class ControlInput:
     cycle: int = 0               # -1 / +1 (mouse wheel)
     deploy: bool = False         # leave the drop ship / open glider
     emote: str | None = None
+    build_toggle: bool = False   # enter / leave build mode
+    build_piece: str | None = None   # wall / floor / ramp
+    build_material_next: bool = False
 
 
 @dataclass
@@ -85,7 +88,11 @@ class Combatant:
     last_damage_time: float = -99.0
     storm_tick: float = 0.0
     landed_time: float = -1.0
-    action: str = ""             # transient animation cue: fire / reload / swing / use
+    action: str = ""             # transient animation cue: fire / reload / swing / use / build
+    materials: dict = field(default_factory=lambda: {"wood": 0, "stone": 0, "metal": 0})
+    build_mode: bool = False
+    build_piece: str = "wall"
+    build_material: str = "wood"
 
     @property
     def alive(self) -> bool:

@@ -51,6 +51,8 @@ class HUD:
             count = text(box, "", (0.048, -0.048), 0.026, T.TEXT, "bold", "right")
             rarity = DirectFrame(parent=box, frameSize=(-0.055, 0.055, -0.055, -0.045), frameColor=(0, 0, 0, 0))
             self.slots.append({"box": box, "count": count, "rarity": rarity, "img": None, "item": "?", "key": key})
+        self.mats = text(self.hotbar, "", (-0.06, 0.17), 0.032, T.TEXT, "bold", "right", shadow=True)
+        self.build_hint = text(self.root, "", (0, -0.55), 0.034, T.ACCENT, "bold", "center", shadow=True)
         self.ammo_big = text(self.hotbar, "", (-0.38, 0.1), 0.06, T.TEXT, "black", "right")
         self.ammo_small = text(self.hotbar, "", (-0.36, 0.1), 0.035, T.TEXT_DIM, "bold")
         self.weapon_name = text(self.hotbar, "", (-0.06, 0.1), 0.036, T.TEXT, "bold", "right")
@@ -241,8 +243,18 @@ class HUD:
             sel = inv.selected == i
             slot["box"]["frameColor"] = (0.25, 0.2, 0.5, 0.85) if sel else (0.05, 0.06, 0.12, 0.7)
             slot["box"].setScale(1.12 if sel else 1.0)
+        m = p.materials
+        self.mats.setText("   ".join(("> " if p.build_mode and p.build_material == k else "") + f"{k.upper()} {m[k]}"
+                                     for k in ("wood", "stone", "metal")))
+        self.build_hint.setText(f"BUILD MODE  •  {p.build_piece.upper()} ({p.build_material})   [1] Wall  [2] Floor  "
+                                f"[3] Ramp  [4] Material  [Q] Exit" if p.build_mode else "")
         cur = inv.current
-        if isinstance(cur, WeaponInstance):
+        if p.build_mode:
+            self.ammo_big.setText("")
+            self.ammo_small.setText("")
+            self.weapon_name.setText(f"Build: {p.build_piece}  •  10 {p.build_material}")
+            self.weapon_name["fg"] = T.ACCENT
+        elif isinstance(cur, WeaponInstance):
             self.ammo_big.setText(str(cur.in_mag))
             self.ammo_small.setText(f"/ {inv.ammo.get(cur.wdef.ammo, 0)}")
             self.weapon_name.setText(f"{cur.rarity.title()} {cur.name}")

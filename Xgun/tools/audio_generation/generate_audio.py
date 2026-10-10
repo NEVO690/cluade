@@ -190,6 +190,14 @@ def build_sfx():
     s["defeat"] = norm(lp_fast(sum(tone(f, 2.0, "saw") * env(n, 0.02 + i * 0.25, 1.0) for i, f in enumerate((392, 349, 311, 262))), 1500))
     n = int(1.2 * SR)
     s["level_up"] = norm(sum(tone(f, 1.2, "tri") * env(n, 0.005 + i * 0.08, 0.5) for i, f in enumerate((523, 659, 784, 1046, 1319))))
+    n = int(0.35 * SR)
+    s["build_place"] = norm(tone(np.linspace(220, 90, n), 0.35, "tri") * env(n, 0.001, 0.08) +
+                            lp_fast(noise(n), 1400) * env(n, 0.001, 0.05) * 0.8 + click(0.0, 0.35, 2500, 0.6))
+    n = int(0.22 * SR)
+    s["harvest"] = norm(tone(np.linspace(520, 260, n), 0.22, "tri") * env(n, 0.001, 0.05) +
+                        lp_fast(noise(n), 2200) * env(n, 0.0005, 0.03))
+    n = int(0.6 * SR)
+    s["build_break"] = norm(lp_fast(noise(n), 2500) * env(n, 0.001, 0.2) + tone(np.linspace(300, 80, n), 0.6) * env(n, 0.001, 0.15))
     for name, data in s.items():
         write(SFX / f"{name}.wav", data)
     return len(s)

@@ -76,6 +76,9 @@ class BotBrain:
         self.stuck_count = 0
         self.route: list = []
         self._route_goal = None
+        self.build_exit = False
+        self.last_build = -99.0
+        self.harvest_target = None
 
     # ---------------------------------------------------------- helpers
     def _pick_drop_point(self):
@@ -336,6 +339,9 @@ class BotBrain:
             return inp
 
         self.decide_timer -= dt
+        if me.build_mode:
+            inp.build_toggle = True             # one wall placed: back to the weapon
+            return inp
         engage = self.target is not None and self.target.alive
         if engage and not self._weapons():
             # unarmed: only brawl when cornered, otherwise keep looting
@@ -379,6 +385,8 @@ class BotBrain:
         best = self._best_weapon_for(40)
         if best and inv.selected != best[0] and me.reload_timer <= 0:
             inp.select = best[0]
+        if self._harvest(inp, dt):
+            return
         if self.goal is None:
             return
         gx, gy, _ = self.goal
@@ -414,6 +422,36 @@ class BotBrain:
                 inp.move_y = 0.0
                 break
 
+    def _harvest(self, inp: ControlInput, dt: float) -> bool:
+        """Low on building materials and nothing better to do: chop a nearby tree or rock."""
+        from game import building as B
+        me, sim = self.me, self.sim
+        if sum(me.materials.values()) >= 90 or self.goal_kind in ("item", "container", "storm"):
+            self.harvest_target = None
+            return False
+        if self.harvest_target is None:
+            best, bd = None, 9.0
+            for b in sim.collision.query(me.x - 9, me.y - 9, me.x + 9, me.y + 9):
+                if b.tag in B.HARVEST and b.tag.startswith(("env_tree", "env_rock")) and b.z0 < me.z + 1.5:
+                    cx, cy = (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2
+                    d = math.hypot(cx - me.x, cy - me.y)
+                    if d < bd:
+                        best, bd = (cx, cy, max(b.x1 - b.x0, b.y1 - b.y0) / 2), d
+            if best is None:
+                return False
+            self.harvest_target = (best, sim.time)
+        (tx, ty, r), since = self.harvest_target
+        if sim.time - since > 10:
+            self.harvest_target = None
+            return False
+        d = self._steer(inp, tx, ty, dt, stop_dist=r + 1.3)
+        if d <= r + 1.4:
+            inp.move_y = 0.0
+            self._turn_toward(yaw_to(tx - me.x, ty - me.y), -10, dt, 720)
+            inp.select = 0 if me.inventory.selected != 0 else None
+            inp.fire = True
+        return True
+
     def _fight(self, inp: ControlInput, dt: float) -> None:
         me, sim, t = self.me, self.sim, self.target
         dx, dy = t.x - me.x, t.y - me.y
@@ -440,6 +478,17 @@ class BotBrain:
         elif inv.selected != best[0] and me.reload_timer <= 0 and me.fire_cooldown <= 0:
             inp.select = best[0]
         cur = inv.current
+        from game import building as B
+        mats = me.materials
+        if sim.time - me.last_damage_time < 0.5 and sim.time - self.last_build > 2.5 and dist > 5 \
+                and max(mats.values()) >= B.COST and self.rng.random() < 0.35:
+            self.last_build = sim.time
+            me.build_material = max(mats, key=mats.get)
+            inp.build_toggle = True
+            inp.build_piece = "wall"
+            inp.fire_pressed = True
+            inp.yaw, inp.pitch = want_yaw, 0.0
+            return
         on_target = abs(angle_diff(want_yaw, self.yaw)) < 12 + self.aim_error and dist < self.view_range * 2
         ready = sim.time - self.target_seen_at > self.reaction
         if ready and on_target:

@@ -39,6 +39,8 @@ that folder to reset everything. Set `XGUN_USER_DIR` to use another folder.
 | Reload / interact (hold for chests) | `R` / `E` |
 | Pickaxe, slots 1–5 | `1`–`6`, mouse wheel |
 | Leave the drop ship / open glider | `Space` |
+| Build mode on / off | `Q` |
+| In build mode: wall / floor / ramp / next material | `1` / `2` / `3` / `4` (wheel cycles pieces), left mouse places |
 | Emote / map / pause | `B` / `M` / `Esc` |
 | FPS counter / screenshot | `F3` / `F12` |
 

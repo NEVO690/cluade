@@ -70,6 +70,8 @@ class MatchScreen:
         app = self.app
         self.root = app.render.attachNewNode("match")
         self.effects = Effects(app, self.root)
+        from game.build_view import BuildView
+        self.build_view = BuildView(app, self.root)
         self._lights()
         self.hud = HUD(app, self.sim)
         self.wrap_tex = None
@@ -118,7 +120,7 @@ class MatchScreen:
             app.accept(key + "-up", self._key, [key, False])
         for i in range(6):
             app.accept(str(i + 1), self._press, [f"slot{i}"])
-        for k in ("wheel_up", "wheel_down", "m", "b", "escape", "f3", "tab"):
+        for k in ("wheel_up", "wheel_down", "m", "b", "escape", "f3", "tab", "q"):
             app.accept(k, self._press, [k])
         self._capture_mouse(True)
 
@@ -172,6 +174,8 @@ class MatchScreen:
                 inp.select = None
                 inp.cycle = 0
                 inp.emote = None
+                inp.build_toggle = inp.build_material_next = False
+                inp.build_piece = None
                 self._events(self.sim.drain_events())
                 steps += 1
         alpha = self.accum / TICK
@@ -179,6 +183,15 @@ class MatchScreen:
         self._update_camera(alpha)
         self.effects.update(dt)
         self.effects.storm_wall(self.sim.storm)
+        self.build_view.sync(self.sim.builds)
+        pl = self.player
+        if pl.alive and pl.build_mode and pl.state == "ground":
+            spot, _ = self.sim.can_place(pl, pl.build_piece)
+            from game import building as B
+            shown = spot or B.target_for(pl.build_piece, pl.x, pl.y, pl.z, pl.yaw, pl.pitch)
+            self.build_view.show_ghost(pl.build_piece, shown, spot is not None)
+        else:
+            self.build_view.show_ghost(None, None, False)
         target = self.spectate if self.spectate is not None else self.player
         prompt = self.sim.interact_prompt(self.player) if self.player.alive and self.player.state == "ground" else None
         frac = self.player.interact_timer / self.sim.armory.loot["chest_open_time"] if self.player.interact_target and \
@@ -242,13 +255,27 @@ class MatchScreen:
         inp.reload = inp.reload or "r" in p
         inp.jump = inp.jump or "space" in p
         inp.deploy = inp.deploy or "space" in p
-        for i in range(6):
-            if f"slot{i}" in p:
-                inp.select = i
-        if "wheel_up" in p:
-            inp.cycle = -1
-        if "wheel_down" in p:
-            inp.cycle = 1
+        if "q" in p:
+            inp.build_toggle = True
+        if self.player.build_mode and not inp.build_toggle:
+            # in build mode the number keys pick pieces / material, the wheel cycles pieces
+            pieces = ("wall", "floor", "ramp")
+            for i, piece in enumerate(pieces):
+                if f"slot{i}" in p:
+                    inp.build_piece = piece
+            if "slot3" in p:
+                inp.build_material_next = True
+            if "wheel_up" in p or "wheel_down" in p:
+                cur = pieces.index(self.player.build_piece)
+                inp.build_piece = pieces[(cur + (1 if "wheel_down" in p else -1)) % 3]
+        else:
+            for i in range(6):
+                if f"slot{i}" in p:
+                    inp.select = i
+            if "wheel_up" in p:
+                inp.cycle = -1
+            if "wheel_down" in p:
+                inp.cycle = 1
         if "b" in p:
             emote_id = self.loadout.get("emote", "emote_wave")
             item = self.app.services.catalog.items.get(emote_id)
@@ -290,6 +317,8 @@ class MatchScreen:
         return av
 
     def _held_for(self, c):
+        if c.build_mode:
+            return None, "none"
         cur = c.inventory.current
         if isinstance(cur, WeaponInstance):
             return "weapon_" + cur.wdef.id, cur.wdef.hold
@@ -364,7 +393,8 @@ class MatchScreen:
                 lower = "walk"
             else:
                 lower = "idle"
-            upper = {"rifle": "hold_rifle", "pistol": "hold_pistol", "pickaxe": "hold_pickaxe", "item": "use_item"}[kind]
+            upper = {"rifle": "hold_rifle", "pistol": "hold_pistol", "pickaxe": "hold_pickaxe", "item": "use_item",
+                     "none": lower}[kind]
             if c.use_timer > 0:
                 upper = "use_item"
             if c.action == "swing":
@@ -576,6 +606,13 @@ class MatchScreen:
                 audio.play("swing", 0.7)
                 if e["hit"]:
                     audio.play("pickaxe_hit", 0.8)
+            elif t == "build":
+                audio.play("build_place", 0.9 if who == me else 0.7, pos=None if who == me else listener, listener=listener)
+            elif t == "build_destroyed":
+                audio.play("build_break", 0.8)
+            elif t == "harvest" and who == me:
+                audio.play("harvest", 0.7)
+                self.hud.show_notice(f"+{e['amount']} {e['material']}", 0.8)
             elif t in ("crate_break",):
                 c = sim.containers[e["id"]]
                 self.effects.sparkle((c.x, c.y, c.z + 0.6), (0.3, 1, 0.9, 1))
@@ -691,6 +728,7 @@ class MatchScreen:
             av.destroy()
         self.hud.destroy()
         self.effects.destroy()
+        self.build_view.destroy()
         if getattr(self, "death_panel", None) is not None:
             self.death_panel.removeNode()
         if self.paused is not None:

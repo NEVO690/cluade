@@ -13,32 +13,31 @@
 | Social | Vertical player, feeds, likes/comments/saves/follows/views, uploads with validation, search, hashtags, profiles, privacy, reports, blocks, demo seed with 6 original clips |
 | Tests | 33 pytest tests including asset validation and an end-to-end offscreen UI smoke test |
 
+## Limitations follow-up (done)
+
+| Item | Result |
+|---|---|
+| Windows | `.github/workflows/xgun-windows.yml` installs like `install.bat` on `windows-latest`, runs the test suite and launches the game offscreen. It found and fixed a real Windows-only crash (numpy `uint32` memoryview format). |
+| Audio | `tests/test_audio.py` checks levels, clipping, clicks, loop seams and distinct gunshot spectra, and decodes the music through Panda. It is analysed, not listened to. |
+| Bots on upper floors | Buildings export walkable `nav_routes`. Bots plan up and down stairs, and tests walk every route and watch bots loot upper floors. |
+| Thumbnails | Real frames extracted in-game into `userdata/thumbs/`. |
+| Building | Harvest wood/stone/metal with the pickaxe, then place walls, floors and ramps on a 4 m grid. Pieces have HP by material and bullets destroy them. Bots harvest and build cover. |
+| Social tab name | Label configurable via `XGUN_SOCIAL_NAME`. |
+
 ## Known limitations
 
 * **Offline only.** Bots stand in for players, and all social data is local.
-  The interfaces for a server (`MatchSim` + events) and an online social
-  backend (`SocialBackend`) are in place.
-* **No building or editing mechanics.** Pickaxes are melee weapons and break
-  supply crates.
-* **Bots navigate by steering, not a navmesh.** Chests on upper floors are
-  ignored by bots, and unreachable goals are dropped after 12 s.
-* **Video thumbnails are coloured tiles** with the title; frames aren't
-  extracted.
-* **Not yet verified on Windows.** Development and testing happened in Linux
-  CI. The Windows `.bat` files use standard venv layouts, so run
-  `run_tests.bat` first on a new PC.
+* **No edit mode** for build pieces, and no roofs or cones.
+* **Not play-tested on a real Windows GPU** by a human. CI runs the software renderer.
 
 ## Next steps (suggested order)
 
 1. Play-test on Windows with a real GPU and tune: mouse sensitivity defaults,
    weapon balance (`data/gameplay/weapons.json`), bot difficulty
    (`bots/brain.py` `SKILL`).
-2. Add a navmesh or waypoint graph through building doors and stairs so bots
-   can loot upper floors.
-3. Add more outfits/weapons. Add an entry to `data/catalog/cosmetics.json`,
+2. Add more outfits/weapons. Add an entry to `data/catalog/cosmetics.json`,
    a builder to `tools/blender_generation/xgb/outfits.py` (or `gear.py` /
    `weapons.py`), then run `build_assets.bat <category>` and
    `validate_assets.py`.
-4. Extract first-frame thumbnails for uploaded videos.
-5. Online: implement `RemoteSocialBackend` against a real service, and run
+3. Online: implement `RemoteSocialBackend` against a real service, and run
    `MatchSim` on an authoritative server streaming `events` to clients.

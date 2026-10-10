@@ -13,6 +13,7 @@ import random
 from dataclasses import dataclass
 
 from combat.weapons import Armory, WeaponInstance, direction, falloff, spread_direction
+from game import building as B
 from game.entities import RADIUS, Combatant, Container, ControlInput, GroundItem
 from inventory.match_inventory import ConsumableStack, MatchInventory
 from progression.rewards import MatchSummary
@@ -81,7 +82,10 @@ class MatchSim:
         self.combatants: list[Combatant] = []
         self.items: dict[int, GroundItem] = {}
         self.containers: list[Container] = []
+        self.builds: dict[int, B.BuildPiece] = {}
+        self._build_keys: dict = {}
         self._next_item = 1
+        self._next_build = 1
         self.storm = Storm(self.rng, lambda x, y: self.terrain.is_land(x, y, 1.5), time_scale=storm_time_scale)
 
         a = self.rng.uniform(0, 2 * math.pi)
@@ -377,8 +381,29 @@ class MatchSim:
             else:
                 self._notice(c, "Already at full " + ("shield" if cdef.shield else "health") + " for this item")
 
+        # building
+        if inp.build_toggle:
+            c.build_mode = not c.build_mode
+            c.reload_timer = c.use_timer = 0.0
+            self.events.append({"type": "build_mode", "who": c.id, "on": c.build_mode})
+        elif c.build_mode and (inp.select is not None or inp.cycle):
+            c.build_mode = False                     # picking a weapon leaves build mode
+            self.events.append({"type": "build_mode", "who": c.id, "on": False})
+        if c.build_mode:
+            if inp.build_piece in B.PIECES:
+                c.build_piece = inp.build_piece
+            if inp.build_material_next:
+                i = B.MATERIALS.index(c.build_material)
+                c.build_material = B.MATERIALS[(i + 1) % len(B.MATERIALS)]
+            if (inp.fire_pressed or inp.fire) and c.fire_cooldown <= 0 and c.emote is None:
+                c.fire_cooldown = 0.15
+                self.place_piece(c, c.build_piece)
+            inp_fire_blocked = True
+        else:
+            inp_fire_blocked = False
+
         # firing
-        if c.reload_timer <= 0 and c.use_timer <= 0 and c.fire_cooldown <= 0 and c.emote is None:
+        if not inp_fire_blocked and c.reload_timer <= 0 and c.use_timer <= 0 and c.fire_cooldown <= 0 and c.emote is None:
             if item is None and (inp.fire_pressed or inp.fire):
                 self._swing(c)
             elif isinstance(item, WeaponInstance) and item.in_mag > 0:
@@ -468,8 +493,10 @@ class MatchSim:
                 total += self._damage(victim, c, amount, head, wdef.id)
                 if wdef.category == "sniper":
                     c.stats.sniper_hits += 1
-            elif isinstance(self._last_box, Box) and self._last_box.owner >= 0:
+            elif isinstance(self._last_box, Box) and self._last_box.tag == "crate":
                 self._hit_crate(c, self._last_box.owner, dmg * 0.5)
+            elif isinstance(self._last_box, Box) and self._last_box.tag == "build":
+                self._damage_piece(c, self._last_box.owner, dmg * falloff(wdef, dist) * (1.5 if wdef.category == "shotgun" else 1.0))
         self.events.append({"type": "shot", "who": c.id, "weapon": wdef.id, "origin": origin, "ends": ends,
                             "tracer": wdef.tracer, "sound": wdef.sound, "damage": round(total)})
 
@@ -485,12 +512,68 @@ class MatchSim:
         if victim is not None:
             self._damage(victim, c, self.armory.pickaxe["damage"], False, "pickaxe")
             hit = True
-        elif isinstance(self._last_box, Box) and self._last_box.owner >= 0:
+        elif isinstance(self._last_box, Box) and self._last_box.tag == "crate":
             self._hit_crate(c, self._last_box.owner, self.armory.pickaxe["prop_damage"])
+            hit = True
+        elif isinstance(self._last_box, Box) and self._last_box.tag == "build":
+            self._damage_piece(c, self._last_box.owner, self.armory.pickaxe["prop_damage"])
             hit = True
         elif self._last_box is not None:
             hit = True
+            self._harvest(c, self._last_box.tag, end)
         self.events.append({"type": "swing", "who": c.id, "hit": hit, "point": end})
+
+    # ------------------------------------------------------------ building
+    def _harvest(self, c: Combatant, tag: str, point) -> None:
+        got = B.HARVEST.get(tag)
+        if not got:
+            return
+        material, amount = got
+        have = c.materials[material]
+        gained = min(amount, B.MAX_MATERIAL - have)
+        if gained > 0:
+            c.materials[material] = have + gained
+            c.stats.pickaxe_hits += 1
+            self.events.append({"type": "harvest", "who": c.id, "material": material, "amount": gained, "point": point})
+
+    def can_place(self, c: Combatant, kind: str):
+        ix, iy, z, d = B.target_for(kind, c.x, c.y, c.z, c.yaw, c.pitch)
+        if c.materials[c.build_material] < B.COST:
+            return None, f"Need {B.COST} {c.build_material}"
+        if B.piece_key(kind, ix, iy, z, d) in self._build_keys or len(self.builds) >= B.MAX_PIECES:
+            return None, "Already built here"
+        return (ix, iy, z, d), ""
+
+    def place_piece(self, c: Combatant, kind: str) -> B.BuildPiece | None:
+        spot, why = self.can_place(c, kind)
+        if spot is None:
+            self._notice(c, why)
+            return None
+        ix, iy, z, d = spot
+        c.materials[c.build_material] -= B.COST
+        hp = B.HP[c.build_material]
+        piece = B.BuildPiece(self._next_build, kind, c.build_material, ix, iy, z, d, c.id, hp, hp)
+        self._next_build += 1
+        for center, size in B.piece_boxes(kind, ix, iy, z, d):
+            piece.boxes.append(self.collision.add(Box.from_center(center, size, "build", piece.id)))
+        self.builds[piece.id] = piece
+        self._build_keys[piece.key] = piece.id
+        c.action = "build"
+        self.events.append({"type": "build", "who": c.id, "id": piece.id})
+        return piece
+
+    def _damage_piece(self, c: Combatant, piece_id: int, damage: float) -> None:
+        piece = self.builds.get(piece_id)
+        if piece is None:
+            return
+        piece.hp -= damage
+        self.events.append({"type": "build_hit", "id": piece_id, "who": c.id})
+        if piece.hp <= 0:
+            for idx in piece.boxes:
+                self.collision.disable(idx)
+            del self.builds[piece_id]
+            self._build_keys.pop(piece.key, None)
+            self.events.append({"type": "build_destroyed", "id": piece_id, "who": c.id})
 
     def _hit_crate(self, c: Combatant, idx: int, damage: float) -> None:
         crate = self.containers[idx]

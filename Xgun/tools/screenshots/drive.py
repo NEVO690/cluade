@@ -185,6 +185,40 @@ def main():
         steps(80)
         print("thumbs written", app.thumbs.version, "failed", len(app.thumbs.failed), flush=True)
         shot("social_profile_thumbs")
+    if scenario == "build":
+        app.start_match()
+        for _ in range(400):
+            steps(1)
+            if app.screen.__class__.__name__ == "MatchScreen":
+                break
+        m = app.screen
+        sim = m.sim
+        from game import building as B
+        from game.match import TICK
+        p = sim.player
+        poi = sim.layout.pois[0]
+        p.state, p.on_ground = "ground", True
+        p.x, p.y = B.cell_center(*B.cell_of(poi.x + 6, poi.y - 10))
+        p.z = sim.collision.floor_height(p.x, p.y, poi.height + 1, 0.4)
+        p.prev = (p.x, p.y, p.z)
+        p.health = 1e6
+        p.materials.update(wood=200, stone=200, metal=200)
+        p.build_mode = True
+        for yaw, piece, mat in ((0, "wall", "wood"), (90, "wall", "stone"), (270, "wall", "metal"), (180, "ramp", "wood")):
+            p.yaw, p.build_material = yaw, mat
+            sim.place_piece(p, piece)
+        p.yaw = 180
+        p.build_piece = "floor"
+        m.cam_yaw, m.cam_pitch = 150, -18
+        steps(20)
+        shot("build_fort")
+        # damage the wood wall and look at the ghost of a new ramp
+        wall = next(b for b in sim.builds.values() if b.material == "wood")
+        sim._damage_piece(p, wall.id, 100)
+        p.build_piece = "ramp"
+        m.cam_yaw, m.cam_pitch = 200, -12
+        steps(20)
+        shot("build_ghost")
     if scenario == "results":
         app.start_match()
         for _ in range(400):
