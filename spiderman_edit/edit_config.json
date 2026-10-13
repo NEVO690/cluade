@@ -1,0 +1,46 @@
+{
+  "project_name": "Nexo_SpiderMan_Edit",
+
+  "format": { "width": 1080, "height": 1920, "fps": 30 },
+  "target_duration": 27.0,
+
+  "title": {
+    "lines": ["This is my first edit", "and I need to cook."],
+    "font": "/usr/share/fonts/opentype/inter/InterDisplay-SemiBold.otf",
+    "size": 66,
+    "start": 0.25,
+    "end": 2.9
+  },
+
+  "watermark": {
+    "text": "Nexon AE",
+    "font": "/usr/share/fonts/opentype/inter/InterDisplay-Medium.otf",
+    "size": 40,
+    "opacity": 0.30,
+    "center_y": 1480
+  },
+
+  "music": {
+    "file": "music/track.mp3",
+    "drop_time": null,
+    "bpm": null,
+    "drop_at_video_time": 9.0
+  },
+
+  "opening": {
+    "file": "footage/opening/opening.mp4",
+    "in": 0.0,
+    "x_focus": 0.5
+  },
+
+  "montage_clips": [
+    { "file": "footage/montage/clip01.mp4", "moments": [], "x_focus": 0.5 },
+    { "file": "footage/montage/clip02.mp4", "moments": [], "x_focus": 0.5 },
+    { "file": "footage/montage/clip03.mp4", "moments": [], "x_focus": 0.5 },
+    { "file": "footage/montage/clip04.mp4", "moments": [], "x_focus": 0.5 },
+    { "file": "footage/montage/clip05.mp4", "moments": [], "x_focus": 0.5 },
+    { "file": "footage/montage/clip06.mp4", "moments": [], "x_focus": 0.5 }
+  ],
+
+  "smooth_slowmo": true
+}

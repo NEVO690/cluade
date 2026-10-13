@@ -8,3 +8,10 @@ venv/
 *.whl
 *.zip
 /SubwaySurferCity.py
+# spiderman_edit: media is never committed (copyright / size); everything regenerates
+spiderman_edit/output/
+spiderman_edit/placeholders/
+spiderman_edit/placeholder_config.json
+spiderman_edit/footage/**/*.*
+spiderman_edit/music/*.*
+!spiderman_edit/**/.gitkeep
