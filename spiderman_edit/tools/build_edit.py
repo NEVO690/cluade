@@ -344,7 +344,7 @@ def finishing_filter(cfg, tl, build):
     rise = f"(28*pow(1-{p_in},3))"
     size = ti["size"]
     gap = int(size * 1.28)
-    y0 = H * 0.42
+    y0 = ti.get("top_y", H * 0.17)          # title block sits in the top quarter
 
     g = [
         # grade: punchy contrast, cool shadows / warm highlights, rich suit reds
@@ -358,14 +358,14 @@ def finishing_filter(cfg, tl, build):
         f"rgbashift=rh=-9:bh=9:enable='{chroma}'[graded]",
         # darkened backdrop behind the opening title, fades away with it
         f"color=c=black:s={W}x{H}:r={F}:d={t1 + 0.6:.2f},format=yuva420p,"
-        f"colorchannelmixer=aa=0.55,fade=t=out:st={t1 - 0.45:.2f}:d=0.6:alpha=1[dim]",
+        f"colorchannelmixer=aa={ti.get('backdrop_opacity', 0.35)},fade=t=out:st={t1 - 0.45:.2f}:d=0.6:alpha=1[dim]",
         "[graded][dim]overlay=eof_action=pass:format=auto[v1]",
     ]
     draws = []
     for i in range(len(ti["lines"])):
         draws.append(
             f"drawtext=fontfile={ti['font']}:textfile={build / f'title_{i}.txt'}:"
-            f"fontsize={size}:fontcolor=white:alpha={alpha}:"
+            f"fontsize={size}:fontcolor={ti.get('color', 'white')}:alpha={alpha}:"
             f"shadowcolor=black@0.45:shadowx=0:shadowy=3:"
             f"x=(w-tw)/2:y='{y0 + i * gap:.0f}+{rise}':enable='between(t,{t0},{t1})'")
     draws.append(
@@ -380,7 +380,7 @@ def write_overlays(cfg, tl, out_dir):
     """Transparent PNGs used by the Premiere sequence (title lines + watermark)."""
     W, H = tl["width"], tl["height"]
     ti, wm = cfg["title"], cfg["watermark"]
-    size, gap, y0 = ti["size"], int(ti["size"] * 1.28), H * 0.42
+    size, gap, y0 = ti["size"], int(ti["size"] * 1.28), ti.get("top_y", H * 0.17)
     build = out_dir / "build"
     draws = [f"drawtext=fontfile={ti['font']}:textfile={build / f'title_{i}.txt'}:"
              f"fontsize={size}:fontcolor=white:shadowcolor=black@0.45:shadowy=3:"
