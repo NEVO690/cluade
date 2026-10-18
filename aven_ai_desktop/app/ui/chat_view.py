@@ -281,8 +281,8 @@ class ChatView(QWidget):
         layout.addLayout(self.suggestion_grid)
 
         privacy = QLabel(
-            "Messages are processed by AVEN Cloud and its AI provider (Anthropic), or by the provider you "
-            "set up with your own key. Conversations are saved only on this computer."
+            "Messages are processed by the AVEN Cloud server and the AI service it uses, or by the provider "
+            "you set up with your own key. Conversations are saved only on this computer."
         )
         privacy.setObjectName("HelpText")
         privacy.setWordWrap(True)

@@ -219,8 +219,10 @@ class SettingsDialog(QDialog):
             _help(
                 "<b>What leaves your computer.</b> When you send a message, the conversation so far and the "
                 "mode's instructions are sent over HTTPS. With <b>AVEN Cloud</b> (the default) they go to the "
-                "AVEN AI server, which forwards them to Anthropic to generate the reply, together with a random "
-                "install ID used only for fair-use limits. With your own API key they go directly to the "
+                "AVEN AI server, which forwards them to the AI service it runs on (such as Groq, Google Gemini "
+                "or Anthropic) to generate the reply, together with a random install ID used only for fair-use "
+                "limits. Free AI services may use the content they receive under their own terms. "
+                "With your own API key they go directly to the "
                 "provider you selected. Providers process messages under their own terms and privacy policies "
                 f"(<a href='{PROVIDERS['anthropic'].privacy_url}'>Anthropic</a>, "
                 f"<a href='{PROVIDERS['openai'].privacy_url}'>OpenAI</a>). The app has no analytics or "

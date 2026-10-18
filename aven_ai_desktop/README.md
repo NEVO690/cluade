@@ -21,7 +21,7 @@ Version: **1.0.0** (defined in `app/version.py`)
 
 Pick the model for each message with the **model picker in the message box**, next to Send. Your choice is remembered.
 
-| AVEN model | Best for | Claude model behind it |
+| AVEN model | Best for | Model behind it with your own Anthropic key |
 |---|---|---|
 | **AVEN 1.0** (default) | The main AVEN model: smart and reliable for everything | `claude-opus-5-5` |
 | **AVEN Ultra** | The hardest questions, research and code: thinks longer | `claude-opus-5-5` with extra-deep reasoning (`effort: xhigh`) |
@@ -30,7 +30,7 @@ Pick the model for each message with the **model picker in the message box**, ne
 
 The chat interface only shows AVEN names.
 
-- **With AVEN Cloud**, the server decides the mapping above, so you can change it without shipping a new app.
+- **With AVEN Cloud**, the server picks the models. It can run on a **free** service such as Groq or Google Gemini, or on Anthropic; see [`aven_cloud/README.md`](../aven_cloud/README.md). You can change this without shipping a new app.
 - **With your own key**, the mapping is in **Settings → AI Provider → Advanced**. OpenAI and compatible servers have no default mapping.
 
 AVEN AI does not train its own model. Settings and the privacy notice state who processes conversations, and the assistant answers truthfully if asked what powers it.
@@ -72,7 +72,7 @@ On macOS or Linux the steps are the same (`python3 -m venv .venv && source .venv
 
 When the app is built with an AVEN Cloud server address, people just install it and chat. There's nothing to configure. To set this up:
 
-1. Deploy the server: see [`aven_cloud/README.md`](../aven_cloud/README.md).
+1. Deploy the server. A free setup (Groq + Render) is described in [`aven_cloud/README.md`](../aven_cloud/README.md).
 2. Set the GitHub Actions variable `AVEN_CLOUD_URL`, or the environment variable of the same name for local builds.
 3. Rebuild. The address is written into `assets/cloud.json`. It is public and contains no secrets.
 
@@ -126,7 +126,7 @@ Packaged builds read real environment variables, but they never read `.env` file
 
 **What leaves your computer.** When you send a message, AVEN sends the conversation so far, plus the mode's instructions, over HTTPS:
 
-- **With AVEN Cloud**, it goes to the AVEN AI server, which forwards it to Anthropic. A random install ID goes along with it, used only for fair-use limits.
+- **With AVEN Cloud**, it goes to the AVEN AI server, which forwards it to the AI service the server runs on (for example Groq, Google Gemini or Anthropic). A random install ID goes along with it, used only for fair-use limits. Free AI services may use the content they receive under their own terms.
 - **With your own key**, it goes directly to the provider you selected.
 
 Providers process messages under their own terms and privacy policies ([Anthropic](https://www.anthropic.com/legal/privacy), [OpenAI](https://openai.com/policies/privacy-policy)). AVEN AI Desktop has no telemetry or analytics, and it does not upload files or conversations anywhere else.
@@ -291,7 +291,7 @@ aven_ai_desktop/
 
 - Text conversations only: no image or file attachments, and no web browsing.
 - Responses come from one provider at a time: AVEN Cloud, Anthropic, or OpenAI (or OpenAI-compatible).
-- AVEN Cloud needs a deployed server and an Anthropic account. Every message is billed to that account.
+- AVEN Cloud needs a deployed server and a key for an AI service. Free tiers (Groq, Gemini) cost nothing, but their limits are shared by all users of the server.
 - There is no automatic update system. Install new versions over the old one; your data folder is kept.
 - Release builds are not code-signed unless you sign them yourself.
 - Very long conversations send at most about the last 400,000 characters of history to the provider. All messages stay in the local database.

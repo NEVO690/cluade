@@ -3,49 +3,52 @@
 AVEN Cloud is the AVEN AI server. It lets people use **AVEN AI Desktop without an API key**.
 
 ```
-AVEN AI Desktop ──HTTPS──▶ AVEN Cloud (your server, holds the key) ──HTTPS──▶ Anthropic (Claude)
+AVEN AI Desktop ──HTTPS──▶ AVEN Cloud (your server, holds the key) ──HTTPS──▶ AI service
 ```
 
-- The **Anthropic API key stays on the server** in an environment variable. It is never in the app, so it can't be pulled out of the `.exe`.
-- The server maps the four AVEN models to Claude models:
+The **key stays on the server** in an environment variable. It is never in the app, so it can't be pulled out of the `.exe`.
 
-  | AVEN model | Claude model |
-  |---|---|
-  | AVEN 1.0 | `claude-opus-5-5` |
-  | AVEN Ultra | `claude-opus-5-5`, with extra-deep reasoning (`effort: xhigh`) |
-  | AVEN Core | `claude-sonnet-5-5` |
-  | AVEN Light | `claude-haiku-5-5` |
+## Which AI service? (free options first)
 
-- It exposes an OpenAI-compatible API: `POST /v1/chat/completions` with streaming, and `GET /v1/models`. Health checks use `GET /health`.
-- **Fair-use limits** keep a free public service affordable:
-  - per install, per minute and per day
-  - per IP address
-  - a cap on concurrent requests
-  - a cap on reply length and conversation size
-- It never logs message contents.
+| Service | Cost | Key from | Env variable |
+|---|---|---|---|
+| **Groq** (recommended) | **Free tier**, no credit card | <https://console.groq.com> → API Keys | `GROQ_API_KEY` |
+| **Google Gemini** | **Free tier** | <https://aistudio.google.com> → Get API key | `GEMINI_API_KEY` |
+| Anthropic (Claude) | Paid | <https://platform.claude.com> | `ANTHROPIC_API_KEY` |
+| Any OpenAI-compatible service | Varies | - | `AVEN_UPSTREAM=openai_compatible`, `AVEN_UPSTREAM_API_KEY`, `AVEN_UPSTREAM_BASE_URL`, and the four `AVEN_*_MODEL` variables |
 
-## Costs: read this first
+The server uses whichever key you set. With several keys, set `AVEN_UPSTREAM` (`groq`, `gemini` or `anthropic`).
 
-Every message anyone sends is billed to **your** Anthropic account. Before you publish:
+**About free tiers:** they are free but **limited**. Groq allows roughly 30 requests per minute and a daily cap per model. All of your users **share** that limit, because they all use your one key. When it runs out, users see "AVEN Cloud is very busy" until the limit resets. Check each service's console for the current limits. Free tiers may also let the service use the content it receives, so read their terms and mention this in your privacy policy.
 
-1. Set a **monthly spend limit** in the Claude Console (<https://platform.claude.com/>).
-2. Tune the limits below. Deeper reasoning (AVEN Ultra) and longer replies cost more.
-3. If you need to save money, point the AVEN models at cheaper Claude models. For example, set `AVEN_1_MODEL=claude-sonnet-5-5`.
+## How AVEN models are mapped
 
-## Deploy on Render (free tier works for testing)
+Free services rename models often, so for each AVEN model the server asks the service which models exist and **automatically picks the best available one**. There's nothing to update when a model is renamed.
 
-1. Create an API key in the Claude Console.
-2. On <https://render.com>, choose **New → Blueprint** and select this repository. Render reads `aven_cloud/render.yaml`.
-3. When Render asks for `ANTHROPIC_API_KEY`, paste your key. It is stored as a secret on Render, never in git.
-4. Wait for the deploy to finish, then open `https://<your-service>.onrender.com/health`. It should show `{"status":"ok","configured":true}`.
-5. In GitHub, go to **Settings → Secrets and variables → Actions → Variables** and add `AVEN_CLOUD_URL` = `https://<your-service>.onrender.com`.
-6. Run the **Build AVEN AI Desktop (Windows)** workflow again (**Actions** tab → *Run workflow*). The new `.exe` works out of the box, with no API key.
+| AVEN model | Groq (free) | Gemini (free) | Anthropic (paid) |
+|---|---|---|---|
+| AVEN 1.0 | `openai/gpt-oss-120b`, else the newest 70B model | newest Flash | `claude-opus-5-5` |
+| AVEN Ultra | `openai/gpt-oss-120b` | newest Flash | `claude-opus-5-5` with extra-deep reasoning |
+| AVEN Core | `llama-3.3-70b-versatile`, else the newest 70B model | newest Flash | `claude-sonnet-5-5` |
+| AVEN Light | `llama-3.1-8b-instant`, else the newest 8B model | newest Flash-Lite | `claude-haiku-5-5` |
 
-The same Docker image runs on any host: Railway, Fly.io, a VPS, and others.
+To pin an exact model, set `AVEN_1_MODEL`, `AVEN_ULTRA_MODEL`, `AVEN_CORE_MODEL` or `AVEN_LIGHT_MODEL`. Check `GET /health` to see which service is active.
+
+## Free deployment: Groq + Render (about 15 minutes, $0)
+
+1. **Get a free Groq key.** Sign up at <https://console.groq.com>, open **API Keys**, and create a key.
+2. **Deploy the server.** At <https://render.com> (free account), choose **New → Blueprint**, select this GitHub repository, and paste the Groq key when Render asks for `GROQ_API_KEY`. It is stored as a secret on Render, never in git.
+3. **Check it.** Open `https://<your-service>.onrender.com/health`. It should show `"configured": true, "service": "groq"`.
+4. **Connect the app.** In GitHub, go to **Settings → Secrets and variables → Actions → Variables** and add `AVEN_CLOUD_URL` = `https://<your-service>.onrender.com`.
+5. **Rebuild.** Open the **Actions** tab → *Build AVEN AI Desktop (Windows)* → **Run workflow**. Every copy of the new `.exe` chats with no setup.
+
+Render's free plan puts the server to sleep after a period with no traffic. The first message after a quiet period can take up to about a minute while it wakes up.
+
+The same Docker image runs on any host (Railway, Fly.io, a VPS, and others):
 
 ```bash
 docker build -t aven-cloud aven_cloud
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... aven-cloud
+docker run -p 8000:8000 -e GROQ_API_KEY=gsk_... aven-cloud
 ```
 
 ## Configuration
@@ -54,24 +57,25 @@ All settings are environment variables:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | - | **Required.** Your Anthropic key. |
-| `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | see the table above | Claude model behind each AVEN model |
-| `AVEN_REQUESTS_PER_MINUTE` | 20 | Messages per install per minute |
-| `AVEN_REQUESTS_PER_DAY` | 300 | Messages per install per day |
-| `AVEN_IP_REQUESTS_PER_MINUTE` | 60 | Messages per IP address per minute |
-| `AVEN_MAX_CONCURRENT` | 20 | Replies generated at the same time |
-| `AVEN_MAX_OUTPUT_TOKENS` | 16000 | Longest reply allowed |
+| `GROQ_API_KEY` / `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` | - | **One is required.** Key for the AI service. |
+| `AVEN_UPSTREAM` | auto | `groq`, `gemini`, `anthropic` or `openai_compatible` |
+| `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | automatic | Pin the exact model behind each AVEN model |
+| `AVEN_REQUESTS_PER_MINUTE` | 10 | Messages per install per minute |
+| `AVEN_REQUESTS_PER_DAY` | 100 | Messages per install per day |
+| `AVEN_IP_REQUESTS_PER_MINUTE` | 30 | Messages per IP address per minute |
+| `AVEN_MAX_CONCURRENT` | 10 | Replies generated at the same time |
+| `AVEN_MAX_OUTPUT_TOKENS` | 8000 | Longest reply allowed |
 | `AVEN_MAX_INPUT_CHARS` | 400000 | Longest conversation accepted |
 | `AVEN_TRUST_PROXY` | false | Read the client IP from `X-Forwarded-For`. Enable only behind a trusted proxy, as on Render. |
 
-The limits live in memory, so run **one** instance with one worker; the Dockerfile already does this. They are a fair-use guard, not strong security: someone determined could rotate install IDs and IP addresses. Your Anthropic spend limit is the real backstop.
+The limits live in memory, so run **one** instance with one worker; the Dockerfile already does this. They are a fair-use guard, not strong security: someone determined could rotate install IDs and IP addresses. On a free tier the worst case is that the shared daily quota runs out. On a paid service, set a spend limit in its console.
 
 ## Run locally
 
 ```bash
 cd aven_cloud
 pip install -r requirements.txt
-ANTHROPIC_API_KEY=sk-ant-... uvicorn server:app --port 8000
+GROQ_API_KEY=gsk_... uvicorn server:app --port 8000
 # In another terminal, run the desktop app against it:
 AVEN_CLOUD_URL=http://localhost:8000 python ../aven_ai_desktop/main.py
 ```
@@ -83,10 +87,12 @@ pip install -r requirements-dev.txt
 QT_QPA_PLATFORM=offscreen python -m pytest -q
 ```
 
-The tests mock Anthropic at the HTTP level, so they need no key and no network. They cover:
-- model mapping, streaming, validation, rate limits and error mapping
+The tests mock the AI services at the HTTP level, so they need no key and no network. They cover:
+- Groq, Gemini and Anthropic
+- automatic model selection, including renamed models
+- streaming, validation, rate limits and error mapping
 - an end-to-end test where the desktop app's real provider code chats with a running server over HTTP
 
 ## Privacy
 
-Users' messages pass through this server to Anthropic. The server keeps nothing except in-memory rate-limit counters, and its logs record only the model name and a shortened hash of the install ID. If you publish AVEN Cloud, your website's privacy policy should say that conversations are processed by your server and by Anthropic.
+Users' messages pass through this server to the AI service it runs on. The server keeps nothing except in-memory rate-limit counters, and its logs record only the model name and a shortened hash of the install ID. If you publish AVEN Cloud, your website's privacy policy should say that conversations are processed by your server and by that AI service, under that service's terms.

@@ -24,7 +24,10 @@ PROVIDERS: dict[str, ProviderInfo] = {
         id="aven_cloud",
         name="AVEN Cloud",
         key_env_var="",
-        key_help="No API key needed. Messages go to the AVEN AI server, which uses Anthropic's Claude models.",
+        key_help=(
+            "No API key needed. Messages go to the AVEN AI server, which generates replies with a "
+            "third-party AI service (such as Groq, Google Gemini or Anthropic)."
+        ),
         console_url="",
         privacy_url="https://www.anthropic.com/legal/privacy",
     ),

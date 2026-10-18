@@ -1,18 +1,20 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
-# Deploy from the repository; set ANTHROPIC_API_KEY in the Render dashboard (never in this file).
+# Free setup: create a free Groq key (console.groq.com) and paste it as GROQ_API_KEY in the
+# Render dashboard when asked. Never put keys in this file.
 services:
   - type: web
     name: aven-cloud
     runtime: docker
+    plan: free
     rootDir: aven_cloud
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
-      - key: ANTHROPIC_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: AVEN_TRUST_PROXY
         value: "true"
       - key: AVEN_REQUESTS_PER_DAY
-        value: "300"
+        value: "100"
       - key: AVEN_REQUESTS_PER_MINUTE
-        value: "20"
+        value: "10"

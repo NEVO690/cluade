@@ -94,7 +94,7 @@ class Upstream:
 
 def make(config: Config | None = None, upstream: Upstream | None = None):
     upstream = upstream or Upstream()
-    config = config or Config(anthropic_api_key="sk-ant-server-key")
+    config = config or Config(service="anthropic", api_key="sk-ant-server-key")
     return TestClient(create_app(config, upstream.client())), upstream
 
 
@@ -168,7 +168,7 @@ def test_non_streaming_response() -> None:
 
 
 def test_max_tokens_is_capped() -> None:
-    client, upstream = make(Config(anthropic_api_key="k", max_output_tokens=1000))
+    client, upstream = make(Config(service="anthropic", api_key="k", max_output_tokens=1000))
     chat(client, max_tokens=999_999)
     assert upstream.requests[0]["max_tokens"] == 1000
 
@@ -187,8 +187,8 @@ def test_models_and_health() -> None:
     client, _ = make()
     ids = [m["id"] for m in client.get("/v1/models").json()["data"]]
     assert ids == ["aven-1", "aven-ultra", "aven-core", "aven-light"]
-    assert client.get("/health").json() == {"status": "ok", "configured": True}
-    unconfigured = TestClient(create_app(Config(anthropic_api_key="")))
+    assert client.get("/health").json() == {"status": "ok", "configured": True, "service": "anthropic"}
+    unconfigured = TestClient(create_app(Config(service="anthropic", api_key="")))
     assert unconfigured.get("/health").json()["configured"] is False
     assert chat(unconfigured).status_code == 503
 
@@ -215,7 +215,7 @@ def test_invalid_requests_rejected(body, status) -> None:
 
 
 def test_oversized_conversation_rejected() -> None:
-    client, upstream = make(Config(anthropic_api_key="k", max_input_chars=10))
+    client, upstream = make(Config(service="anthropic", api_key="k", max_input_chars=10))
     response = client.post(
         "/v1/chat/completions", json={"model": "aven-1", "messages": [{"role": "user", "content": "x" * 50}]}
     )
@@ -227,7 +227,7 @@ def test_oversized_conversation_rejected() -> None:
 
 
 def test_per_install_rate_limit() -> None:
-    client, upstream = make(Config(anthropic_api_key="k", requests_per_minute=2))
+    client, upstream = make(Config(service="anthropic", api_key="k", requests_per_minute=2))
     assert chat(client, token="a").status_code == 200
     assert chat(client, token="a").status_code == 200
     limited = chat(client, token="a")
@@ -238,7 +238,7 @@ def test_per_install_rate_limit() -> None:
 
 
 def test_daily_limit() -> None:
-    client, _ = make(Config(anthropic_api_key="k", requests_per_day=1))
+    client, _ = make(Config(service="anthropic", api_key="k", requests_per_day=1))
     assert chat(client).status_code == 200
     response = chat(client)
     assert response.status_code == 429
@@ -274,13 +274,13 @@ def test_upstream_errors_are_mapped_without_leaking(status, error_type, expected
 
 
 def test_concurrency_slot_released_after_requests() -> None:
-    client, _ = make(Config(anthropic_api_key="k", max_concurrent=1))
+    client, _ = make(Config(service="anthropic", api_key="k", max_concurrent=1))
     for _ in range(3):  # would hang if the single slot leaked
         assert chat(client).status_code == 200
     upstream = Upstream(
         lambda body: httpx2.Response(500, json={"type": "error", "error": {"type": "api_error", "message": "boom"}})
     )
-    client, _ = make(Config(anthropic_api_key="k", max_concurrent=1), upstream)
+    client, _ = make(Config(service="anthropic", api_key="k", max_concurrent=1), upstream)
     for _ in range(3):
         assert chat(client).status_code == 503
 
@@ -306,7 +306,7 @@ def test_desktop_app_provider_talks_to_server_over_http() -> None:
     port = _free_port()
     server = uvicorn.Server(
         uvicorn.Config(
-            create_app(Config(anthropic_api_key="k"), upstream.client()),
+            create_app(Config(service="anthropic", api_key="k"), upstream.client()),
             host="127.0.0.1",
             port=port,
             log_level="warning",

@@ -1,11 +1,12 @@
 """AVEN Cloud - the AVEN AI server that lets people chat without an API key.
 
-The AVEN AI Desktop app sends chats here; this server holds the Anthropic API
-key (in an environment variable, never in the app), maps the AVEN models to
-Claude models and streams replies back using the OpenAI-compatible
+The AVEN AI Desktop app sends chats here. This server holds the AI service key
+(in an environment variable, never in the app), maps the AVEN models to the
+service's models and streams replies back using the OpenAI-compatible
 ``/v1/chat/completions`` format the app already understands.
 
-Run locally:  ANTHROPIC_API_KEY=... uvicorn server:app --port 8000
+Free setup:  GROQ_API_KEY=... uvicorn server:app --port 8000
+See backends.py for the supported services.
 """
 
 from __future__ import annotations
@@ -21,14 +22,13 @@ from collections import defaultdict, deque
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 
-import anthropic
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.background import BackgroundTask
 
-log = logging.getLogger("aven_cloud")
+from backends import AVEN_MODEL_IDS, SERVICES, UPSTREAM_ERRORS, Backend, make_client, map_upstream_error
 
-# --- AVEN models ------------------------------------------------------------------------
+log = logging.getLogger("aven_cloud")
 
 AVEN_MODELS = {
     "aven-1": "AVEN 1.0",
@@ -36,21 +36,7 @@ AVEN_MODELS = {
     "aven-core": "AVEN Core",
     "aven-light": "AVEN Light",
 }
-DEFAULT_MAPPING = {
-    "aven-1": "claude-opus-5-5",
-    "aven-ultra": "claude-opus-5-5",
-    "aven-core": "claude-sonnet-5-5",
-    "aven-light": "claude-haiku-5-5",
-}
-# AVEN Ultra runs the same model as AVEN 1.0 but reasons more deeply.
-DEFAULT_EFFORT = {"aven-ultra": "xhigh"}
-EFFORT_MODELS = frozenset(
-    {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5"}
-)
-# Server-side refusal fallback: if a model declines on policy grounds, Anthropic
-# answers with a recommended fallback model inside the same stream.
-FALLBACK_MODELS = frozenset({"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"})
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
+assert tuple(AVEN_MODELS) == AVEN_MODEL_IDS
 
 
 def _env_int(name: str, default: int) -> int:
@@ -60,36 +46,50 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def detect_service() -> str:
+    explicit = os.environ.get("AVEN_UPSTREAM", "").strip().lower()
+    if explicit in SERVICES:
+        return explicit
+    for service_id in ("anthropic", "groq", "gemini"):
+        if os.environ.get(SERVICES[service_id].key_env, "").strip():
+            return service_id
+    return "groq"
+
+
 @dataclass
 class Config:
-    anthropic_api_key: str = ""
-    mapping: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_MAPPING))
-    effort: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_EFFORT))
-    max_output_tokens: int = 16_000
+    service: str = "groq"
+    api_key: str = ""
+    base_url: str = ""  # only needed for "openai_compatible"
+    overrides: dict[str, str] = field(default_factory=dict)  # AVEN model -> exact upstream model
+    max_output_tokens: int = 8_000
     max_input_chars: int = 400_000
-    requests_per_minute: int = 20  # per install
-    requests_per_day: int = 300  # per install
-    ip_requests_per_minute: int = 60  # per IP address
-    max_concurrent: int = 20
+    requests_per_minute: int = 10  # per install
+    requests_per_day: int = 100  # per install
+    ip_requests_per_minute: int = 30  # per IP address
+    max_concurrent: int = 10
     trust_proxy: bool = False  # read the client IP from X-Forwarded-For (only behind a trusted proxy)
     request_timeout: float = 600.0
 
     @classmethod
     def from_env(cls) -> Config:
+        service = detect_service()
         config = cls(
-            anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", "").strip(),
-            max_output_tokens=_env_int("AVEN_MAX_OUTPUT_TOKENS", 16_000),
+            service=service,
+            api_key=os.environ.get(SERVICES[service].key_env, "").strip(),
+            base_url=os.environ.get("AVEN_UPSTREAM_BASE_URL", "").strip(),
+            max_output_tokens=_env_int("AVEN_MAX_OUTPUT_TOKENS", 8_000),
             max_input_chars=_env_int("AVEN_MAX_INPUT_CHARS", 400_000),
-            requests_per_minute=_env_int("AVEN_REQUESTS_PER_MINUTE", 20),
-            requests_per_day=_env_int("AVEN_REQUESTS_PER_DAY", 300),
-            ip_requests_per_minute=_env_int("AVEN_IP_REQUESTS_PER_MINUTE", 60),
-            max_concurrent=_env_int("AVEN_MAX_CONCURRENT", 20),
+            requests_per_minute=_env_int("AVEN_REQUESTS_PER_MINUTE", 10),
+            requests_per_day=_env_int("AVEN_REQUESTS_PER_DAY", 100),
+            ip_requests_per_minute=_env_int("AVEN_IP_REQUESTS_PER_MINUTE", 30),
+            max_concurrent=_env_int("AVEN_MAX_CONCURRENT", 10),
             trust_proxy=os.environ.get("AVEN_TRUST_PROXY", "").lower() in ("1", "true", "yes"),
         )
         for model_id in AVEN_MODELS:
             override = os.environ.get(model_id.upper().replace("-", "_") + "_MODEL", "").strip()  # AVEN_1_MODEL
             if override:
-                config.mapping[model_id] = override
+                config.overrides[model_id] = override
         return config
 
 
@@ -120,28 +120,6 @@ class RateLimiter:
 
 def error_response(status: int, message: str, error_type: str) -> JSONResponse:
     return JSONResponse({"error": {"message": message, "type": error_type, "code": None}}, status_code=status)
-
-
-def map_upstream_error(exc: Exception) -> tuple[int, str, str]:
-    """Translate Anthropic errors into safe client-facing errors (never leak the server key)."""
-    if isinstance(exc, (anthropic.AuthenticationError, anthropic.PermissionDeniedError)):
-        log.error("Upstream rejected the server credentials (%s)", type(exc).__name__)
-        return 503, "AVEN Cloud is temporarily unavailable. Please try again later.", "server_error"
-    if isinstance(exc, anthropic.RateLimitError):
-        return 429, "AVEN Cloud is very busy right now. Please wait a moment and try again.", "rate_limit_error"
-    if isinstance(exc, anthropic.NotFoundError):
-        log.error("Upstream model not found - check the model mapping")
-        return 503, "This AVEN model is temporarily unavailable.", "server_error"
-    if isinstance(exc, anthropic.BadRequestError):
-        return 400, f"The request was rejected: {exc.message}", "invalid_request_error"
-    if isinstance(exc, anthropic.APITimeoutError):
-        return 504, "The reply took too long. Please try again.", "server_error"
-    if isinstance(exc, anthropic.APIConnectionError):
-        return 503, "AVEN Cloud could not reach the AI service. Please try again.", "server_error"
-    if isinstance(exc, anthropic.APIStatusError) and exc.status_code >= 500:
-        return 503, "The AI service is temporarily unavailable. Please try again shortly.", "server_error"
-    log.exception("Unexpected upstream error")
-    return 500, "Unexpected server error.", "server_error"
 
 
 def client_identity(request: Request, trust_proxy: bool) -> tuple[str, str]:
@@ -208,9 +186,6 @@ def parse_chat_request(body: object, config: Config) -> ParsedRequest | JSONResp
     return ParsedRequest(aven_model, "\n\n".join(system_parts), messages, max_tokens, bool(body.get("stream")))
 
 
-FINISH_REASONS = {"end_turn": "stop", "stop_sequence": "stop", "max_tokens": "length", "refusal": "content_filter"}
-
-
 def chunk(completion_id: str, model: str, created: int, delta: dict, finish: str | None = None) -> str:
     payload = {
         "id": completion_id,
@@ -225,19 +200,20 @@ def chunk(completion_id: str, model: str, created: int, delta: dict, finish: str
 # --- application ---------------------------------------------------------------------------
 
 
-def create_app(config: Config | None = None, client: anthropic.AsyncAnthropic | None = None) -> FastAPI:
+def create_app(config: Config | None = None, client=None) -> FastAPI:
+    """Build the app. ``client`` (an Anthropic or OpenAI async client) is injectable for tests."""
     config = config or Config.from_env()
-    if client is None and config.anthropic_api_key:
-        client = anthropic.AsyncAnthropic(
-            api_key=config.anthropic_api_key, timeout=config.request_timeout, max_retries=2
-        )
+    service = SERVICES[config.service]
+    if client is None and config.api_key:
+        client = make_client(service, config.api_key, config.base_url, config.request_timeout)
+    backend = Backend(service, client, dict(config.overrides)) if client is not None else None
     limiter = RateLimiter()
     semaphore = asyncio.Semaphore(max(1, config.max_concurrent))
     app = FastAPI(title="AVEN Cloud", docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.get("/health")
     async def health() -> dict:
-        return {"status": "ok", "configured": client is not None}
+        return {"status": "ok", "configured": backend is not None, "service": config.service}
 
     @app.get("/v1/models")
     async def list_models() -> dict:
@@ -248,7 +224,7 @@ def create_app(config: Config | None = None, client: anthropic.AsyncAnthropic | 
 
     @app.post("/v1/chat/completions")
     async def chat_completions(request: Request):
-        if client is None:
+        if backend is None:
             return error_response(503, "AVEN Cloud is not configured yet.", "server_error")
         install_id, ip = client_identity(request, config.trust_proxy)
         if not (
@@ -272,29 +248,18 @@ def create_app(config: Config | None = None, client: anthropic.AsyncAnthropic | 
         if isinstance(parsed, JSONResponse):
             return parsed
 
-        upstream_model = config.mapping[parsed.aven_model]
-        params: dict = {
-            "model": upstream_model,
-            "max_tokens": parsed.max_tokens,
-            "messages": parsed.messages,
-        }
-        if parsed.system:
-            params["system"] = parsed.system
-        effort = config.effort.get(parsed.aven_model)
-        if effort and upstream_model in EFFORT_MODELS:
-            params["output_config"] = {"effort": effort}
-
-        def open_stream():
-            if upstream_model in FALLBACK_MODELS:
-                return client.beta.messages.stream(**params, betas=[FALLBACK_BETA], fallbacks="default")
-            return client.messages.stream(**params)
+        upstream_model = await backend.resolve(parsed.aven_model)
+        if not upstream_model:
+            log.error("No upstream model available for %s", parsed.aven_model)
+            return error_response(503, "This AVEN model is temporarily unavailable.", "server_error")
 
         await semaphore.acquire()
-        manager = open_stream()
         try:
-            # Entering the stream sends the request, so upstream errors become proper HTTP statuses.
-            stream = await manager.__aenter__()
-        except anthropic.APIError as exc:
+            # Opening the stream sends the request, so upstream errors become proper HTTP statuses.
+            handle = await backend.open_stream(
+                parsed.aven_model, upstream_model, parsed.system, parsed.messages, parsed.max_tokens
+            )
+        except UPSTREAM_ERRORS as exc:
             semaphore.release()
             status, message, kind = map_upstream_error(exc)
             return error_response(status, message, kind)
@@ -312,7 +277,7 @@ def create_app(config: Config | None = None, client: anthropic.AsyncAnthropic | 
                 return
             closed = True
             try:
-                await manager.__aexit__(None, None, None)
+                await handle.close()
             finally:
                 semaphore.release()
 
@@ -323,14 +288,11 @@ def create_app(config: Config | None = None, client: anthropic.AsyncAnthropic | 
         async def events() -> AsyncIterator[str]:
             try:
                 yield chunk(completion_id, parsed.aven_model, created, {"role": "assistant", "content": ""})
-                async for event in stream:
-                    if event.type == "text":
-                        yield chunk(completion_id, parsed.aven_model, created, {"content": event.text})
-                final = await stream.get_final_message()
-                finish = FINISH_REASONS.get(final.stop_reason or "", "stop")
-                yield chunk(completion_id, parsed.aven_model, created, {}, finish)
+                async for text in handle.texts:
+                    yield chunk(completion_id, parsed.aven_model, created, {"content": text})
+                yield chunk(completion_id, parsed.aven_model, created, {}, handle.finish_reason)
                 yield "data: [DONE]\n\n"
-            except anthropic.APIError as exc:
+            except UPSTREAM_ERRORS as exc:
                 _status, message, kind = map_upstream_error(exc)
                 yield f"data: {json.dumps({'error': {'message': message, 'type': kind}})}\n\n"
             finally:
