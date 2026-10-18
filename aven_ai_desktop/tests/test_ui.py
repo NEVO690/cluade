@@ -292,7 +292,8 @@ def test_aven_cloud_chat_works_without_any_key(make_window, qtbot, monkeypatch) 
     assert repo.list_messages(repo.list_conversations()[0].id)[-1].content == "Hi from AVEN Cloud"
 
 
-def test_settings_hide_key_fields_for_aven_cloud(make_window, qtbot) -> None:
+def test_settings_hide_key_fields_for_aven_cloud(make_window, qtbot, monkeypatch) -> None:
+    monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
     window, _repo, _ = make_window(provider_id="aven_cloud")
     dialog = SettingsDialog(window.settings, window.credentials, window)
     qtbot.addWidget(dialog)
@@ -300,3 +301,90 @@ def test_settings_hide_key_fields_for_aven_cloud(make_window, qtbot) -> None:
     assert dialog.key_section.isHidden()
     dialog.provider_combo.setCurrentIndex(dialog.provider_combo.findData("anthropic"))
     assert not dialog.key_section.isHidden()
+
+
+# --- settings: choosing a provider is saved -------------------------------------------------------
+
+
+def test_choosing_aven_local_is_saved_and_survives_restart(make_window, qtbot, monkeypatch, tmp_path) -> None:
+    import sys
+    from pathlib import Path
+
+    from PySide6.QtWidgets import QDialogButtonBox
+
+    from app.local import engine as engine_module
+
+    fake = Path(__file__).with_name("fake_llama_server.py")
+    engine_module.set_engine(engine_module.LocalEngine(command_prefix=[sys.executable, str(fake)]))
+    window, _repo, _ = make_window()  # starts on Anthropic
+    downloads = []
+    monkeypatch.setattr(window, "download_selected_model", lambda: downloads.append(1) or False)
+
+    def choose_and_save(dialog):
+        dialog.provider_combo.setCurrentIndex(dialog.provider_combo.findData("aven_local"))
+        dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.StandardButton.Save).click()
+        return dialog.result()
+
+    monkeypatch.setattr(SettingsDialog, "exec", choose_and_save)
+    window.open_settings()
+    assert window.settings.provider == "aven_local"
+    assert SettingsStore(tmp_path / "settings.json").load().provider == "aven_local"  # persisted
+    assert downloads == [1]  # the model download is offered right away
+    engine_module.set_engine(None)
+
+
+def test_closing_settings_with_changes_offers_to_save(make_window, qtbot, monkeypatch) -> None:
+    window, _repo, _ = make_window()
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    dialog.provider_combo.setCurrentIndex(dialog.provider_combo.findData("aven_local"))
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: asked.append(a[1]) or QMessageBox.StandardButton.Save)
+    dialog.reject()  # Cancel, Esc or the window's close button
+    assert asked == ["Save changes?"]
+    assert dialog.result() == SettingsDialog.DialogCode.Accepted
+    assert dialog.settings.provider == "aven_local"
+
+
+def test_closing_settings_without_changes_just_closes(make_window, qtbot, monkeypatch) -> None:
+    window, _repo, _ = make_window()
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: pytest.fail("should not ask"))
+    dialog.reject()
+    assert dialog.result() == SettingsDialog.DialogCode.Rejected
+
+
+def test_discarding_changes_keeps_old_provider(make_window, qtbot, monkeypatch) -> None:
+    window, _repo, _ = make_window()
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    dialog.provider_combo.setCurrentIndex(dialog.provider_combo.findData("aven_local"))
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Discard)
+    dialog.reject()
+    assert dialog.result() == SettingsDialog.DialogCode.Rejected
+    assert window.settings.provider == "anthropic"
+
+
+def test_aven_cloud_only_offered_when_build_has_server(make_window, qtbot, monkeypatch) -> None:
+    window, _repo, _ = make_window()
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    ids = [dialog.provider_combo.itemData(i) for i in range(dialog.provider_combo.count())]
+    assert ids == ["aven_local", "anthropic", "openai"]
+
+    monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    ids = [dialog.provider_combo.itemData(i) for i in range(dialog.provider_combo.count())]
+    assert "aven_cloud" in ids
+
+
+def test_settings_fit_small_screens(make_window, qtbot) -> None:
+    from PySide6.QtWidgets import QScrollArea
+
+    window, _repo, _ = make_window()
+    dialog = SettingsDialog(window.settings, window.credentials, window)
+    qtbot.addWidget(dialog)
+    assert all(isinstance(dialog.tabs.widget(i), QScrollArea) for i in range(dialog.tabs.count()))
+    assert dialog.minimumHeight() <= 420

@@ -523,6 +523,10 @@ class MainWindow(QMainWindow):
         self.theme.apply(self.settings.theme)
         self.chat.set_send_with_enter(self.settings.send_with_enter)
         self.update_status()
+        # Just switched to AVEN Local: offer the one-time model download straight away.
+        status = self.chat_service.status()
+        if self.settings.provider == "aven_local" and status.needs_download:
+            self.download_selected_model()
 
     def toggle_theme(self) -> None:
         self.settings.theme = "light" if self.theme.palette.dark else "dark"

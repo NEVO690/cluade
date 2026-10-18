@@ -14,11 +14,13 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -55,6 +57,15 @@ def _form_label(text: str) -> QLabel:
     return label
 
 
+def _scrollable(page: QWidget) -> QScrollArea:
+    area = QScrollArea()
+    area.setWidget(page)
+    area.setWidgetResizable(True)
+    area.setFrameShape(QFrame.Shape.NoFrame)
+    area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    return area
+
+
 def _help(text: str) -> QLabel:
     label = QLabel(text)
     label.setObjectName("HelpText")
@@ -70,7 +81,8 @@ class SettingsDialog(QDialog):
     def __init__(self, settings: AppSettings, credentials: CredentialStore, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setMinimumSize(620, 600)
+        self.setMinimumSize(560, 420)
+        self.resize(660, 720)
         self.settings = copy.deepcopy(settings)
         self.credentials = credentials
         self._tasks: list[TaskWorker] = []
@@ -78,10 +90,11 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 14)
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_general(), "General")
-        self.tabs.addTab(self._build_provider(), "AI Provider")
-        self.tabs.addTab(self._build_privacy(), "Privacy && Data")
-        self.tabs.addTab(self._build_about(), "About")
+        # Each page scrolls, so the Save button stays visible on small or scaled screens.
+        self.tabs.addTab(_scrollable(self._build_general()), "General")
+        self.tabs.addTab(_scrollable(self._build_provider()), "AI Provider")
+        self.tabs.addTab(_scrollable(self._build_privacy()), "Privacy && Data")
+        self.tabs.addTab(_scrollable(self._build_about()), "About")
         layout.addWidget(self.tabs, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
@@ -92,6 +105,61 @@ class SettingsDialog(QDialog):
 
         self._previous_provider = self._selected_provider()
         self._load_provider_fields()
+        self._initial_state = self._form_state()
+        self._closing = False
+
+    # --- unsaved changes ----------------------------------------------------------------
+    def _form_state(self) -> tuple:
+        return (
+            self._selected_provider(),
+            self.theme_combo.currentData(),
+            self.enter_checkbox.isChecked(),
+            self.key_edit.text().strip(),
+            self.base_url_edit.text().strip(),
+            tuple(combo.currentText().strip() for combo in self.map_combos.values()),
+            self.max_tokens.value(),
+            self.timeout.value(),
+        )
+
+    def has_unsaved_changes(self) -> bool:
+        return self._form_state() != self._initial_state
+
+    def reject(self) -> None:
+        """Cancel / Esc / closing the window: offer to save a changed choice instead of losing it."""
+        if self._closing or not self.has_unsaved_changes():
+            super().reject()
+            return
+        answer = QMessageBox.question(
+            self,
+            "Save changes?",
+            "You changed your settings. Save them before closing?",
+            QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Save,
+        )
+        if answer == QMessageBox.StandardButton.Save:
+            self._on_save()
+        elif answer == QMessageBox.StandardButton.Discard:
+            self._closing = True
+            super().reject()
+
+    def closeEvent(self, event) -> None:  # noqa: N802 (Qt API)
+        if self._closing or not self.isVisible():
+            event.accept()  # already finished, or closed programmatically while hidden
+            return
+        event.ignore()
+        self.reject()
+
+    def showEvent(self, event) -> None:  # noqa: N802 (Qt API)
+        super().showEvent(event)
+        # Never open taller or wider than the screen (laptops with display scaling).
+        screen = self.screen()
+        if screen is not None:
+            available = screen.availableGeometry()
+            width = min(self.width(), int(available.width() * 0.95))
+            height = min(self.height(), int(available.height() * 0.9))
+            if (width, height) != (self.width(), self.height()):
+                self.resize(width, height)
+                self.move(available.center() - self.rect().center())
 
     # --- tabs -----------------------------------------------------------------------
     def _build_general(self) -> QWidget:
@@ -120,8 +188,11 @@ class SettingsDialog(QDialog):
 
         self.provider_combo = QComboBox()
         for pid in PROVIDER_IDS:
+            # AVEN Cloud is only offered when this build includes an AVEN Cloud server.
+            if pid == "aven_cloud" and not cloud_url():
+                continue
             self.provider_combo.addItem(PROVIDERS[pid].name, pid)
-        self.provider_combo.setCurrentIndex(PROVIDER_IDS.index(self.settings.provider))
+        self.provider_combo.setCurrentIndex(max(0, self.provider_combo.findData(self.settings.provider)))
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         form.addRow(_form_label("Provider"), self.provider_combo)
         self.provider_help = _help("")
