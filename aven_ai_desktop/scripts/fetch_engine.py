@@ -66,9 +66,10 @@ def fetch(platform: str) -> Path:
             shutil.rmtree(ENGINE_DIR)
         # Keep the server and the libraries next to it; drop the other command-line tools.
         shutil.copytree(found.parent, ENGINE_DIR)
+    # Only executables are removed; libraries (.dll/.so, some named "llama-*") must stay.
     for tool in ENGINE_DIR.iterdir():
-        is_tool = tool.name.startswith("llama-") and tool.name != binary
-        if is_tool or tool.name in ("test-backend-ops", "test-backend-ops.exe", "rpc-server", "rpc-server.exe"):
+        is_program = tool.suffix in ("", ".exe") and tool.is_file() and tool.name != binary
+        if is_program and (tool.name.startswith(("llama", "test-", "rpc-", "ggml-rpc"))):
             tool.unlink()
     (ENGINE_DIR / binary).chmod(0o755)
     (ENGINE_DIR / "LLAMA_CPP_VERSION.txt").write_text(f"llama.cpp {LLAMA_CPP_TAG} ({name})\n", encoding="utf-8")
