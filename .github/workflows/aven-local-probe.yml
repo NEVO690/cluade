@@ -1,0 +1,13 @@
+name: AVEN Local probe (temporary)
+on:
+  push:
+    paths: [".github/probe/**", ".github/workflows/aven-local-probe.yml"]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/probe/probe.py
