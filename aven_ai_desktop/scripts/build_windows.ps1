@@ -89,6 +89,26 @@ if (-not $SkipTests) {
 Write-Host "==> Generating icon" -ForegroundColor Cyan
 Invoke-Checked $VenvPython @("scripts\generate_icon.py")
 
+# --- AVEN Local engine ----------------------------------------------------------------
+# llama.cpp's llama-server (pinned release, checksum-verified) runs open-source models on the PC.
+Write-Host "==> Fetching the AVEN Local engine (llama.cpp)" -ForegroundColor Cyan
+Invoke-Checked $VenvPython @("scripts\fetch_engine.py", "--platform", "win-x64")
+# Ship the Microsoft C++ runtime next to the engine for PCs that don't have it installed.
+$RuntimeSources = @(
+    (Join-Path $Venv "Lib\site-packages\PySide6"),
+    (Split-Path (& $VenvPython -c "import sys; print(sys.base_prefix + '\\python.exe')"))
+)
+foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll", "msvcp140_1.dll")) {
+    $target = Join-Path $ProjectRoot "engine\$dll"
+    if (-not (Test-Path $target)) {
+        foreach ($dir in $RuntimeSources) {
+            $candidate = Join-Path $dir $dll
+            if (Test-Path $candidate) { Copy-Item $candidate $target; break }
+        }
+    }
+}
+Invoke-Checked (Join-Path $ProjectRoot "engine\llama-server.exe") @("--version")
+
 # --- AVEN Cloud address -------------------------------------------------------------
 # The server address is public (no secrets). Without it, users must add their own API key.
 $CloudFile = Join-Path $ProjectRoot "assets\cloud.json"

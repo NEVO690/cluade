@@ -20,12 +20,19 @@ from app.config.settings import (
 # --- settings ---------------------------------------------------------------------------
 
 
-def test_defaults_use_aven_cloud_and_aven_1() -> None:
+def test_defaults_use_aven_local_without_a_cloud_server() -> None:
+    settings = AppSettings().normalized()
+    assert settings.provider == "aven_local"
+    assert settings.model == "aven-light"  # smallest download first
+    assert settings.resolved_model() == "aven-light"  # mapped to a local model by AVEN Local
+    assert len(settings.install_id) == 32
+
+
+def test_defaults_use_aven_cloud_when_the_build_has_a_server(monkeypatch) -> None:
+    monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
     settings = AppSettings().normalized()
     assert settings.provider == "aven_cloud"
     assert settings.model == "aven-1"
-    assert settings.resolved_model() == "aven-1"  # AVEN Cloud maps on the server
-    assert len(settings.install_id) == 32
 
 
 def test_personal_key_mapping_defaults() -> None:
@@ -68,7 +75,12 @@ def test_invalid_model_choices_are_normalized(tmp_path) -> None:
     path = tmp_path / "settings.json"
     path.write_text(
         json.dumps(
-            {"model": "gpt-9", "install_id": "../bad", "model_map": {"anthropic": {"aven-core": "bad id", "x": "y"}}}
+            {
+                "provider": "anthropic",
+                "model": "gpt-9",
+                "install_id": "../bad",
+                "model_map": {"anthropic": {"aven-core": "bad id", "x": "y"}},
+            }
         )
     )
     loaded = SettingsStore(path).load()
@@ -93,7 +105,7 @@ def test_corrupt_or_invalid_settings_fall_back_to_defaults(tmp_path) -> None:
     path.write_text(json.dumps({"theme": "neon", "provider": "nope", "max_tokens": 10**9, "request_timeout": "x"}))
     loaded = SettingsStore(path).load()
     assert loaded.theme == "system"
-    assert loaded.provider == "aven_cloud"
+    assert loaded.provider == "aven_local"
     assert loaded.max_tokens == 128_000
     assert loaded.request_timeout == 600
 
@@ -112,7 +124,7 @@ def test_env_overrides(monkeypatch) -> None:
     assert settings.openai_base_url == ""  # invalid URL ignored
 
     monkeypatch.setenv("AVEN_MODEL", "not-a-model")
-    assert apply_env_overrides(AppSettings()).model == "aven-1"
+    assert apply_env_overrides(AppSettings(provider="anthropic")).model == "aven-1"
 
 
 def test_cloud_url_from_env_and_build_file(monkeypatch, tmp_path) -> None:

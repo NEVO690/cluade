@@ -179,6 +179,17 @@ class SettingsDialog(QDialog):
         )
         outer.addWidget(self.key_section)
 
+        # AVEN Local: downloaded models.
+        self.local_section = QWidget()
+        local_layout = QHBoxLayout(self.local_section)
+        local_layout.setContentsMargins(0, 0, 0, 0)
+        self.local_models_label = _help("")
+        self.delete_models_button = QPushButton("Delete downloaded models")
+        self.delete_models_button.clicked.connect(self._on_delete_models)
+        local_layout.addWidget(self.local_models_label, 1)
+        local_layout.addWidget(self.delete_models_button)
+        outer.addWidget(self.local_section)
+
         form = QFormLayout()
         form.setVerticalSpacing(10)
         self.max_tokens = QSpinBox()
@@ -218,7 +229,9 @@ class SettingsDialog(QDialog):
         layout.addWidget(
             _help(
                 "<b>What leaves your computer.</b> When you send a message, the conversation so far and the "
-                "mode's instructions are sent over HTTPS. With <b>AVEN Cloud</b> (the default) they go to the "
+                "mode's instructions are processed as follows. With <b>AVEN Local</b> nothing leaves your computer: "
+                "the model runs on your PC (models are downloaded once from Hugging Face). With <b>AVEN Cloud</b> "
+                "they are sent over HTTPS to the "
                 "AVEN AI server, which forwards them to the AI service it runs on (such as Groq, Google Gemini "
                 "or Anthropic) to generate the reply, together with a random install ID used only for fair-use "
                 "limits. Free AI services may use the content they receive under their own terms. "
@@ -292,7 +305,9 @@ class SettingsDialog(QDialog):
     def _load_provider_fields(self) -> None:
         pid = self._selected_provider()
         info = PROVIDERS[pid]
-        if pid == "aven_cloud":
+        if pid == "aven_local":
+            self.provider_help.setText(info.key_help)
+        elif pid == "aven_cloud":
             available = bool(cloud_url())
             self.provider_help.setText(
                 info.key_help
@@ -305,14 +320,17 @@ class SettingsDialog(QDialog):
             )
         else:
             self.provider_help.setText(f"{info.key_help} <a href='{info.console_url}'>{info.console_url}</a>")
-        self.key_section.setVisible(pid != "aven_cloud")
-        self.list_button.setVisible(pid != "aven_cloud")
+        keyless = pid in ("aven_cloud", "aven_local")
+        self.key_section.setVisible(not keyless)
+        self.list_button.setVisible(not keyless)
+        self.local_section.setVisible(pid == "aven_local")
+        self._refresh_local_models()
         is_openai = pid == "openai"
         self.base_url_label.setVisible(is_openai)
         self.base_url_edit.setVisible(is_openai)
         self.base_url_edit.setText(self.settings.openai_base_url)
 
-        mapping = self.settings.mapping_for(pid) if pid != "aven_cloud" else {}
+        mapping = self.settings.mapping_for(pid) if not keyless else {}
         for model_id, combo in self.map_combos.items():
             value = mapping.get(model_id, "")
             combo.clear()
@@ -326,7 +344,7 @@ class SettingsDialog(QDialog):
 
     def _refresh_key_status(self) -> None:
         pid = self._selected_provider()
-        if pid == "aven_cloud":
+        if pid in ("aven_cloud", "aven_local"):
             self.key_status.clear()
             return
         lookup = self.credentials.lookup(pid)
@@ -360,7 +378,7 @@ class SettingsDialog(QDialog):
         self.remove_key.setEnabled(lookup.source in ("credential store", "session"))
 
     def _store_current_models(self) -> None:
-        if self._previous_provider == "aven_cloud":
+        if self._previous_provider in ("aven_cloud", "aven_local"):
             return
         mapping = self.settings.mapping_for(self._previous_provider)
         for model_id, combo in self.map_combos.items():
@@ -379,6 +397,8 @@ class SettingsDialog(QDialog):
 
     def _make_provider(self):
         pid = self._selected_provider()
+        if pid == "aven_local":
+            return create_provider(pid, None, timeout=float(self.timeout.value()))
         if pid == "aven_cloud":
             return create_provider(pid, None, timeout=float(self.timeout.value()), client_id=self.settings.install_id)
         base_url = self.base_url_edit.text().strip() if pid == "openai" else ""
@@ -422,8 +442,8 @@ class SettingsDialog(QDialog):
 
     def _on_test(self) -> None:
         aven_model = self.settings.model
-        if self._selected_provider() == "aven_cloud":
-            model = aven_model  # the AVEN Cloud server maps AVEN models itself
+        if self._selected_provider() in ("aven_cloud", "aven_local"):
+            model = aven_model  # AVEN Cloud and AVEN Local map AVEN models themselves
         else:
             model = sanitize_model_id(self.map_combos[aven_model].currentText())
         if not model:
@@ -458,6 +478,40 @@ class SettingsDialog(QDialog):
             combo.addItems(models)
             combo.setCurrentText(current)  # never guess a mapping for an unset AVEN model
         self._show_result(True, f"Loaded {len(models)} models available to this key.")
+
+    def _refresh_local_models(self) -> None:
+        from app.local.downloader import is_downloaded
+        from app.local.models import MODEL_FILES
+
+        downloaded = [f for f in MODEL_FILES.values() if is_downloaded(f)]
+        if downloaded:
+            total = sum(f.size for f in downloaded) / 1_000_000_000
+            names = ", ".join(f.label for f in downloaded)
+            self.local_models_label.setText(f"Downloaded: {names} ({total:.1f} GB on this computer).")
+        else:
+            self.local_models_label.setText(
+                "No models downloaded yet. Pick a model in the message box; AVEN offers to download it."
+            )
+        self.delete_models_button.setEnabled(bool(downloaded))
+
+    def _on_delete_models(self) -> None:
+        from app.local.downloader import delete_model
+        from app.local.engine import get_engine
+        from app.local.models import MODEL_FILES
+
+        answer = QMessageBox.question(
+            self,
+            "Delete downloaded models?",
+            "This frees the disk space used by AVEN Local models. You can download them again any time.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        get_engine().stop()  # release the open model file first
+        for file in MODEL_FILES.values():
+            delete_model(file)
+        self._refresh_local_models()
 
     def _on_remove_key(self) -> None:
         pid = self._selected_provider()

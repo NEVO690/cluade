@@ -21,6 +21,8 @@ ONEFILE = os.environ.get("AVEN_ONEFILE") == "1"
 ICON = ROOT / "assets" / "aven.ico"
 
 datas = [(str(ROOT / "assets" / "aven.ico"), "assets"), (str(ROOT / "assets" / "aven.png"), "assets")]
+if (ROOT / "engine").is_dir():
+    datas.append((str(ROOT / "engine"), "engine"))  # AVEN Local: llama.cpp llama-server (scripts/fetch_engine.py)
 if (ROOT / "assets" / "cloud.json").exists():
     datas.append((str(ROOT / "assets" / "cloud.json"), "assets"))  # AVEN Cloud server address (public)
 

@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         self.chat.mode_changed.connect(self.set_mode)
         self.chat.model_changed.connect(self.set_model)
         self.chat.settings_requested.connect(self.open_settings)
+        self.chat.download_requested.connect(self.download_selected_model)
         self.chat.retry_requested.connect(self.retry)
         self.chat.regenerate_requested.connect(self.regenerate)
         self.chat.load_earlier_requested.connect(self.load_earlier)
@@ -153,6 +154,27 @@ class MainWindow(QMainWindow):
 
     def update_status(self) -> None:
         self.chat.set_status(self.chat_service.status())
+        self.chat.model_picker.set_notes(self._model_notes())
+
+    def _model_notes(self) -> dict[str, str]:
+        if self.settings.provider != "aven_local":
+            return {}
+        from app.local.downloader import is_downloaded
+        from app.local.models import LOCAL_MODELS
+
+        return {
+            model_id: "· On this computer" if is_downloaded(local.file) else f"· {local.file.size_text} download"
+            for model_id, local in LOCAL_MODELS.items()
+        }
+
+    def download_selected_model(self) -> bool:
+        """Download the model behind the selected AVEN model (AVEN Local). Returns True when ready."""
+        from app.ui.download_dialog import DownloadDialog
+
+        dialog = DownloadDialog(self.settings.model, self)
+        ok = dialog.exec() == DownloadDialog.DialogCode.Accepted
+        self.update_status()
+        return ok
 
     def new_conversation(self) -> None:
         self.stop_generation()
@@ -305,6 +327,10 @@ class MainWindow(QMainWindow):
         if not text:
             return
         status = self.chat_service.status()
+        if not status.ready and status.needs_download:
+            if self.download_selected_model():
+                self.send_message(text)
+            return
         if not status.ready:
             self.update_status()
             if (
@@ -522,6 +548,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt API)
         self.stop_generation()
+        from app.local.engine import get_engine
+
+        get_engine().stop()  # free the memory used by an on-device model
         self.settings.window_geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")
         self.save_settings()
         super().closeEvent(event)

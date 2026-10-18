@@ -30,6 +30,26 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
 
+  # Real AVEN Local check: real llama.cpp engine, real model download (verified), real answers.
+  local-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: aven_ai_desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Fetch the llama.cpp engine
+        run: python scripts/fetch_engine.py --platform linux-x64
+      - name: Download AVEN Light and chat with it
+        run: python scripts/local_e2e.py
+        env:
+          AVEN_DATA_DIR: ${{ runner.temp }}/aven-e2e
+
   build:
     runs-on: windows-latest
     timeout-minutes: 45
@@ -65,6 +85,9 @@ jobs:
           Stop-Process -Id $proc.Id -Force
           if (-not (Test-Path (Join-Path $env:AVEN_DATA_DIR "conversations.db"))) { throw "Database was not created" }
           Get-Content (Join-Path $env:AVEN_DATA_DIR "logs\aven.log")
+          # The bundled AVEN Local engine must start on Windows.
+          & "dist\AVEN AI\_internal\engine\llama-server.exe" --version
+          if ($LASTEXITCODE -ne 0) { throw "Bundled llama-server failed to run" }
 
       - name: SHA-256 checksums
         run: |

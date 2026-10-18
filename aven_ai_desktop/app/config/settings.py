@@ -6,7 +6,7 @@ written here - see :mod:`app.config.secrets`.
 Environment variables (useful for development, also read by packaged builds)
 take precedence over saved values for the current session only:
 
-* ``AVEN_PROVIDER``     - ``aven_cloud`` (default), ``anthropic`` or ``openai``
+* ``AVEN_PROVIDER``     - ``aven_local``, ``aven_cloud``, ``anthropic`` or ``openai``
 * ``AVEN_MODEL``        - selected AVEN model (``aven-1``, ``aven-ultra``, ``aven-core``, ``aven-light``)
 * ``AVEN_1_MODEL`` / ``AVEN_ULTRA_MODEL`` / ``AVEN_CORE_MODEL`` / ``AVEN_LIGHT_MODEL``
                         - provider model ID behind each AVEN model (personal-key providers)
@@ -28,14 +28,27 @@ from app.paths import project_root, settings_path
 log = logging.getLogger(__name__)
 
 THEMES = ("system", "light", "dark")
-# "aven_cloud" uses the AVEN AI server (no API key needed); the others use a personal key.
-PROVIDER_IDS = ("aven_cloud", "anthropic", "openai")
+# "aven_local" runs open-source models on this computer and "aven_cloud" uses the AVEN AI
+# server (neither needs an API key); the others use a personal key.
+PROVIDER_IDS = ("aven_local", "aven_cloud", "anthropic", "openai")
 KEY_PROVIDER_IDS = ("anthropic", "openai")
 
 MIN_MAX_TOKENS = 256
 MAX_MAX_TOKENS = 128_000
 MIN_TIMEOUT = 10
 MAX_TIMEOUT = 1800
+
+
+def default_provider() -> str:
+    """AVEN Cloud when this build includes a server address, otherwise AVEN Local."""
+    from app.config.cloud import cloud_url
+
+    return "aven_cloud" if cloud_url() else "aven_local"
+
+
+def default_model(provider: str) -> str:
+    # On a home computer the smallest model is the best first experience.
+    return "aven-light" if provider == "aven_local" else DEFAULT_AVEN_MODEL
 
 
 def _default_mappings() -> dict[str, dict[str, str]]:
@@ -45,9 +58,9 @@ def _default_mappings() -> dict[str, dict[str, str]]:
 @dataclass
 class AppSettings:
     theme: str = "system"
-    provider: str = "aven_cloud"
-    # AVEN model selected in the message box.
-    model: str = DEFAULT_AVEN_MODEL
+    provider: str = field(default_factory=default_provider)
+    # AVEN model selected in the message box ("" = the provider's default).
+    model: str = ""
     # Provider model ID behind each AVEN model, per personal-key provider.
     model_map: dict[str, dict[str, str]] = field(default_factory=_default_mappings)
     openai_base_url: str = ""
@@ -57,6 +70,10 @@ class AppSettings:
     window_geometry: str = ""
     # Random identifier sent to AVEN Cloud for fair-use limits (not linked to any account).
     install_id: str = field(default_factory=lambda: uuid.uuid4().hex)
+
+    def __post_init__(self) -> None:
+        if not self.model:
+            self.model = default_model(self.provider)
 
     # --- convenience accessors -------------------------------------------------
     def mapping_for(self, provider: str | None = None) -> dict[str, str]:
@@ -69,9 +86,9 @@ class AppSettings:
     def resolved_model(self) -> str:
         """Model ID sent to the provider for the selected AVEN model ("" when not mapped).
 
-        AVEN Cloud receives the AVEN model id itself; the server maps it.
+        AVEN Cloud and AVEN Local receive the AVEN model id itself and map it.
         """
-        if self.provider == "aven_cloud":
+        if self.provider in ("aven_cloud", "aven_local"):
             return self.model
         return self.provider_model_for(self.model)
 
@@ -80,12 +97,12 @@ class AppSettings:
         if self.theme not in THEMES:
             self.theme = "system"
         if self.provider not in PROVIDER_IDS:
-            self.provider = "aven_cloud"
+            self.provider = default_provider()
         self.max_tokens = _clamp(self.max_tokens, MIN_MAX_TOKENS, MAX_MAX_TOKENS, 32_000)
         self.request_timeout = _clamp(self.request_timeout, MIN_TIMEOUT, MAX_TIMEOUT, 600)
         self.openai_base_url = (self.openai_base_url or "").strip()
         if self.model not in AVEN_MODEL_IDS:
-            self.model = DEFAULT_AVEN_MODEL
+            self.model = default_model(self.provider)
         if not (isinstance(self.install_id, str) and len(self.install_id) == 32 and self.install_id.isalnum()):
             self.install_id = uuid.uuid4().hex
         for pid in KEY_PROVIDER_IDS:

@@ -5,7 +5,7 @@ AVEN AI Desktop is a Windows desktop AI app written in Python (PySide6). It has 
 - **AVEN** is a friendly general-purpose assistant for questions, explanations, brainstorming, writing, summaries, learning, planning and everyday problem-solving.
 - **AVEN CODE** is a programming assistant for writing, debugging, explaining, refactoring and reviewing code. It knows Python, JavaScript/TypeScript, HTML/CSS, Roblox Luau, Unity C#, Unreal Engine C++, Java, C#, SQL and more.
 
-By default the app chats through **AVEN Cloud**, the AVEN AI server in [`../aven_cloud`](../aven_cloud), so **users don't need an API key**. Advanced users can instead use their own key for **Anthropic (Claude)**, **OpenAI**, or any **OpenAI-compatible server** (including local model servers on `localhost`). The app never makes up responses: if nothing is available, it shows a setup screen.
+Out of the box the app uses **AVEN Local**: open-source AI models running **on the user's own computer**, with **no API key, no account and no cost**. Builds that include an **AVEN Cloud** server address (the AVEN AI server in [`../aven_cloud`](../aven_cloud)) use that server instead, again with no key for users. Advanced users can instead use their own key for **Anthropic (Claude)**, **OpenAI**, or any **OpenAI-compatible server** (including local model servers on `localhost`). The app never makes up responses: if nothing is available, it shows a setup screen.
 
 | Dark theme, AVEN CODE | Light theme, first launch |
 |---|---|
@@ -17,9 +17,29 @@ Version: **1.0.0** (defined in `app/version.py`)
 
 ---
 
+## AVEN Local: free, private, on your computer
+
+AVEN Local runs open-source **Qwen3** models (Apache-2.0) with the bundled **llama.cpp** engine (`llama-server`, MIT). The first time you pick a model, AVEN offers a **one-time download** from Hugging Face. Each file is pinned to an exact version and checked against its SHA-256 checksum. After that it works offline, and conversations never leave the computer.
+
+| AVEN model | Local model | Download | Notes |
+|---|---|---|---|
+| **AVEN Light** (default) | Qwen3 1.7B | 1.3 GB | Fastest; runs on almost any PC |
+| **AVEN Core** | Qwen3 4B | 2.5 GB | Smarter; 8 GB of RAM recommended |
+| **AVEN 1.0** | Qwen3 4B, with thinking mode | same file as Core | Reasons before answering: better, slower |
+| **AVEN Ultra** | Qwen3 8B, with thinking mode | 5.0 GB | Smartest locally; 16 GB of RAM recommended, slow on older PCs |
+
+Some things to know:
+
+- The engine runs on the **CPU**, so speed depends on the PC: a few words per second on older laptops, much faster on modern desktops.
+- It listens only on `127.0.0.1`, with a random per-session access token.
+- Models are stored in `%APPDATA%\AVEN AI\models`. Delete them in **Settings → AI Provider → Delete downloaded models**.
+- Local models are capable, but less so than large cloud models. For the best answers use AVEN Cloud or your own key.
+
 ## AVEN models
 
 Pick the model for each message with the **model picker in the message box**, next to Send. Your choice is remembered.
+
+Cloud mapping (AVEN Cloud with Anthropic, or your own Anthropic key):
 
 | AVEN model | Best for | Model behind it with your own Anthropic key |
 |---|---|---|
@@ -105,7 +125,8 @@ When you run from source, you can put a `.env` file next to `main.py` (see `.env
 | Variable | Purpose |
 |---|---|
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | API key. Takes precedence over a key saved in Settings. |
-| `AVEN_PROVIDER` | `aven_cloud` (default), `anthropic` or `openai` |
+| `AVEN_PROVIDER` | `aven_local`, `aven_cloud`, `anthropic` or `openai` |
+| `AVEN_LLAMA_SERVER` | Path to a `llama-server` binary (development; packaged builds bundle one) |
 | `AVEN_CLOUD_URL` | AVEN Cloud server address, for example `http://localhost:8000` when testing |
 | `AVEN_MODEL` | Selected AVEN model: `aven-1`, `aven-ultra`, `aven-core` or `aven-light` |
 | `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | Provider model ID behind each AVEN model (personal-key providers) |
@@ -124,7 +145,7 @@ Packaged builds read real environment variables, but they never read `.env` file
 
 ## Privacy and your data
 
-**What leaves your computer.** When you send a message, AVEN sends the conversation so far, plus the mode's instructions, over HTTPS:
+**What leaves your computer.** With **AVEN Local**, nothing: the model runs on your PC. The only network traffic is the one-time model download from Hugging Face. With the other providers, AVEN sends the conversation so far, plus the mode's instructions, over HTTPS:
 
 - **With AVEN Cloud**, it goes to the AVEN AI server, which forwards it to the AI service the server runs on (for example Groq, Google Gemini or Anthropic). A random install ID goes along with it, used only for fair-use limits. Free AI services may use the content they receive under their own terms.
 - **With your own key**, it goes directly to the provider you selected.
@@ -139,6 +160,7 @@ Providers process messages under their own terms and privacy policies ([Anthropi
 | Settings (no secrets) | `%APPDATA%\AVEN AI\settings.json` |
 | Logs (events and errors, no message contents) | `%APPDATA%\AVEN AI\logs\` |
 | API key | Windows Credential Manager, entry “AVEN AI Desktop” |
+| AVEN Local models | `%APPDATA%\AVEN AI\models\` |
 
 On macOS the data folder is `~/Library/Application Support/AVEN AI`. On Linux it is `~/.local/share/aven-ai`.
 
@@ -182,6 +204,9 @@ ruff check .
 The tests never need a real API key and never touch the network. Provider tests drive the real `anthropic` and `openai` SDKs against a mocked HTTP transport that returns streaming responses in each provider's format. UI tests (pytest-qt) use a fake provider.
 
 ## Building the Windows executable
+
+The build script also downloads the pinned llama.cpp engine (`scripts/fetch_engine.py`, checksum-verified) and bundles it for AVEN Local. Models are **not** bundled: users download only the ones they choose.
+
 
 The build has to run **on Windows**. PyInstaller cannot cross-compile.
 
@@ -257,6 +282,7 @@ aven_ai_desktop/
 │   │   └── conversation_repository.py
 │   ├── rendering/
 │   │   └── markdown_renderer.py # safe Markdown, code segmentation, highlighting
+│   ├── local/                   # AVEN Local: model catalog, verified downloader, llama-server engine
 │   ├── workers/
 │   │   └── ai_worker.py         # background streaming and task threads
 │   └── ui/
@@ -274,6 +300,9 @@ aven_ai_desktop/
 
 | Problem | What to do |
 |---|---|
+| AVEN Local replies are slow | Use AVEN Light, close other heavy programs, or use AVEN Cloud or your own key. |
+| “The local AI engine stopped while loading the model” | Not enough free memory for that model. Use AVEN Light or AVEN Core. |
+| Model download fails or stops | Click **Try again**: downloads resume where they stopped. A corporate firewall may block huggingface.co. |
 | “AVEN Cloud is not available in this build yet” | The build was made without `AVEN_CLOUD_URL`. Deploy AVEN Cloud and rebuild, or add your own key in Settings → AI Provider. |
 | “You've reached today's free message limit” | AVEN Cloud's fair-use limit. Try again tomorrow, or use your own API key. |
 | “AI provider not configured” | Add an API key in Settings → AI Provider, or set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. |

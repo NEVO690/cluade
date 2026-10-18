@@ -90,14 +90,18 @@ class ModelOption(QFrame):
         texts.setSpacing(1)
         name = QLabel(model.name)
         name.setObjectName("ModelOptionName")
-        description = QLabel(model.description)
-        description.setObjectName("ModelOptionDescription")
+        self.base_description = model.description
+        self.description = QLabel(model.description)
+        self.description.setObjectName("ModelOptionDescription")
         texts.addWidget(name)
-        texts.addWidget(description)
+        texts.addWidget(self.description)
         layout.addLayout(texts, 1)
         self.check = QLabel("✓")
         self.check.setObjectName("ModelOptionCheck")
         layout.addWidget(self.check)
+
+    def set_note(self, note: str) -> None:
+        self.description.setText(f"{self.base_description} {note}".strip())
 
     def set_selected(self, selected: bool) -> None:
         self.check.setText("✓" if selected else "")
@@ -144,6 +148,11 @@ class ModelPicker(QToolButton):
         for mid, option in self.options.items():
             option.set_selected(mid == model_id)
 
+    def set_notes(self, notes: dict[str, str]) -> None:
+        """Extra text per model, e.g. its download size for AVEN Local."""
+        for model_id, option in self.options.items():
+            option.set_note(notes.get(model_id, ""))
+
     def _choose(self, model_id: str) -> None:
         self.menu_.close()
         changed = model_id != self.current
@@ -158,6 +167,7 @@ class ChatView(QWidget):
     mode_changed = Signal(str)
     model_changed = Signal(str)
     settings_requested = Signal()
+    download_requested = Signal()
     retry_requested = Signal()
     regenerate_requested = Signal()
     load_earlier_requested = Signal()
@@ -257,11 +267,11 @@ class ChatView(QWidget):
         setup_layout.setContentsMargins(16, 12, 12, 12)
         self.setup_label = QLabel()
         self.setup_label.setWordWrap(True)
-        setup_button = QPushButton("Open Settings")
-        setup_button.setObjectName("PrimaryButton")
-        setup_button.clicked.connect(self.settings_requested.emit)
+        self.setup_button = QPushButton("Open Settings")
+        self.setup_button.setObjectName("PrimaryButton")
+        self.setup_button.clicked.connect(self._on_setup_clicked)
         setup_layout.addWidget(self.setup_label, 1)
-        setup_layout.addWidget(setup_button)
+        setup_layout.addWidget(self.setup_button)
         layout.addSpacing(6)
         layout.addWidget(self.setup_card)
 
@@ -281,8 +291,8 @@ class ChatView(QWidget):
         layout.addLayout(self.suggestion_grid)
 
         privacy = QLabel(
-            "Messages are processed by the AVEN Cloud server and the AI service it uses, or by the provider "
-            "you set up with your own key. Conversations are saved only on this computer."
+            "With AVEN Local, everything runs on this computer and nothing is sent anywhere. With AVEN Cloud "
+            "or your own key, messages are processed by that service. Conversations are saved only here."
         )
         privacy.setObjectName("HelpText")
         privacy.setWordWrap(True)
@@ -408,10 +418,22 @@ class ChatView(QWidget):
         if status.ready:
             self.model_label.setText(f"{MODES[self.mode].name} · {status.model_name}")
             self.setup_card.hide()
+        elif status.needs_download:
+            self.model_label.setText(f"{MODES[self.mode].name} · {status.model_name} · download needed")
+            self.setup_label.setText(status.problem)
+            self.setup_button.setText("Download")
+            self.setup_card.show()
         else:
             self.model_label.setText(f"{MODES[self.mode].name} · not configured")
             self.setup_label.setText(status.problem)
+            self.setup_button.setText("Open Settings")
             self.setup_card.show()
+
+    def _on_setup_clicked(self) -> None:
+        if self._status is not None and self._status.needs_download:
+            self.download_requested.emit()
+        else:
+            self.settings_requested.emit()
 
     def set_send_with_enter(self, value: bool) -> None:
         self.input.send_with_enter = value

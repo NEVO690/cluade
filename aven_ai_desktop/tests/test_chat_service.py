@@ -20,20 +20,20 @@ def service(key: str | None = "sk-test-key", provider=None, settings: AppSetting
 
 def test_aven_cloud_is_ready_without_any_key(monkeypatch) -> None:
     monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
-    status = service(key=None).status()
+    status = service(key=None, settings=AppSettings(provider="aven_cloud")).status()
     assert status.ready
     assert status.provider_name == "AVEN Cloud"
     assert status.model_name == "AVEN 1.0"
 
 
 def test_aven_cloud_unavailable_when_build_has_no_server() -> None:
-    status = service(key=None).status()
+    status = service(key=None, settings=AppSettings(provider="aven_cloud")).status()
     assert not status.ready
     assert "own API key" in status.problem
 
 
 def test_aven_cloud_requests_send_aven_model_id_and_no_effort() -> None:
-    svc = service(settings=AppSettings(model="aven-ultra"))
+    svc = service(settings=AppSettings(provider="aven_cloud", model="aven-ultra"))
     request = svc.build_request("aven", [ChatMessage("user", "Hi")])
     assert request.model == "aven-ultra"  # the server maps it
     assert request.effort is None  # the server applies effort
@@ -136,7 +136,7 @@ def test_stream_wraps_unexpected_exceptions() -> None:
 
 
 def test_missing_credentials_from_real_factory() -> None:
-    svc = ChatService(AppSettings(), CredentialStore(use_keyring=False))
+    svc = ChatService(AppSettings(provider="aven_cloud"), CredentialStore(use_keyring=False))
     request = svc.build_request("aven", [ChatMessage("user", "hi")])
     with pytest.raises(errors.MissingCredentialsError):
         list(svc.stream(request))

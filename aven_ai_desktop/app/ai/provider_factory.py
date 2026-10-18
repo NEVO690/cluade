@@ -20,6 +20,17 @@ class ProviderInfo:
 
 
 PROVIDERS: dict[str, ProviderInfo] = {
+    "aven_local": ProviderInfo(
+        id="aven_local",
+        name="AVEN Local (on this computer, free)",
+        key_env_var="",
+        key_help=(
+            "No API key and no account. AVEN runs open-source Qwen3 models on this computer; each model "
+            "is downloaded once. Conversations never leave your computer. Replies are slower on older PCs."
+        ),
+        console_url="",
+        privacy_url="",
+    ),
     "aven_cloud": ProviderInfo(
         id="aven_cloud",
         name="AVEN Cloud",
@@ -55,7 +66,7 @@ def is_local_url(url: str) -> bool:
 
 
 def key_required(provider_id: str, base_url: str = "") -> bool:
-    if provider_id == "aven_cloud":
+    if provider_id in ("aven_cloud", "aven_local"):
         return False
     return not (provider_id == "openai" and is_local_url(base_url))
 
@@ -70,6 +81,11 @@ def create_provider(
 ) -> AIProvider:
     if provider_id not in PROVIDERS:
         raise errors.ProviderError(f"Unknown AI provider: {provider_id}")
+    if provider_id == "aven_local":
+        from app.ai.local_provider import LocalProvider
+        from app.local.engine import get_engine
+
+        return LocalProvider(get_engine(), timeout=timeout)
     if provider_id == "aven_cloud":
         from app.ai.openai_provider import OpenAIProvider
         from app.config.cloud import cloud_url

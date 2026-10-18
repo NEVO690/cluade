@@ -29,8 +29,10 @@ class OpenAIProvider(AIProvider):
         timeout: float = 600.0,
         client: openai.OpenAI | None = None,
         display_name: str = "",
+        extra_body: dict | None = None,
     ) -> None:
         self.base_url = base_url
+        self.extra_body = extra_body
         if display_name:
             self.display_name = display_name
         elif base_url:
@@ -48,7 +50,9 @@ class OpenAIProvider(AIProvider):
         # The official API uses max_completion_tokens; many compatible servers only know max_tokens.
         limit = {"max_tokens" if self.base_url else "max_completion_tokens": request.max_tokens}
         try:
-            stream = self.client.chat.completions.create(model=request.model, messages=messages, stream=True, **limit)
+            stream = self.client.chat.completions.create(
+                model=request.model, messages=messages, stream=True, extra_body=self.extra_body, **limit
+            )
             model_reported = False
             finish_reason = None
             try:

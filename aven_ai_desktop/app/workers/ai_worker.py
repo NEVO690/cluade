@@ -36,11 +36,11 @@ class StreamSignals(QObject):
 
 # Jobs are referenced from the GUI thread until shortly after they finish, so their
 # signal objects are always destroyed on the GUI thread.
-_LIVE_JOBS: set[_Job] = set()
+_LIVE_JOBS: set[BackgroundJob] = set()
 RELEASE_DELAY_MS = 2000
 
 
-class _Job:
+class BackgroundJob:
     signals: StreamSignals | TaskSignals
 
     def start(self) -> None:
@@ -59,7 +59,7 @@ class _Job:
         raise NotImplementedError
 
 
-class StreamWorker(_Job):
+class StreamWorker(BackgroundJob):
     """Consumes a stream of :class:`StreamEvent` produced by ``stream_factory``."""
 
     def __init__(
@@ -112,7 +112,7 @@ class TaskSignals(QObject):
     failed = Signal(object)  # AIError
 
 
-class TaskWorker(_Job):
+class TaskWorker(BackgroundJob):
     """Runs a short blocking call (connection test, model listing) off the GUI thread."""
 
     def __init__(self, func: Callable[[], Any]) -> None:
