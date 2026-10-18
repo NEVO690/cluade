@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 from app.ai.chat_service import ConfigStatus
 from app.ai.errors import AIError
 from app.ai.prompts import MODES
+from app.config.aven_models import aven_model_name
 from app.ui.logo import logo_pixmap
 from app.ui.message_widget import AssistantMessageWidget, ErrorWidget, UserMessageWidget
 from app.ui.theme_manager import Palette
@@ -307,11 +308,10 @@ class ChatView(QWidget):
         self.title_label.setText(title)
         self.title_label.setToolTip(title)
 
-    def set_status(self, status: ConfigStatus, served_model: str | None = None) -> None:
+    def set_status(self, status: ConfigStatus) -> None:
         self._status = status
         if status.ready:
-            model = served_model or status.model
-            self.model_label.setText(f"{MODES[self.mode].name} · {model} · {status.provider_name}")
+            self.model_label.setText(f"{MODES[self.mode].name} · {status.model_name}")
             self.setup_card.hide()
         else:
             self.model_label.setText(f"{MODES[self.mode].name} · not configured")
@@ -375,7 +375,7 @@ class ChatView(QWidget):
     ) -> AssistantMessageWidget:
         widget = AssistantMessageWidget(name, self.palette_)
         widget.message_id = message_id
-        widget.set_model(model)
+        widget.set_model(aven_model_name(model))
         widget.regenerate_requested.connect(self.regenerate_requested.emit)
         if content:
             widget.set_content(content)

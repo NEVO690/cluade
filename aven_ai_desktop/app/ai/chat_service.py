@@ -8,8 +8,9 @@ from dataclasses import dataclass
 
 from app.ai import errors
 from app.ai.base_provider import AIProvider, ChatMessage, ChatRequest, StreamEvent
-from app.ai.prompts import MODES, system_prompt_for
+from app.ai.prompts import system_prompt_for
 from app.ai.provider_factory import PROVIDERS, create_provider, key_required
+from app.config.aven_models import aven_model_name
 from app.config.secrets import CredentialStore
 from app.config.settings import AppSettings
 
@@ -26,8 +27,20 @@ ProviderFactory = Callable[..., AIProvider]
 class ConfigStatus:
     ready: bool
     provider_name: str
-    model: str
+    aven_model: str  # AVEN model id, e.g. "aven-ultra"
+    model: str  # provider model id behind it ("" when not mapped)
     problem: str = ""
+
+    @property
+    def model_name(self) -> str:
+        return aven_model_name(self.aven_model)
+
+
+def _unmapped_message(aven_model: str) -> str:
+    return (
+        f"{aven_model_name(aven_model)} is not set up for this provider yet. "
+        "Set its model ID in Settings → AI Provider → Advanced."
+    )
 
 
 def trim_history(messages: list[ChatMessage], max_chars: int = MAX_HISTORY_CHARS) -> list[ChatMessage]:
@@ -62,15 +75,16 @@ class ChatService:
     def status(self, mode: str) -> ConfigStatus:
         pid = self.settings.provider
         info = PROVIDERS[pid]
+        aven_model = self.settings.aven_model_for_mode(mode)
         model = self.settings.model_for_mode(mode)
         base_url = self.settings.openai_base_url if pid == "openai" else ""
         if key_required(pid, base_url) and not self.credentials.get_key(pid):
-            return ConfigStatus(False, info.name, model, f"Add an API key for {info.name} to start chatting.")
-        if not model:
             return ConfigStatus(
-                False, info.name, model, f"Choose a model for {MODES[mode].name} in Settings → AI Provider."
+                False, info.name, aven_model, model, f"Add an API key for {info.name} to start chatting."
             )
-        return ConfigStatus(True, info.name, model)
+        if not model:
+            return ConfigStatus(False, info.name, aven_model, model, _unmapped_message(aven_model))
+        return ConfigStatus(True, info.name, aven_model, model)
 
     def create_provider(self, provider_id: str | None = None, api_key: str | None = None) -> AIProvider:
         pid = provider_id or self.settings.provider
@@ -86,9 +100,7 @@ class ChatService:
     def build_request(self, mode: str, history: list[ChatMessage]) -> ChatRequest:
         model = self.settings.model_for_mode(mode)
         if not model:
-            raise errors.MissingModelError(
-                f"No model is configured for {MODES[mode].name}. Choose one in Settings → AI Provider."
-            )
+            raise errors.MissingModelError(_unmapped_message(self.settings.aven_model_for_mode(mode)))
         messages = trim_history(history)
         if not messages or messages[-1].role != "user":
             raise errors.InvalidRequestError("There is no message to send.")

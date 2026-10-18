@@ -17,6 +17,18 @@ Version: **1.0.0** (defined in `app/version.py`)
 
 ---
 
+## AVEN models
+
+You choose between AVEN's own model lineup, separately for each mode (**Settings → General**):
+
+| AVEN model | Best for | Default mapping (Anthropic) |
+|---|---|---|
+| **AVEN Swift** | Fastest replies for everyday questions | `claude-haiku-5-5` |
+| **AVEN Core** | Balanced speed and quality | `claude-sonnet-5-5` |
+| **AVEN Ultra** (default) | Complex reasoning, writing and code | `claude-opus-5-5` |
+
+The chat interface only shows AVEN names. Each AVEN model runs on a real model at the provider you configured, and you can change that mapping in **Settings → AI Provider → Advanced**. OpenAI and compatible servers have no default mapping, so you enter model IDs or use **Load available models**. AVEN AI does not train its own model. Settings and the privacy notice state which provider processes conversations, and the assistant answers truthfully if asked what powers it.
+
 ## Features
 
 - Sidebar with branding, a **New conversation** button, search, and history grouped by date (Today, Yesterday, …)
@@ -25,7 +37,7 @@ Version: **1.0.0** (defined in `app/version.py`)
 - **Markdown** rendering: headings, lists, tables, links and inline code
 - **Code blocks** with syntax highlighting (Pygments) and a **Copy code** button. You can also copy whole messages.
 - **Local history** in SQLite: create, rename, delete, load earlier messages on demand in long conversations, and delete everything
-- **Settings**: theme (match Windows / light / dark), provider, API key, separate models for AVEN and AVEN CODE, loading the list of models your key can use, a real **connection test**, max response length and timeout
+- **Settings**: theme (match Windows / light / dark), the AVEN model for each mode, provider, API key, the provider model behind each AVEN model, loading the list of models your key can use, a real **connection test**, max response length and timeout
 - **Clear errors** for a missing or invalid key, unknown models, rate limits, timeouts, network failures, provider outages and declined requests
 - The window stays responsive: network calls run on background threads and streamed text is batched for rendering
 
@@ -56,11 +68,12 @@ On first launch AVEN shows a setup card. Open **Settings → AI Provider**, then
 2. Paste your **API key**.
    - Anthropic keys come from the Claude Console: <https://platform.claude.com/>
    - OpenAI keys come from <https://platform.openai.com/>
-3. Choose a model for **AVEN** and for **AVEN CODE**. You can type any model ID your account can use, or click **Load available models** to fetch the list from the provider.
-   - For Anthropic the default for both modes is `claude-opus-5-5`.
-   - OpenAI has no built-in default. Enter a model ID or load the list.
-4. Click **Test connection**. This sends one short real request and shows either the provider's reply or the exact error.
-5. Click **Save**.
+3. Check the **Advanced** mapping, which sets the provider model behind AVEN Swift, Core and Ultra.
+   - Anthropic comes pre-mapped (see [AVEN models](#aven-models)).
+   - For OpenAI, type model IDs or click **Load available models** and pick from the list.
+4. Under **General**, choose the AVEN model for each mode. The default for both is AVEN Ultra.
+5. Click **Test connection**. This sends one short real request with the AVEN mode's model and shows either the reply or the exact error.
+6. Click **Save**.
 
 ### OpenAI-compatible and local servers
 
@@ -74,7 +87,8 @@ When you run from source, you can put a `.env` file next to `main.py` (see `.env
 |---|---|
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | API key. Takes precedence over a key saved in Settings. |
 | `AVEN_PROVIDER` | `anthropic` or `openai` |
-| `AVEN_MODEL` / `AVEN_CODE_MODEL` | Model IDs for each mode (this session only) |
+| `AVEN_MODEL` / `AVEN_CODE_MODEL` | AVEN model for each mode: `aven-swift`, `aven-core` or `aven-ultra` |
+| `AVEN_SWIFT_MODEL` / `AVEN_CORE_MODEL` / `AVEN_ULTRA_MODEL` | Provider model ID behind each AVEN model, for the current provider |
 | `AVEN_BASE_URL` | Base URL for an OpenAI-compatible server |
 | `AVEN_DATA_DIR` | Use a different data folder |
 
@@ -201,6 +215,7 @@ aven_ai_desktop/
 │   ├── logging_setup.py         # rotating log file with secret redaction
 │   ├── application.py           # bootstrap: services, theme, main window
 │   ├── config/
+│   │   ├── aven_models.py       # AVEN Swift / Core / Ultra and default mappings
 │   │   ├── settings.py          # settings model, JSON persistence, env overrides
 │   │   └── secrets.py           # API keys: env var → credential store → session
 │   ├── ai/
@@ -235,7 +250,8 @@ aven_ai_desktop/
 |---|---|
 | “AI provider not configured” | Add an API key in Settings → AI Provider, or set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. |
 | “Invalid API key” | Copy the key again from the provider console. Check whether an environment variable is overriding the saved key; Settings shows where the key comes from. |
-| “Model not available” | Your account may not have access to that model. Click **Load available models** and pick one from the list. |
+| “Model not available” | Your account may not have access to the model behind that AVEN model. In Settings → AI Provider → Advanced, click **Load available models** and pick one. |
+| “AVEN Ultra is not set up for this provider yet” | Set its provider model ID under Settings → AI Provider → Advanced. |
 | “Rate limit reached” | Wait and retry. Check your plan's limits and billing in the provider console. |
 | “Request timed out” / “Connection problem” | Check your internet connection, proxy or firewall. Long answers may need a larger timeout in Settings. |
 | Answer ends with “reached the maximum length” | Increase **Max response tokens** in Settings. |

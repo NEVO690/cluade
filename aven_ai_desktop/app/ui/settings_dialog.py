@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from app.ai.errors import AIError
 from app.ai.provider_factory import PROVIDERS, create_provider, key_required
+from app.config.aven_models import AVEN_MODELS, aven_model_name
 from app.config.secrets import CredentialStore, mask_key
 from app.config.settings import (
     MAX_MAX_TOKENS,
@@ -95,6 +96,19 @@ class SettingsDialog(QDialog):
             self.theme_combo.addItem(label, value)
         self.theme_combo.setCurrentIndex(max(0, [v for v, _ in THEME_CHOICES].index(self.settings.theme)))
         form.addRow("Theme", self.theme_combo)
+
+        self.aven_model = self._aven_model_combo(self.settings.aven_model)
+        self.code_model = self._aven_model_combo(self.settings.code_model)
+        form.addRow("AVEN model", self.aven_model)
+        form.addRow("AVEN CODE model", self.code_model)
+        form.addRow(
+            "",
+            _help(
+                "<b>AVEN Swift</b> - fastest replies for everyday questions.<br>"
+                "<b>AVEN Core</b> - balanced speed and quality.<br>"
+                "<b>AVEN Ultra</b> - most capable, for complex reasoning, writing and code."
+            ),
+        )
         self.enter_checkbox = QCheckBox("Press Enter to send (Shift+Enter inserts a new line)")
         self.enter_checkbox.setChecked(self.settings.send_with_enter)
         form.addRow("Composer", self.enter_checkbox)
@@ -143,19 +157,22 @@ class SettingsDialog(QDialog):
         self.base_url_label = QLabel("Base URL")
         form.addRow(self.base_url_label, self.base_url_edit)
 
-        self.aven_model = QComboBox()
-        self.aven_model.setEditable(True)
-        self.aven_model.lineEdit().setPlaceholderText("Enter a model ID")
-        self.code_model = QComboBox()
-        self.code_model.setEditable(True)
-        self.code_model.lineEdit().setPlaceholderText("Enter a model ID")
-        form.addRow("AVEN model", self.aven_model)
-        form.addRow("AVEN CODE model", self.code_model)
+        advanced = QLabel("Advanced: provider model behind each AVEN model")
+        advanced.setObjectName("SectionLabel")
+        form.addRow(advanced)
+        self.map_combos: dict[str, QComboBox] = {}
+        for model in AVEN_MODELS:
+            combo = QComboBox()
+            combo.setEditable(True)
+            combo.lineEdit().setPlaceholderText("Provider model ID")
+            combo.setToolTip(model.description)
+            self.map_combos[model.id] = combo
+            form.addRow(model.name, combo)
         form.addRow(
             "",
             _help(
-                "Enter any model ID your account can use, or load the list of models available to your key. "
-                "Access to specific models depends on your provider account."
+                "AVEN models run on the provider selected above. Enter any model ID your account can use, "
+                "or load the list of models available to your key."
             ),
         )
 
@@ -259,6 +276,14 @@ class SettingsDialog(QDialog):
         layout.addStretch(1)
         return page
 
+    def _aven_model_combo(self, current: str) -> QComboBox:
+        combo = QComboBox()
+        for model in AVEN_MODELS:
+            combo.addItem(model.name, model.id)
+            combo.setItemData(combo.count() - 1, model.description, Qt.ItemDataRole.ToolTipRole)
+        combo.setCurrentIndex(max(0, combo.findData(current)))
+        return combo
+
     # --- provider fields ----------------------------------------------------------------
     def _selected_provider(self) -> str:
         return self.provider_combo.currentData()
@@ -272,8 +297,9 @@ class SettingsDialog(QDialog):
         self.base_url_edit.setVisible(is_openai)
         self.base_url_edit.setText(self.settings.openai_base_url)
 
-        models = self.settings.models_for(pid)
-        for combo, value in ((self.aven_model, models.aven_model), (self.code_model, models.aven_code_model)):
+        mapping = self.settings.mapping_for(pid)
+        for model_id, combo in self.map_combos.items():
+            value = mapping.get(model_id, "")
             combo.clear()
             if value:
                 combo.addItem(value)
@@ -316,9 +342,9 @@ class SettingsDialog(QDialog):
         self.remove_key.setEnabled(lookup.source in ("credential store", "session"))
 
     def _store_current_models(self) -> None:
-        models = self.settings.models_for(self._previous_provider)
-        models.aven_model = sanitize_model_id(self.aven_model.currentText())
-        models.aven_code_model = sanitize_model_id(self.code_model.currentText())
+        mapping = self.settings.mapping_for(self._previous_provider)
+        for model_id, combo in self.map_combos.items():
+            mapping[model_id] = sanitize_model_id(combo.currentText())
         if self._previous_provider == "openai":
             self.settings.openai_base_url = self.base_url_edit.text().strip()
 
@@ -373,16 +399,21 @@ class SettingsDialog(QDialog):
         self.result_label.style().polish(self.result_label)
 
     def _on_test(self) -> None:
-        model = sanitize_model_id(self.aven_model.currentText()) or sanitize_model_id(self.code_model.currentText())
+        aven_model = self.aven_model.currentData()
+        model = sanitize_model_id(self.map_combos[aven_model].currentText())
         if not model:
-            self._show_result(False, "Enter a model ID first (or load the available models).")
+            self._show_result(False, f"Set the provider model for {aven_model_name(aven_model)} under Advanced first.")
             return
         try:
             provider = self._make_provider()
         except (AIError, ValueError) as exc:
             self._show_result(False, self._format_error(exc) if isinstance(exc, AIError) else str(exc))
             return
-        self._run_task(lambda: provider.test_connection(model), lambda text: self._show_result(True, text))
+        name = aven_model_name(aven_model)
+        self._run_task(
+            lambda: provider.test_connection(model),
+            lambda text: self._show_result(True, f"{name} is ready. {text}"),
+        )
 
     def _on_list_models(self) -> None:
         try:
@@ -396,11 +427,11 @@ class SettingsDialog(QDialog):
         if not models:
             self._show_result(False, "The provider returned no models for this key.")
             return
-        for combo in (self.aven_model, self.code_model):
+        for combo in self.map_combos.values():
             current = combo.currentText()
             combo.clear()
             combo.addItems(models)
-            combo.setCurrentText(current or models[0])
+            combo.setCurrentText(current)  # never guess a mapping for an unset AVEN model
         self._show_result(True, f"Loaded {len(models)} models available to this key.")
 
     def _on_remove_key(self) -> None:
@@ -450,6 +481,8 @@ class SettingsDialog(QDialog):
                 )
 
         self.settings.provider = pid
+        self.settings.aven_model = self.aven_model.currentData()
+        self.settings.code_model = self.code_model.currentData()
         self.settings.theme = self.theme_combo.currentData()
         self.settings.send_with_enter = self.enter_checkbox.isChecked()
         self.settings.max_tokens = self.max_tokens.value()

@@ -46,7 +46,8 @@ def test_window_initializes_with_welcome_screen(make_window) -> None:
     window, _repo, _ = make_window()
     assert window.windowTitle() == "AVEN AI Desktop"
     assert window.chat.stack.currentIndex() == 0
-    assert "claude-opus-5-5" in window.chat.model_label.text()
+    assert window.chat.model_label.text() == "AVEN · AVEN Ultra"
+    assert "claude" not in window.chat.model_label.text().lower()
     assert window.chat.setup_card.isHidden()
 
 
@@ -71,10 +72,11 @@ def test_send_streams_response_and_persists(make_window, qtbot) -> None:
     assert conversation.title == "Write hello world"
     messages = repo.list_messages(conversation.id)
     assert [(m.role, m.content) for m in messages] == [("user", "Write hello world"), ("assistant", reply)]
-    assert messages[1].model == "claude-opus-5-5"
+    assert messages[1].model == "aven-ultra"
     assistant = widgets_of(window, AssistantMessageWidget)[0]
     codes = [w for w in assistant.findChildren(CodeBlockWidget)]
     assert len(codes) == 1 and codes[0]._code == "print('hi')"
+    assert assistant.meta_label.text() == "AVEN Ultra"
     assert window.chat.input.toPlainText() == ""
     assert window.chat.send_button.text() == "Send"
 
@@ -209,17 +211,20 @@ def test_settings_dialog_saves_key_and_models(make_window, qtbot, monkeypatch) -
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: notices.append(a[1]))
     dialog = SettingsDialog(window.settings, window.credentials, window)
     qtbot.addWidget(dialog)
-    assert dialog.aven_model.currentText() == "claude-opus-5-5"
+    assert dialog.aven_model.currentText() == "AVEN Ultra"
+    assert dialog.map_combos["aven-ultra"].currentText() == "claude-opus-5-5"
     dialog.key_edit.setText("sk-ant-new-key-987654")
-    dialog.code_model.setCurrentText("claude-sonnet-5-5")
+    dialog.code_model.setCurrentIndex(dialog.code_model.findData("aven-swift"))
+    dialog.map_combos["aven-swift"].setCurrentText("claude-haiku-4-5")
     dialog.theme_combo.setCurrentIndex(2)
     dialog._on_save()
     assert dialog.result() == SettingsDialog.DialogCode.Accepted
     assert window.credentials.get_key("anthropic") == "sk-ant-new-key-987654"
     assert notices == ["Key kept for this session"]
-    assert dialog.settings.model_for_mode("code") == "claude-sonnet-5-5"
+    assert dialog.settings.code_model == "aven-swift"
+    assert dialog.settings.model_for_mode("code") == "claude-haiku-4-5"
     assert dialog.settings.theme == "dark"
-    assert window.settings.model_for_mode("code") == "claude-opus-5-5"  # unchanged until applied
+    assert window.settings.code_model == "aven-ultra"  # unchanged until applied
 
 
 def test_settings_dialog_rejects_insecure_base_url(make_window, qtbot, monkeypatch) -> None:
@@ -242,7 +247,7 @@ def test_connection_test_reports_real_result(make_window, qtbot, monkeypatch) ->
     monkeypatch.setattr(dialog, "_make_provider", lambda: FakeProvider(reply="OK"))
     dialog._on_test()
     qtbot.waitUntil(lambda: dialog.test_button.isEnabled(), timeout=5000)
-    assert dialog.result_label.text().startswith("✓")
+    assert dialog.result_label.text().startswith("✓ AVEN Ultra is ready.")
     assert "OK" in dialog.result_label.text()
 
     monkeypatch.setattr(

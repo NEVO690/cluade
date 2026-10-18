@@ -1,0 +1,61 @@
+name: Build AVEN AI Desktop (Windows)
+
+on:
+  push:
+    paths:
+      - "aven_ai_desktop/**"
+      - ".github/workflows/build-aven-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: aven_ai_desktop
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Folder build (recommended) + zip; runs the full test suite first.
+      - name: Build folder version
+        run: ./scripts/build_windows.ps1 -Python python
+
+      - name: Build single-file version
+        run: ./scripts/build_windows.ps1 -Python python -OneFile -SkipTests
+
+      - name: Smoke-test packaged executable
+        run: |
+          $env:AVEN_DATA_DIR = Join-Path $env:RUNNER_TEMP "aven-smoke"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $proc = Start-Process -FilePath "dist\AVEN AI\AVEN AI.exe" -PassThru
+          Start-Sleep -Seconds 15
+          if ($proc.HasExited) { throw "AVEN AI exited early with code $($proc.ExitCode)" }
+          Stop-Process -Id $proc.Id -Force
+          if (-not (Test-Path (Join-Path $env:AVEN_DATA_DIR "conversations.db"))) { throw "Database was not created" }
+          Get-Content (Join-Path $env:AVEN_DATA_DIR "logs\aven.log")
+
+      - name: SHA-256 checksums
+        run: |
+          Get-ChildItem dist -File | Get-FileHash -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
+            Set-Content dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AVEN-AI-Desktop-Windows
+          path: |
+            aven_ai_desktop/dist/AVEN AI.exe
+            aven_ai_desktop/dist/AVEN-AI-Desktop-*-win64.zip
+            aven_ai_desktop/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30

@@ -23,31 +23,32 @@ def test_status_reports_missing_key_and_model() -> None:
     assert not status.ready
     assert "API key" in status.problem
 
-    settings = AppSettings()
-    settings.models_for().aven_code_model = ""
+    settings = AppSettings(code_model="aven-core")
+    settings.mapping_for().pop("aven-core")
     status = service(settings=settings).status("code")
     assert not status.ready
-    assert "AVEN CODE" in status.problem
-    assert service().status("aven").ready
+    assert "AVEN Core" in status.problem and "Advanced" in status.problem
+    ready = service().status("aven")
+    assert ready.ready
+    assert ready.model_name == "AVEN Ultra"
+    assert ready.model == "claude-opus-5-5"
 
 
 def test_local_openai_server_needs_no_key() -> None:
     settings = AppSettings(provider="openai", openai_base_url="http://localhost:11434/v1")
-    settings.models_for("openai").aven_model = "llama3"
+    settings.mapping_for("openai")["aven-ultra"] = "llama3"
     assert service(key=None, settings=settings).status("aven").ready
 
 
 def test_modes_use_distinct_system_prompts_and_models() -> None:
-    settings = AppSettings()
-    settings.models_for().aven_model = "general-model"
-    settings.models_for().aven_code_model = "code-model"
+    settings = AppSettings(aven_model="aven-core", code_model="aven-ultra")
     svc = service(settings=settings)
     history = [ChatMessage("user", "Hello")]
     general = svc.build_request("aven", history)
     code = svc.build_request("code", history)
     assert general.system_prompt == AVEN_SYSTEM_PROMPT
     assert code.system_prompt == AVEN_CODE_SYSTEM_PROMPT
-    assert (general.model, code.model) == ("general-model", "code-model")
+    assert (general.model, code.model) == ("claude-sonnet-5-5", "claude-opus-5-5")
 
 
 def test_code_prompt_forbids_claiming_execution() -> None:
@@ -62,8 +63,7 @@ def test_build_request_requires_trailing_user_message() -> None:
 
 
 def test_build_request_without_model() -> None:
-    settings = AppSettings()
-    settings.models_for().aven_model = ""
+    settings = AppSettings(provider="openai")
     with pytest.raises(errors.MissingModelError):
         service(settings=settings).build_request("aven", [ChatMessage("user", "q")])
 
@@ -104,3 +104,9 @@ def test_missing_credentials_from_real_factory() -> None:
     request = svc.build_request("aven", [ChatMessage("user", "hi")])
     with pytest.raises(errors.MissingCredentialsError):
         list(svc.stream(request))
+
+
+def test_prompts_keep_aven_branding_without_hiding_the_provider() -> None:
+    for prompt, name in ((AVEN_SYSTEM_PROMPT, "AVEN"), (AVEN_CODE_SYSTEM_PROMPT, "AVEN CODE")):
+        assert f"you are {name} by AVEN AI" in prompt
+        assert "do not deny using a third-party provider" in prompt

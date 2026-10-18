@@ -40,12 +40,11 @@ class Generation:
     id: int
     conversation_id: int
     mode: str
-    model: str
+    aven_model: str  # AVEN model id saved with the reply
     widget: AssistantMessageWidget
     cancel_event: threading.Event
     worker: StreamWorker
     text: str = ""
-    served_model: str = ""
     truncated: bool = False
 
 
@@ -151,11 +150,7 @@ class MainWindow(QMainWindow):
         self.sidebar.set_conversations(conversations, self.current.id if self.current else None)
 
     def update_status(self) -> None:
-        status = self.chat_service.status(self.mode)
-        served = None
-        if self.generation is not None and self.generation.served_model:
-            served = self.generation.served_model
-        self.chat.set_status(status, served)
+        self.chat.set_status(self.chat_service.status(self.mode))
 
     def new_conversation(self) -> None:
         self.stop_generation()
@@ -348,10 +343,10 @@ class MainWindow(QMainWindow):
 
         self._generation_counter += 1
         gid = self._generation_counter
-        widget = self.chat.add_assistant_message(self._assistant_name(), model=request.model)
+        aven_model = self.settings.aven_model_for_mode(self.mode)
+        widget = self.chat.add_assistant_message(self._assistant_name(), model=aven_model)
         worker = StreamWorker(gid, lambda: self.chat_service.stream(request, provider), request.cancel_event)
         worker.signals.text.connect(self._on_stream_text)
-        worker.signals.model.connect(self._on_stream_model)
         worker.signals.truncated.connect(self._on_stream_truncated)
         worker.signals.finished.connect(self._on_stream_finished)
         worker.signals.failed.connect(self._on_stream_failed)
@@ -359,7 +354,7 @@ class MainWindow(QMainWindow):
             id=gid,
             conversation_id=self.current.id,
             mode=self.mode,
-            model=request.model,
+            aven_model=aven_model,
             widget=widget,
             cancel_event=request.cancel_event,
             worker=worker,
@@ -384,14 +379,6 @@ class MainWindow(QMainWindow):
     def _render_generation(self) -> None:
         if self.generation is not None:
             self.generation.widget.set_content(self.generation.text)
-
-    def _on_stream_model(self, gid: int, model: str) -> None:
-        generation = self._active(gid)
-        if generation is None:
-            return
-        generation.served_model = model
-        generation.widget.set_model(model)
-        self.update_status()
 
     def _on_stream_truncated(self, gid: int) -> None:
         generation = self._active(gid)
@@ -428,7 +415,7 @@ class MainWindow(QMainWindow):
                 generation.conversation_id,
                 "assistant",
                 generation.text,
-                model=generation.served_model or generation.model,
+                model=generation.aven_model,
                 status=status,
             )
             generation.widget.message_id = message.id
@@ -489,7 +476,9 @@ class MainWindow(QMainWindow):
         for name in (
             "theme",
             "provider",
-            "models",
+            "aven_model",
+            "code_model",
+            "model_map",
             "openai_base_url",
             "max_tokens",
             "request_timeout",

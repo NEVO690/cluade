@@ -7,8 +7,10 @@ Environment variables (useful for development, also read by packaged builds)
 take precedence over saved values for the current session only:
 
 * ``AVEN_PROVIDER``     - ``anthropic`` or ``openai``
-* ``AVEN_MODEL``        - model used by AVEN mode
-* ``AVEN_CODE_MODEL``   - model used by AVEN CODE mode
+* ``AVEN_MODEL``        - AVEN model for AVEN mode (``aven-swift``, ``aven-core``, ``aven-ultra``)
+* ``AVEN_CODE_MODEL``   - AVEN model for AVEN CODE mode
+* ``AVEN_SWIFT_MODEL`` / ``AVEN_CORE_MODEL`` / ``AVEN_ULTRA_MODEL``
+                        - provider model ID behind each AVEN model (current provider)
 * ``AVEN_BASE_URL``     - custom HTTPS base URL for the OpenAI provider
 """
 
@@ -20,6 +22,7 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
+from app.config.aven_models import AVEN_MODEL_IDS, DEFAULT_AVEN_MODEL, DEFAULT_MAPPINGS
 from app.paths import project_root, settings_path
 
 log = logging.getLogger(__name__)
@@ -27,33 +30,25 @@ log = logging.getLogger(__name__)
 THEMES = ("system", "light", "dark")
 PROVIDER_IDS = ("anthropic", "openai")
 
-# Defaults applied only for providers where we know a current, documented model
-# identifier. Users can always enter any model their account has access to.
-DEFAULT_MODELS: dict[str, str] = {
-    "anthropic": "claude-opus-5-5",
-    "openai": "",
-}
-
 MIN_MAX_TOKENS = 256
 MAX_MAX_TOKENS = 128_000
 MIN_TIMEOUT = 10
 MAX_TIMEOUT = 1800
 
 
-@dataclass
-class ProviderModels:
-    aven_model: str = ""
-    aven_code_model: str = ""
+def _default_mappings() -> dict[str, dict[str, str]]:
+    return {pid: dict(DEFAULT_MAPPINGS.get(pid, {})) for pid in PROVIDER_IDS}
 
 
 @dataclass
 class AppSettings:
     theme: str = "system"
     provider: str = "anthropic"
-    # Per-provider model selection so switching providers keeps each one's choice.
-    models: dict[str, ProviderModels] = field(
-        default_factory=lambda: {pid: ProviderModels(DEFAULT_MODELS[pid], DEFAULT_MODELS[pid]) for pid in PROVIDER_IDS}
-    )
+    # AVEN model chosen for each mode.
+    aven_model: str = DEFAULT_AVEN_MODEL
+    code_model: str = DEFAULT_AVEN_MODEL
+    # Provider model ID behind each AVEN model, per provider.
+    model_map: dict[str, dict[str, str]] = field(default_factory=_default_mappings)
     openai_base_url: str = ""
     max_tokens: int = 32_000
     request_timeout: int = 600
@@ -61,15 +56,19 @@ class AppSettings:
     window_geometry: str = ""
 
     # --- convenience accessors -------------------------------------------------
-    def models_for(self, provider: str | None = None) -> ProviderModels:
+    def aven_model_for_mode(self, mode: str) -> str:
+        return self.code_model if mode == "code" else self.aven_model
+
+    def mapping_for(self, provider: str | None = None) -> dict[str, str]:
         pid = provider or self.provider
-        if pid not in self.models:
-            self.models[pid] = ProviderModels(DEFAULT_MODELS.get(pid, ""), DEFAULT_MODELS.get(pid, ""))
-        return self.models[pid]
+        return self.model_map.setdefault(pid, dict(DEFAULT_MAPPINGS.get(pid, {})))
+
+    def provider_model_for(self, aven_model: str, provider: str | None = None) -> str:
+        return self.mapping_for(provider).get(aven_model, "")
 
     def model_for_mode(self, mode: str) -> str:
-        models = self.models_for()
-        return models.aven_code_model if mode == "code" else models.aven_model
+        """Provider model ID used for ``mode`` (empty when not mapped)."""
+        return self.provider_model_for(self.aven_model_for_mode(mode))
 
     # --- validation ------------------------------------------------------------
     def normalized(self) -> AppSettings:
@@ -80,10 +79,18 @@ class AppSettings:
         self.max_tokens = _clamp(self.max_tokens, MIN_MAX_TOKENS, MAX_MAX_TOKENS, 32_000)
         self.request_timeout = _clamp(self.request_timeout, MIN_TIMEOUT, MAX_TIMEOUT, 600)
         self.openai_base_url = (self.openai_base_url or "").strip()
+        if self.aven_model not in AVEN_MODEL_IDS:
+            self.aven_model = DEFAULT_AVEN_MODEL
+        if self.code_model not in AVEN_MODEL_IDS:
+            self.code_model = DEFAULT_AVEN_MODEL
         for pid in PROVIDER_IDS:
-            m = self.models_for(pid)
-            m.aven_model = sanitize_model_id(m.aven_model)
-            m.aven_code_model = sanitize_model_id(m.aven_code_model)
+            mapping = self.mapping_for(pid)
+            for key in list(mapping):
+                value = sanitize_model_id(mapping[key])
+                if key in AVEN_MODEL_IDS and value:
+                    mapping[key] = value
+                else:
+                    del mapping[key]
         return self
 
 
@@ -142,13 +149,11 @@ class SettingsStore:
 
         known = {f.name for f in fields(AppSettings)}
         for key, value in raw.items():
-            if key == "models" and isinstance(value, dict):
-                for pid, models in value.items():
-                    if isinstance(models, dict):
-                        settings.models[pid] = ProviderModels(
-                            str(models.get("aven_model", "")), str(models.get("aven_code_model", ""))
-                        )
-            elif key in known and key != "models":
+            if key == "model_map" and isinstance(value, dict):
+                for pid, mapping in value.items():
+                    if isinstance(mapping, dict):
+                        settings.model_map[str(pid)] = {str(k): str(v) for k, v in mapping.items()}
+            elif key in known and key != "model_map":
                 default = getattr(settings, key)
                 if isinstance(value, type(default)):
                     setattr(settings, key, value)
@@ -166,11 +171,16 @@ def apply_env_overrides(settings: AppSettings) -> AppSettings:
     provider = os.environ.get("AVEN_PROVIDER", "").strip().lower()
     if provider in PROVIDER_IDS:
         settings.provider = provider
-    models = settings.models_for()
-    if os.environ.get("AVEN_MODEL"):
-        models.aven_model = sanitize_model_id(os.environ["AVEN_MODEL"])
-    if os.environ.get("AVEN_CODE_MODEL"):
-        models.aven_code_model = sanitize_model_id(os.environ["AVEN_CODE_MODEL"])
+    if os.environ.get("AVEN_MODEL", "").strip() in AVEN_MODEL_IDS:
+        settings.aven_model = os.environ["AVEN_MODEL"].strip()
+    if os.environ.get("AVEN_CODE_MODEL", "").strip() in AVEN_MODEL_IDS:
+        settings.code_model = os.environ["AVEN_CODE_MODEL"].strip()
+    mapping = settings.mapping_for()
+    for model_id in AVEN_MODEL_IDS:
+        env_name = model_id.upper().replace("-", "_") + "_MODEL"  # e.g. AVEN_ULTRA_MODEL
+        value = sanitize_model_id(os.environ.get(env_name))
+        if value:
+            mapping[model_id] = value
     base_url = os.environ.get("AVEN_BASE_URL", "").strip()
     if base_url and validate_base_url(base_url) is None:
         settings.openai_base_url = base_url

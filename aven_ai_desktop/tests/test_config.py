@@ -6,6 +6,7 @@ import keyring
 import pytest
 from keyring.backend import KeyringBackend
 
+from app.config.aven_models import AVEN_MODELS, aven_model_name
 from app.config.secrets import CredentialStore, mask_key
 from app.config.settings import (
     AppSettings,
@@ -19,27 +20,46 @@ from app.config.settings import (
 # --- settings ---------------------------------------------------------------------------
 
 
-def test_defaults_use_documented_anthropic_model_and_no_guessed_openai_model() -> None:
+def test_defaults_use_aven_ultra_mapped_to_documented_anthropic_model() -> None:
     settings = AppSettings().normalized()
     assert settings.provider == "anthropic"
+    assert settings.aven_model == settings.code_model == "aven-ultra"
     assert settings.model_for_mode("aven") == "claude-opus-5-5"
     assert settings.model_for_mode("code") == "claude-opus-5-5"
-    assert settings.models_for("openai").aven_model == ""
+    assert settings.provider_model_for("aven-swift") == "claude-haiku-5-5"
+    assert settings.provider_model_for("aven-core") == "claude-sonnet-5-5"
+    assert settings.mapping_for("openai") == {}  # no guessed OpenAI model IDs
+
+
+def test_aven_model_names() -> None:
+    assert [m.name for m in AVEN_MODELS] == ["AVEN Swift", "AVEN Core", "AVEN Ultra"]
+    assert aven_model_name("aven-core") == "AVEN Core"
+    assert aven_model_name("legacy-raw-id") == "legacy-raw-id"
+    assert aven_model_name(None) == ""
 
 
 def test_settings_round_trip(tmp_path) -> None:
     store = SettingsStore(tmp_path / "settings.json")
-    settings = AppSettings(theme="dark", provider="openai", max_tokens=4096)
-    settings.models_for("openai").aven_model = "my-model"
-    settings.models_for("openai").aven_code_model = "my-code-model"
+    settings = AppSettings(theme="dark", provider="openai", max_tokens=4096, aven_model="aven-swift")
+    settings.mapping_for("openai").update({"aven-swift": "my-fast-model", "aven-ultra": "my-big-model"})
     store.save(settings)
 
     loaded = store.load()
     assert loaded.theme == "dark"
     assert loaded.provider == "openai"
     assert loaded.max_tokens == 4096
-    assert loaded.model_for_mode("aven") == "my-model"
-    assert loaded.model_for_mode("code") == "my-code-model"
+    assert loaded.model_for_mode("aven") == "my-fast-model"
+    assert loaded.model_for_mode("code") == "my-big-model"
+    assert loaded.mapping_for("anthropic")["aven-ultra"] == "claude-opus-5-5"
+
+
+def test_invalid_model_choices_are_normalized(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"aven_model": "gpt-9", "model_map": {"anthropic": {"aven-core": "bad id", "x": "y"}}}))
+    loaded = SettingsStore(path).load()
+    assert loaded.aven_model == "aven-ultra"
+    assert "aven-core" not in loaded.mapping_for("anthropic")
+    assert "x" not in loaded.mapping_for("anthropic")
 
 
 def test_settings_file_never_contains_api_keys(tmp_path) -> None:
@@ -64,13 +84,17 @@ def test_corrupt_or_invalid_settings_fall_back_to_defaults(tmp_path) -> None:
 
 def test_env_overrides(monkeypatch) -> None:
     monkeypatch.setenv("AVEN_PROVIDER", "openai")
-    monkeypatch.setenv("AVEN_MODEL", "general-model")
-    monkeypatch.setenv("AVEN_CODE_MODEL", "code-model")
+    monkeypatch.setenv("AVEN_MODEL", "aven-swift")
+    monkeypatch.setenv("AVEN_CODE_MODEL", "not-a-tier")
+    monkeypatch.setenv("AVEN_SWIFT_MODEL", "local-small")
+    monkeypatch.setenv("AVEN_ULTRA_MODEL", "local-large")
     monkeypatch.setenv("AVEN_BASE_URL", "javascript:alert(1)")
     settings = apply_env_overrides(AppSettings())
     assert settings.provider == "openai"
-    assert settings.model_for_mode("aven") == "general-model"
-    assert settings.model_for_mode("code") == "code-model"
+    assert settings.aven_model == "aven-swift"
+    assert settings.code_model == "aven-ultra"  # invalid value ignored
+    assert settings.model_for_mode("aven") == "local-small"
+    assert settings.model_for_mode("code") == "local-large"
     assert settings.openai_base_url == ""  # invalid URL ignored
 
 
