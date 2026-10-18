@@ -1,0 +1,7 @@
+# Runtime dependencies for AVEN AI Desktop (versions tested together).
+PySide6-Essentials>=6.8,<7
+anthropic>=1.15,<2
+openai>=3.30,<4
+keyring>=25,<26
+Markdown>=3.6,<4
+Pygments>=2.18,<3

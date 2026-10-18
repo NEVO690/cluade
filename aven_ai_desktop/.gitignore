@@ -1,0 +1,8 @@
+# Build output
+build/
+dist/
+.venv-build/
+*.spec.bak
+
+# Local configuration - never commit API keys
+.env
