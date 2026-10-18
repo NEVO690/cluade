@@ -30,18 +30,29 @@ Run these on a machine **without Python installed** and **without** `ANTHROPIC_A
 - [ ] Install the new build over the previous release: existing conversations are still there
 - [ ] `%APPDATA%\AVEN AI\logs\aven.log` contains no message contents and no API keys
 
-## 5. Code signing (strongly recommended)
-Unsigned executables trigger Windows SmartScreen warnings.
-- [ ] Sign `AVEN AI.exe` with an OV or EV code-signing certificate, for example:
-  `signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a "dist\AVEN AI\AVEN AI.exe"`
-- [ ] Verify: `signtool verify /pa /v "dist\AVEN AI\AVEN AI.exe"`
-- [ ] Only describe the release as signed if these steps were actually done
+## 5. Code signing (removes the "Windows protected your PC" warning)
+Unsigned executables trigger Windows SmartScreen warnings, and only a code-signing certificate removes them. Options:
+
+- **Free, for open-source projects: [SignPath Foundation](https://signpath.org).** The project must be public with an OSI-approved licence (add a `LICENSE` file first). Apply on their site; once approved, they sign the release builds.
+- **Microsoft Trusted Signing / Azure Artifact Signing.** A low monthly fee; identity verification required.
+- **A standard OV or EV certificate** from a certificate authority (Sectigo, DigiCert, SSL.com, …). Paid yearly.
+
+To make the CI build sign automatically with a `.pfx` certificate:
+- [ ] Encode it: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("cert.pfx")) | Set-Clipboard`
+- [ ] GitHub → **Settings → Secrets and variables → Actions → New repository secret**:
+  - `AVEN_SIGN_PFX_BASE64` = the encoded certificate
+  - `AVEN_SIGN_PFX_PASSWORD` = its password
+- [ ] Run the workflow. The exe and the installer are signed and verified with `signtool`, and the log says "code-signed".
+- [ ] Only describe the release as signed if these steps were actually done.
+
+A new certificate still needs some download "reputation" before SmartScreen stops warning. EV certificates get it immediately.
 
 ## 6. Packaging for download
-- [ ] Distribute `dist\AVEN-AI-Desktop-<version>-win64.zip` (or an installer built from the `dist\AVEN AI` folder, for example with Inno Setup)
+- [ ] Distribute `dist\AVEN-AI-Setup-<version>.exe` (the installer). Optionally also offer `dist\AVEN-AI-Desktop-<version>-win64.zip` as a portable version
+- [ ] Check that the CI "Microsoft Defender scan" step reported no threats
 - [ ] Publish SHA-256 checksums: `Get-FileHash .\dist\AVEN-AI-Desktop-<version>-win64.zip -Algorithm SHA256`
 - [ ] Upload to the official AVEN AI website and check that the download link and checksum match
-- [ ] The download page explains: users need their own AI provider account and API key, conversations are processed by that provider, data is stored locally, and there are no automatic updates
+- [ ] The download page explains: AVEN Local runs on the user's PC with no key (the first model download is 1.3 GB or more), how to handle the "Windows protected your PC" prompt if the build is unsigned, that data is stored locally, and that there are no automatic updates
 
 ## 7. After release
 - [ ] Tag the release in git (`git tag v<version>`)

@@ -227,12 +227,27 @@ Output:
 
 | Build | Path |
 |---|---|
-| Folder build (recommended) | `dist\AVEN AI\AVEN AI.exe`, plus `dist\AVEN-AI-Desktop-<version>-win64.zip` |
-| Single file (`-OneFile`) | `dist\AVEN AI.exe` |
+| **Installer (`-Installer`, recommended for download)** | `dist\AVEN-AI-Setup-<version>.exe`: per-user install, no admin rights, Start menu shortcut, normal uninstall |
+| Folder build (portable) | `dist\AVEN AI\AVEN AI.exe`, plus `dist\AVEN-AI-Desktop-<version>-win64.zip` |
+| Single file (`-OneFile`) | `dist\AVEN AI.exe`. Not recommended: antivirus products flag self-extracting single files most often |
 
 The folder build starts faster and antivirus heuristics flag it less often than a self-extracting single file. Distribute the **whole** `AVEN AI` folder (or the zip). The executable is windowed, so no console opens. It carries Windows version information and the AVEN icon, and it bundles the Python runtime.
 
-Script options: `-OneFile`, `-SkipTests`, `-Python "py -3.13"`.
+Script options: `-Installer`, `-BuildBootloader`, `-OneFile`, `-SkipTests`, `-Python "py -3.13"`.
+
+### Download safety
+
+Two different warnings can appear for a new Windows app:
+
+1. **Antivirus false positives.** Apps packaged with PyInstaller are often flagged because malware uses the same pre-built launcher. The release build therefore:
+   - compiles PyInstaller's launcher from source (`-BuildBootloader`)
+   - ships an installer instead of a self-extracting single file
+   - is scanned with Microsoft Defender in CI, and the build fails on any detection
+
+   If an antivirus product still flags a release, report it as a false positive. For Microsoft, use <https://www.microsoft.com/wdsi/filesubmission>.
+2. **"Windows protected your PC" (SmartScreen).** This appears for software that is **not code-signed**. Only a code-signing certificate removes it; see section 5 of [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), including **free signing for open-source projects**. Once the certificate is added as two repository secrets, the build signs everything automatically.
+
+Publish the SHA-256 checksums (`SHA256SUMS.txt`) next to the download so people can verify their copy.
 
 See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) before publishing a build.
 

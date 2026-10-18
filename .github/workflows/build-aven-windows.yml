@@ -54,6 +54,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     env:
+      # Optional code signing: add these repository secrets to sign the exe and installer
+      # (base64-encoded .pfx certificate and its password). Without them the build is unsigned.
+      AVEN_SIGN_PFX_BASE64: ${{ secrets.AVEN_SIGN_PFX_BASE64 }}
+      AVEN_SIGN_PFX_PASSWORD: ${{ secrets.AVEN_SIGN_PFX_PASSWORD }}
       # Public address of your AVEN Cloud server. Set it under
       # Settings → Secrets and variables → Actions → Variables. Empty = users need their own key.
       AVEN_CLOUD_URL: ${{ vars.AVEN_CLOUD_URL }}
@@ -68,12 +72,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Folder build (recommended) + zip; runs the full test suite first.
-      - name: Build folder version
-        run: ./scripts/build_windows.ps1 -Python python
-
-      - name: Build single-file version
-        run: ./scripts/build_windows.ps1 -Python python -OneFile -SkipTests
+      # Folder build + zip + installer; runs the full test suite first. The PyInstaller bootloader is
+      # compiled from source to avoid the antivirus false positives the stock bootloader triggers.
+      - name: Build app and installer
+        run: ./scripts/build_windows.ps1 -Python python -Installer -BuildBootloader
 
       - name: Smoke-test packaged executable
         run: |
@@ -89,6 +91,34 @@ jobs:
           & "dist\AVEN AI\_internal\engine\llama-server.exe" --version
           if ($LASTEXITCODE -ne 0) { throw "Bundled llama-server failed to run" }
 
+      - name: Test the installer (silent per-user install, launch, uninstall)
+        run: |
+          $setup = Get-ChildItem dist\AVEN-AI-Setup-*.exe | Select-Object -First 1
+          $dir = Join-Path $env:RUNNER_TEMP "aven-install"
+          $p = Start-Process $setup.FullName -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/CURRENTUSER", "/NORESTART", "/DIR=`"$dir`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Installer failed with exit code $($p.ExitCode)" }
+          if (-not (Test-Path (Join-Path $dir "AVEN AI.exe"))) { throw "AVEN AI.exe was not installed" }
+          $env:AVEN_DATA_DIR = Join-Path $env:RUNNER_TEMP "aven-installed-data"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $app = Start-Process (Join-Path $dir "AVEN AI.exe") -PassThru
+          Start-Sleep -Seconds 15
+          if ($app.HasExited) { throw "Installed app exited early with code $($app.ExitCode)" }
+          Stop-Process -Id $app.Id -Force
+          $u = Start-Process (Join-Path $dir "unins000.exe") -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES" -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "Uninstaller failed with exit code $($u.ExitCode)" }
+
+      - name: Microsoft Defender scan
+        run: |
+          $mp = Join-Path $env:ProgramFiles "Windows Defender\MpCmdRun.exe"
+          if (-not (Test-Path $mp)) { Write-Host "::warning::Microsoft Defender is not available on this runner"; exit 0 }
+          & $mp -SignatureUpdate | Out-Host
+          $target = (Resolve-Path dist).Path
+          & $mp -Scan -ScanType 3 -File $target -DisableRemediation | Out-Host
+          $code = $LASTEXITCODE
+          if ($code -eq 2) { throw "Microsoft Defender reported a detection in the build output" }
+          if ($code -ne 0) { Write-Host "::warning::Defender scan could not complete (exit code $code)" }
+          else { Write-Host "Microsoft Defender: no threats found in $target" }
+
       - name: SHA-256 checksums
         run: |
           Get-ChildItem dist -File | Get-FileHash -Algorithm SHA256 |
@@ -100,7 +130,7 @@ jobs:
         with:
           name: AVEN-AI-Desktop-Windows
           path: |
-            aven_ai_desktop/dist/AVEN AI.exe
+            aven_ai_desktop/dist/AVEN-AI-Setup-*.exe
             aven_ai_desktop/dist/AVEN-AI-Desktop-*-win64.zip
             aven_ai_desktop/dist/SHA256SUMS.txt
           if-no-files-found: error

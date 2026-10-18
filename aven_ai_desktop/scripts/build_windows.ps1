@@ -12,6 +12,14 @@
 .PARAMETER OneFile
     Also produce a single-file executable instead of the folder build.
 
+.PARAMETER Installer
+    Also build an Inno Setup installer: dist\AVEN-AI-Setup-<version>.exe (recommended for download).
+
+.PARAMETER BuildBootloader
+    Compile PyInstaller's bootloader from source. Antivirus products often flag the stock,
+    pre-built bootloader (it is shared with malware); a freshly compiled one avoids most of
+    these false positives. Needs the Visual Studio C++ build tools.
+
 .PARAMETER SkipTests
     Skip the pytest run (not recommended for release builds).
 
@@ -19,6 +27,9 @@
     Python launcher/command to use (default: "py -3.12" if available, else "python").
 
 .NOTES
+    Code signing: when AVEN_SIGN_PFX_BASE64 (a base64-encoded .pfx certificate) and
+    AVEN_SIGN_PFX_PASSWORD are set, the executable and installer are signed with signtool.
+
     Set the AVEN_CLOUD_URL environment variable (e.g. https://aven-cloud.onrender.com) to build an
     app that works without an API key through your AVEN Cloud server.
 
@@ -28,6 +39,8 @@
 #>
 param(
     [switch]$OneFile,
+    [switch]$Installer,
+    [switch]$BuildBootloader,
     [switch]$SkipTests,
     [string]$Python = ""
 )
@@ -76,6 +89,13 @@ $VenvPython = Join-Path $Venv "Scripts\python.exe"
 Write-Host "==> Installing dependencies" -ForegroundColor Cyan
 Invoke-Checked $VenvPython @("-m", "pip", "install", "--upgrade", "pip")
 Invoke-Checked $VenvPython @("-m", "pip", "install", "-r", "requirements-dev.txt")
+if ($BuildBootloader) {
+    $pyiVersion = & $VenvPython -c "import PyInstaller; print(PyInstaller.__version__)"
+    Write-Host "==> Compiling the PyInstaller $pyiVersion bootloader from source" -ForegroundColor Cyan
+    $env:PYINSTALLER_COMPILE_BOOTLOADER = "1"
+    Invoke-Checked $VenvPython @("-m", "pip", "install", "--force-reinstall", "--no-deps", "--no-binary", "pyinstaller", "pyinstaller==$pyiVersion")
+    Remove-Item Env:PYINSTALLER_COMPILE_BOOTLOADER
+}
 
 # --- tests -------------------------------------------------------------------------
 if (-not $SkipTests) {
@@ -134,6 +154,32 @@ if ($OneFile) {
 }
 if (-not (Test-Path $Exe)) { throw "Build finished but $Exe was not found." }
 
+# --- code signing (optional) ---------------------------------------------------------------
+function Get-SignTool {
+    $found = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending | Select-Object -First 1
+    if ($found) { return $found.FullName }
+    return $null
+}
+$Signing = [bool]($env:AVEN_SIGN_PFX_BASE64 -and $env:AVEN_SIGN_PFX_PASSWORD)
+$PfxPath = Join-Path ([System.IO.Path]::GetTempPath()) "aven-signing.pfx"
+function Sign-File([string]$Path) {
+    if (-not $Signing) { return }
+    $signtool = Get-SignTool
+    if (-not $signtool) { throw "signtool.exe not found (install the Windows SDK)." }
+    Write-Host "==> Signing $Path" -ForegroundColor Cyan
+    # Called directly (not via Invoke-Checked) so a failure never prints the certificate password.
+    & $signtool sign /f $PfxPath /p $env:AVEN_SIGN_PFX_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com `
+        /td SHA256 /d "AVEN AI" $Path
+    if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $Path (exit code $LASTEXITCODE)." }
+    Invoke-Checked $signtool @("verify", "/pa", $Path)
+}
+if ($Signing) {
+    [System.IO.File]::WriteAllBytes($PfxPath, [Convert]::FromBase64String($env:AVEN_SIGN_PFX_BASE64))
+}
+try {
+    Sign-File $Exe
+
 $version = & $VenvPython -c "from app.version import __version__; print(__version__)"
 Write-Host ""
 Write-Host "Build complete: AVEN AI Desktop $version" -ForegroundColor Green
@@ -144,4 +190,29 @@ if (-not $OneFile) {
     Compress-Archive -Path (Join-Path $ProjectRoot "dist\AVEN AI") -DestinationPath $zip
     Write-Host "Zip archive: $zip" -ForegroundColor Green
 }
-Write-Host "Note: the executable is NOT code-signed. See RELEASE_CHECKLIST.md." -ForegroundColor Yellow
+
+    # --- installer (optional) ---------------------------------------------------------------
+    if ($Installer -and -not $OneFile) {
+        $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
+        if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+        if (-not (Test-Path $iscc)) {
+            Write-Host "==> Installing Inno Setup" -ForegroundColor Cyan
+            Invoke-Checked "choco" @("install", "innosetup", "-y", "--no-progress")
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        }
+        Write-Host "==> Building the installer" -ForegroundColor Cyan
+        Invoke-Checked $iscc @("/Qp", "/DAppVersion=$version", (Join-Path $ProjectRoot "installer\aven_ai.iss"))
+        $setup = Join-Path $ProjectRoot "dist\AVEN-AI-Setup-$version.exe"
+        if (-not (Test-Path $setup)) { throw "Installer was not created." }
+        Sign-File $setup
+        Write-Host "Installer: $setup" -ForegroundColor Green
+    }
+} finally {
+    if (Test-Path $PfxPath) { Remove-Item $PfxPath -Force }
+}
+
+if ($Signing) {
+    Write-Host "The executable and installer are code-signed." -ForegroundColor Green
+} else {
+    Write-Host "Note: not code-signed (no certificate configured). See RELEASE_CHECKLIST.md." -ForegroundColor Yellow
+}
