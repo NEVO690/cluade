@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "aven_ai_desktop/**"
+      - "aven_cloud/**"
       - ".github/workflows/build-aven-windows.yml"
   workflow_dispatch:
 
@@ -11,9 +12,31 @@ permissions:
   contents: read
 
 jobs:
+  test-cloud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: aven_cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install system libraries for Qt (used by the end-to-end test)
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libfontconfig1
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+        env:
+          QT_QPA_PLATFORM: offscreen
+
   build:
     runs-on: windows-latest
     timeout-minutes: 45
+    env:
+      # Public address of your AVEN Cloud server. Set it under
+      # Settings → Secrets and variables → Actions → Variables. Empty = users need their own key.
+      AVEN_CLOUD_URL: ${{ vars.AVEN_CLOUD_URL }}
     defaults:
       run:
         working-directory: aven_ai_desktop

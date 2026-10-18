@@ -28,9 +28,12 @@ class OpenAIProvider(AIProvider):
         base_url: str = "",
         timeout: float = 600.0,
         client: openai.OpenAI | None = None,
+        display_name: str = "",
     ) -> None:
         self.base_url = base_url
-        if base_url:
+        if display_name:
+            self.display_name = display_name
+        elif base_url:
             self.display_name = "OpenAI-compatible server"
         self.client = client or openai.OpenAI(
             api_key=api_key or LOCAL_SERVER_KEY,

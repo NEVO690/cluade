@@ -97,6 +97,7 @@ class MainWindow(QMainWindow):
         self._install_shortcuts()
         self.theme.changed.connect(self._on_theme_changed)
         self.chat.set_send_with_enter(settings.send_with_enter)
+        self.chat.set_model(settings.model)
         self.chat.set_mode(self.mode)
         self._restore_geometry()
 
@@ -114,6 +115,7 @@ class MainWindow(QMainWindow):
         self.chat.send_requested.connect(self.send_message)
         self.chat.stop_requested.connect(self.stop_generation)
         self.chat.mode_changed.connect(self.set_mode)
+        self.chat.model_changed.connect(self.set_model)
         self.chat.settings_requested.connect(self.open_settings)
         self.chat.retry_requested.connect(self.retry)
         self.chat.regenerate_requested.connect(self.regenerate)
@@ -150,7 +152,7 @@ class MainWindow(QMainWindow):
         self.sidebar.set_conversations(conversations, self.current.id if self.current else None)
 
     def update_status(self) -> None:
-        self.chat.set_status(self.chat_service.status(self.mode))
+        self.chat.set_status(self.chat_service.status())
 
     def new_conversation(self) -> None:
         self.stop_generation()
@@ -284,6 +286,14 @@ class MainWindow(QMainWindow):
             self.refresh_sidebar()
         self.update_status()
 
+    def set_model(self, model_id: str) -> None:
+        """AVEN model chosen in the message box; applies from the next message."""
+        if model_id == self.settings.model:
+            return
+        self.settings.model = model_id
+        self.save_settings()
+        self.update_status()
+
     def _assistant_name(self) -> str:
         return MODES[self.mode].name
 
@@ -294,7 +304,7 @@ class MainWindow(QMainWindow):
         text = text.strip()
         if not text:
             return
-        status = self.chat_service.status(self.mode)
+        status = self.chat_service.status()
         if not status.ready:
             self.update_status()
             if (
@@ -343,7 +353,7 @@ class MainWindow(QMainWindow):
 
         self._generation_counter += 1
         gid = self._generation_counter
-        aven_model = self.settings.aven_model_for_mode(self.mode)
+        aven_model = self.settings.model
         widget = self.chat.add_assistant_message(self._assistant_name(), model=aven_model)
         worker = StreamWorker(gid, lambda: self.chat_service.stream(request, provider), request.cancel_event)
         worker.signals.text.connect(self._on_stream_text)
@@ -466,7 +476,7 @@ class MainWindow(QMainWindow):
     # --- settings & theme ---------------------------------------------------------------------
     def open_settings(self, provider_tab: bool = False) -> None:
         dialog = SettingsDialog(self.settings, self.credentials, self)
-        if provider_tab or not self.chat_service.status(self.mode).ready:
+        if provider_tab or not self.chat_service.status().ready:
             dialog.tabs.setCurrentIndex(1)
         dialog.delete_all_requested.connect(self.delete_all_conversations)
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
@@ -476,8 +486,6 @@ class MainWindow(QMainWindow):
         for name in (
             "theme",
             "provider",
-            "aven_model",
-            "code_model",
             "model_map",
             "openai_base_url",
             "max_tokens",

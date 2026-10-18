@@ -1,0 +1,8 @@
+-r requirements.txt
+pytest>=8
+httpx>=0.27
+openai>=3.30,<4
+PySide6-Essentials>=6.8,<7
+keyring>=25,<26
+Markdown>=3.6,<4
+Pygments>=2.18,<3

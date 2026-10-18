@@ -18,6 +18,11 @@ log = logging.getLogger(__name__)
 FALLBACK_MODELS = frozenset({"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"})
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
+# Models that accept output_config.effort. Other models never receive it.
+EFFORT_MODELS = frozenset(
+    {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5"}
+)
+
 
 class AnthropicProvider(AIProvider):
     provider_id = "anthropic"
@@ -51,6 +56,8 @@ class AnthropicProvider(AIProvider):
             "system": request.system_prompt,
             "messages": [{"role": m.role, "content": m.content} for m in request.messages],
         }
+        if request.effort and request.model in EFFORT_MODELS:
+            params["output_config"] = {"effort": request.effort}
         if use_fallbacks:
             manager = self.client.beta.messages.stream(**params, betas=[FALLBACK_BETA], fallbacks="default")
         else:

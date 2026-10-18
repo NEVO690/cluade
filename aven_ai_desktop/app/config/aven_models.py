@@ -1,10 +1,15 @@
 """AVEN's own model lineup.
 
-Users choose between AVEN models (Swift, Core, Ultra). Each one is a tier that
-maps to a real model at the configured AI provider; the mapping is editable in
-Settings → AI Provider → Advanced. The chat interface only shows AVEN names,
-while Settings and the privacy notice still state which provider processes
-the conversation.
+Users pick an AVEN model in the message box before sending. Each AVEN model is
+served by a real model at an AI provider:
+
+* With **AVEN Cloud** (the default) the AVEN AI server decides the mapping, so
+  the app only sends the AVEN model id and users need no API key.
+* With a personal provider key, the mapping below is used and can be edited in
+  Settings → AI Provider → Advanced.
+
+The chat interface only shows AVEN names; Settings and the privacy notice still
+state which service processes conversations.
 """
 
 from __future__ import annotations
@@ -20,23 +25,29 @@ class AvenModel:
 
 
 AVEN_MODELS: tuple[AvenModel, ...] = (
-    AvenModel("aven-swift", "AVEN Swift", "Fastest replies for everyday questions."),
-    AvenModel("aven-core", "AVEN Core", "Balanced speed and quality."),
-    AvenModel("aven-ultra", "AVEN Ultra", "Most capable, for complex reasoning, writing and code."),
+    AvenModel("aven-1", "AVEN 1.0", "The main AVEN model: smart and reliable for everything."),
+    AvenModel("aven-ultra", "AVEN Ultra", "Thinks longer for the hardest questions, research and code."),
+    AvenModel("aven-core", "AVEN Core", "Balanced speed and quality for everyday work."),
+    AvenModel("aven-light", "AVEN Light", "The fastest replies for quick questions."),
 )
 AVEN_MODEL_IDS = tuple(m.id for m in AVEN_MODELS)
-DEFAULT_AVEN_MODEL = "aven-ultra"
+DEFAULT_AVEN_MODEL = "aven-1"
 
-# Default provider model behind each AVEN model. Only providers with known,
-# documented model identifiers get defaults; others are mapped by the user.
+# Provider model behind each AVEN model when using a personal key. Only
+# providers with known, documented model identifiers get defaults.
 DEFAULT_MAPPINGS: dict[str, dict[str, str]] = {
     "anthropic": {
-        "aven-swift": "claude-haiku-5-5",
-        "aven-core": "claude-sonnet-5-5",
+        "aven-1": "claude-opus-5-5",
         "aven-ultra": "claude-opus-5-5",
+        "aven-core": "claude-sonnet-5-5",
+        "aven-light": "claude-haiku-5-5",
     },
     "openai": {},
 }
+
+# Reasoning effort per AVEN model (applied only where the provider model supports it).
+# AVEN Ultra runs the same model as AVEN 1.0 but reasons more deeply.
+AVEN_EFFORT: dict[str, str] = {"aven-ultra": "xhigh"}
 
 
 def get_aven_model(model_id: str) -> AvenModel | None:

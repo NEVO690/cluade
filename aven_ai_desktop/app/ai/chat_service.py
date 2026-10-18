@@ -10,7 +10,8 @@ from app.ai import errors
 from app.ai.base_provider import AIProvider, ChatMessage, ChatRequest, StreamEvent
 from app.ai.prompts import system_prompt_for
 from app.ai.provider_factory import PROVIDERS, create_provider, key_required
-from app.config.aven_models import aven_model_name
+from app.config.aven_models import AVEN_EFFORT, aven_model_name
+from app.config.cloud import cloud_url
 from app.config.secrets import CredentialStore
 from app.config.settings import AppSettings
 
@@ -72,12 +73,20 @@ class ChatService:
         self.provider_factory = provider_factory
 
     # --- configuration ---------------------------------------------------------
-    def status(self, mode: str) -> ConfigStatus:
+    def status(self) -> ConfigStatus:
         pid = self.settings.provider
         info = PROVIDERS[pid]
-        aven_model = self.settings.aven_model_for_mode(mode)
-        model = self.settings.model_for_mode(mode)
+        aven_model = self.settings.model
+        model = self.settings.resolved_model()
         base_url = self.settings.openai_base_url if pid == "openai" else ""
+        if pid == "aven_cloud" and not cloud_url():
+            return ConfigStatus(
+                False,
+                info.name,
+                aven_model,
+                model,
+                "AVEN Cloud is not available in this build yet. Add your own API key in Settings → AI Provider.",
+            )
         if key_required(pid, base_url) and not self.credentials.get_key(pid):
             return ConfigStatus(
                 False, info.name, aven_model, model, f"Add an API key for {info.name} to start chatting."
@@ -94,13 +103,14 @@ class ChatService:
             key,
             base_url=self.settings.openai_base_url if pid == "openai" else "",
             timeout=float(self.settings.request_timeout),
+            client_id=self.settings.install_id,
         )
 
     # --- requests --------------------------------------------------------------
     def build_request(self, mode: str, history: list[ChatMessage]) -> ChatRequest:
-        model = self.settings.model_for_mode(mode)
+        model = self.settings.resolved_model()
         if not model:
-            raise errors.MissingModelError(_unmapped_message(self.settings.aven_model_for_mode(mode)))
+            raise errors.MissingModelError(_unmapped_message(self.settings.model))
         messages = trim_history(history)
         if not messages or messages[-1].role != "user":
             raise errors.InvalidRequestError("There is no message to send.")
@@ -109,6 +119,8 @@ class ChatService:
             system_prompt=system_prompt_for(mode),
             messages=messages,
             max_tokens=self.settings.max_tokens,
+            # AVEN Cloud applies effort on the server; personal keys apply it here.
+            effort=None if self.settings.provider == "aven_cloud" else AVEN_EFFORT.get(self.settings.model),
         )
 
     def stream(self, request: ChatRequest, provider: AIProvider | None = None) -> Iterator[StreamEvent]:

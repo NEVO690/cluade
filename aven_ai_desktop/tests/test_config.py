@@ -6,7 +6,7 @@ import keyring
 import pytest
 from keyring.backend import KeyringBackend
 
-from app.config.aven_models import AVEN_MODELS, aven_model_name
+from app.config.aven_models import AVEN_EFFORT, AVEN_MODELS, aven_model_name
 from app.config.secrets import CredentialStore, mask_key
 from app.config.settings import (
     AppSettings,
@@ -20,19 +20,29 @@ from app.config.settings import (
 # --- settings ---------------------------------------------------------------------------
 
 
-def test_defaults_use_aven_ultra_mapped_to_documented_anthropic_model() -> None:
+def test_defaults_use_aven_cloud_and_aven_1() -> None:
     settings = AppSettings().normalized()
-    assert settings.provider == "anthropic"
-    assert settings.aven_model == settings.code_model == "aven-ultra"
-    assert settings.model_for_mode("aven") == "claude-opus-5-5"
-    assert settings.model_for_mode("code") == "claude-opus-5-5"
-    assert settings.provider_model_for("aven-swift") == "claude-haiku-5-5"
-    assert settings.provider_model_for("aven-core") == "claude-sonnet-5-5"
+    assert settings.provider == "aven_cloud"
+    assert settings.model == "aven-1"
+    assert settings.resolved_model() == "aven-1"  # AVEN Cloud maps on the server
+    assert len(settings.install_id) == 32
+
+
+def test_personal_key_mapping_defaults() -> None:
+    settings = AppSettings(provider="anthropic")
+    assert settings.mapping_for() == {
+        "aven-1": "claude-opus-5-5",
+        "aven-ultra": "claude-opus-5-5",
+        "aven-core": "claude-sonnet-5-5",
+        "aven-light": "claude-haiku-5-5",
+    }
+    assert settings.resolved_model() == "claude-opus-5-5"
     assert settings.mapping_for("openai") == {}  # no guessed OpenAI model IDs
+    assert AVEN_EFFORT == {"aven-ultra": "xhigh"}
 
 
 def test_aven_model_names() -> None:
-    assert [m.name for m in AVEN_MODELS] == ["AVEN Swift", "AVEN Core", "AVEN Ultra"]
+    assert [m.name for m in AVEN_MODELS] == ["AVEN 1.0", "AVEN Ultra", "AVEN Core", "AVEN Light"]
     assert aven_model_name("aven-core") == "AVEN Core"
     assert aven_model_name("legacy-raw-id") == "legacy-raw-id"
     assert aven_model_name(None) == ""
@@ -40,24 +50,30 @@ def test_aven_model_names() -> None:
 
 def test_settings_round_trip(tmp_path) -> None:
     store = SettingsStore(tmp_path / "settings.json")
-    settings = AppSettings(theme="dark", provider="openai", max_tokens=4096, aven_model="aven-swift")
-    settings.mapping_for("openai").update({"aven-swift": "my-fast-model", "aven-ultra": "my-big-model"})
+    settings = AppSettings(theme="dark", provider="openai", max_tokens=4096, model="aven-light")
+    settings.mapping_for("openai").update({"aven-light": "my-fast-model", "aven-1": "my-big-model"})
     store.save(settings)
 
     loaded = store.load()
     assert loaded.theme == "dark"
     assert loaded.provider == "openai"
     assert loaded.max_tokens == 4096
-    assert loaded.model_for_mode("aven") == "my-fast-model"
-    assert loaded.model_for_mode("code") == "my-big-model"
+    assert loaded.model == "aven-light"
+    assert loaded.resolved_model() == "my-fast-model"
+    assert loaded.install_id == settings.install_id
     assert loaded.mapping_for("anthropic")["aven-ultra"] == "claude-opus-5-5"
 
 
 def test_invalid_model_choices_are_normalized(tmp_path) -> None:
     path = tmp_path / "settings.json"
-    path.write_text(json.dumps({"aven_model": "gpt-9", "model_map": {"anthropic": {"aven-core": "bad id", "x": "y"}}}))
+    path.write_text(
+        json.dumps(
+            {"model": "gpt-9", "install_id": "../bad", "model_map": {"anthropic": {"aven-core": "bad id", "x": "y"}}}
+        )
+    )
     loaded = SettingsStore(path).load()
-    assert loaded.aven_model == "aven-ultra"
+    assert loaded.model == "aven-1"
+    assert len(loaded.install_id) == 32 and loaded.install_id.isalnum()
     assert "aven-core" not in loaded.mapping_for("anthropic")
     assert "x" not in loaded.mapping_for("anthropic")
 
@@ -77,25 +93,43 @@ def test_corrupt_or_invalid_settings_fall_back_to_defaults(tmp_path) -> None:
     path.write_text(json.dumps({"theme": "neon", "provider": "nope", "max_tokens": 10**9, "request_timeout": "x"}))
     loaded = SettingsStore(path).load()
     assert loaded.theme == "system"
-    assert loaded.provider == "anthropic"
+    assert loaded.provider == "aven_cloud"
     assert loaded.max_tokens == 128_000
     assert loaded.request_timeout == 600
 
 
 def test_env_overrides(monkeypatch) -> None:
     monkeypatch.setenv("AVEN_PROVIDER", "openai")
-    monkeypatch.setenv("AVEN_MODEL", "aven-swift")
-    monkeypatch.setenv("AVEN_CODE_MODEL", "not-a-tier")
-    monkeypatch.setenv("AVEN_SWIFT_MODEL", "local-small")
-    monkeypatch.setenv("AVEN_ULTRA_MODEL", "local-large")
+    monkeypatch.setenv("AVEN_MODEL", "aven-light")
+    monkeypatch.setenv("AVEN_LIGHT_MODEL", "local-small")
+    monkeypatch.setenv("AVEN_1_MODEL", "local-large")
     monkeypatch.setenv("AVEN_BASE_URL", "javascript:alert(1)")
     settings = apply_env_overrides(AppSettings())
     assert settings.provider == "openai"
-    assert settings.aven_model == "aven-swift"
-    assert settings.code_model == "aven-ultra"  # invalid value ignored
-    assert settings.model_for_mode("aven") == "local-small"
-    assert settings.model_for_mode("code") == "local-large"
+    assert settings.model == "aven-light"
+    assert settings.resolved_model() == "local-small"
+    assert settings.mapping_for()["aven-1"] == "local-large"
     assert settings.openai_base_url == ""  # invalid URL ignored
+
+    monkeypatch.setenv("AVEN_MODEL", "not-a-model")
+    assert apply_env_overrides(AppSettings()).model == "aven-1"
+
+
+def test_cloud_url_from_env_and_build_file(monkeypatch, tmp_path) -> None:
+    from app.config import cloud
+
+    monkeypatch.delenv("AVEN_CLOUD_URL", raising=False)
+    monkeypatch.setattr(cloud, "resource_path", lambda name: tmp_path / name)
+    assert cloud.cloud_url() == ""
+    (tmp_path / "cloud.json").write_text(json.dumps({"url": "https://aven-cloud.example.com/"}))
+    assert cloud.cloud_url() == "https://aven-cloud.example.com/v1"
+    # Windows PowerShell 5.1 writes UTF-8 with a byte-order mark.
+    (tmp_path / "cloud.json").write_bytes(b"\xef\xbb\xbf" + json.dumps({"url": "https://bom.example.com"}).encode())
+    assert cloud.cloud_url() == "https://bom.example.com/v1"
+    monkeypatch.setenv("AVEN_CLOUD_URL", "http://evil.example.com")
+    assert cloud.cloud_url() == ""  # plain http rejected (except localhost)
+    monkeypatch.setenv("AVEN_CLOUD_URL", "http://localhost:8000/v1")
+    assert cloud.cloud_url() == "http://localhost:8000/v1"
 
 
 @pytest.mark.parametrize(

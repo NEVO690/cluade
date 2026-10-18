@@ -5,7 +5,7 @@ AVEN AI Desktop is a Windows desktop AI app written in Python (PySide6). It has 
 - **AVEN** is a friendly general-purpose assistant for questions, explanations, brainstorming, writing, summaries, learning, planning and everyday problem-solving.
 - **AVEN CODE** is a programming assistant for writing, debugging, explaining, refactoring and reviewing code. It knows Python, JavaScript/TypeScript, HTML/CSS, Roblox Luau, Unity C#, Unreal Engine C++, Java, C#, SQL and more.
 
-Responses come from the AI provider you configure. Right now that's **Anthropic (Claude)**, **OpenAI**, or any **OpenAI-compatible server** (including local model servers on `localhost`). The app never makes up responses: if no provider is configured, it shows a setup screen.
+By default the app chats through **AVEN Cloud**, the AVEN AI server in [`../aven_cloud`](../aven_cloud), so **users don't need an API key**. Advanced users can instead use their own key for **Anthropic (Claude)**, **OpenAI**, or any **OpenAI-compatible server** (including local model servers on `localhost`). The app never makes up responses: if nothing is available, it shows a setup screen.
 
 | Dark theme, AVEN CODE | Light theme, first launch |
 |---|---|
@@ -19,15 +19,21 @@ Version: **1.0.0** (defined in `app/version.py`)
 
 ## AVEN models
 
-You choose between AVEN's own model lineup, separately for each mode (**Settings → General**):
+Pick the model for each message with the **model picker in the message box**, next to Send. Your choice is remembered.
 
-| AVEN model | Best for | Default mapping (Anthropic) |
+| AVEN model | Best for | Claude model behind it |
 |---|---|---|
-| **AVEN Swift** | Fastest replies for everyday questions | `claude-haiku-5-5` |
-| **AVEN Core** | Balanced speed and quality | `claude-sonnet-5-5` |
-| **AVEN Ultra** (default) | Complex reasoning, writing and code | `claude-opus-5-5` |
+| **AVEN 1.0** (default) | The main AVEN model: smart and reliable for everything | `claude-opus-5-5` |
+| **AVEN Ultra** | The hardest questions, research and code: thinks longer | `claude-opus-5-5` with extra-deep reasoning (`effort: xhigh`) |
+| **AVEN Core** | Balanced speed and quality for everyday work | `claude-sonnet-5-5` |
+| **AVEN Light** | The fastest replies for quick questions | `claude-haiku-5-5` |
 
-The chat interface only shows AVEN names. Each AVEN model runs on a real model at the provider you configured, and you can change that mapping in **Settings → AI Provider → Advanced**. OpenAI and compatible servers have no default mapping, so you enter model IDs or use **Load available models**. AVEN AI does not train its own model. Settings and the privacy notice state which provider processes conversations, and the assistant answers truthfully if asked what powers it.
+The chat interface only shows AVEN names.
+
+- **With AVEN Cloud**, the server decides the mapping above, so you can change it without shipping a new app.
+- **With your own key**, the mapping is in **Settings → AI Provider → Advanced**. OpenAI and compatible servers have no default mapping.
+
+AVEN AI does not train its own model. Settings and the privacy notice state who processes conversations, and the assistant answers truthfully if asked what powers it.
 
 ## Features
 
@@ -62,18 +68,31 @@ On macOS or Linux the steps are the same (`python3 -m venv .venv && source .venv
 
 ## Configuring an AI provider
 
-On first launch AVEN shows a setup card. Open **Settings → AI Provider**, then:
+### AVEN Cloud (default, no API key)
 
-1. Pick a **Provider**.
+When the app is built with an AVEN Cloud server address, people just install it and chat. There's nothing to configure. To set this up:
+
+1. Deploy the server: see [`aven_cloud/README.md`](../aven_cloud/README.md).
+2. Set the GitHub Actions variable `AVEN_CLOUD_URL`, or the environment variable of the same name for local builds.
+3. Rebuild. The address is written into `assets/cloud.json`. It is public and contains no secrets.
+
+The app sends a random install ID with each request so the server can enforce fair-use limits. No API key is ever stored in the app.
+
+If a build has no server address, the app says so and asks for a personal key instead.
+
+### Your own API key (optional)
+
+Open **Settings → AI Provider**, then:
+
+1. Pick **Anthropic (Claude)** or **OpenAI / OpenAI-compatible**.
 2. Paste your **API key**.
    - Anthropic keys come from the Claude Console: <https://platform.claude.com/>
    - OpenAI keys come from <https://platform.openai.com/>
-3. Check the **Advanced** mapping, which sets the provider model behind AVEN Swift, Core and Ultra.
-   - Anthropic comes pre-mapped (see [AVEN models](#aven-models)).
-   - For OpenAI, type model IDs or click **Load available models** and pick from the list.
-4. Under **General**, choose the AVEN model for each mode. The default for both is AVEN Ultra.
-5. Click **Test connection**. This sends one short real request with the AVEN mode's model and shows either the reply or the exact error.
-6. Click **Save**.
+3. Check the **Advanced** mapping, which sets the provider model behind each AVEN model.
+   - Anthropic comes pre-mapped.
+   - For OpenAI, type model IDs or click **Load available models**.
+4. Click **Test connection**. This sends one short real request with the selected AVEN model and shows either the reply or the exact error.
+5. Click **Save**.
 
 ### OpenAI-compatible and local servers
 
@@ -86,9 +105,10 @@ When you run from source, you can put a `.env` file next to `main.py` (see `.env
 | Variable | Purpose |
 |---|---|
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | API key. Takes precedence over a key saved in Settings. |
-| `AVEN_PROVIDER` | `anthropic` or `openai` |
-| `AVEN_MODEL` / `AVEN_CODE_MODEL` | AVEN model for each mode: `aven-swift`, `aven-core` or `aven-ultra` |
-| `AVEN_SWIFT_MODEL` / `AVEN_CORE_MODEL` / `AVEN_ULTRA_MODEL` | Provider model ID behind each AVEN model, for the current provider |
+| `AVEN_PROVIDER` | `aven_cloud` (default), `anthropic` or `openai` |
+| `AVEN_CLOUD_URL` | AVEN Cloud server address, for example `http://localhost:8000` when testing |
+| `AVEN_MODEL` | Selected AVEN model: `aven-1`, `aven-ultra`, `aven-core` or `aven-light` |
+| `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | Provider model ID behind each AVEN model (personal-key providers) |
 | `AVEN_BASE_URL` | Base URL for an OpenAI-compatible server |
 | `AVEN_DATA_DIR` | Use a different data folder |
 
@@ -100,11 +120,16 @@ Packaged builds read real environment variables, but they never read `.env` file
 - Keys are **never** written to the settings file, the database or the logs. The logs also mask anything that looks like a key.
 - **Limitation:** Credential Manager protects a key with your Windows sign-in. That keeps it away from other user accounts and from accidental disclosure, but **any program running under your own user account can read it**. Treat your API key like a password, set a spending limit in your provider's console, and revoke the key if you suspect your PC is compromised.
 - If no credential store is available, the key is only kept in memory until you close the app. Use the environment variable instead.
-- **Developers:** never put your own API key into the source code or the packaged app. Every user configures their own provider.
+- **Developers:** never put your own API key into the source code or the packaged app. Anyone can extract it from an `.exe`. To let people chat without a key, use AVEN Cloud, which keeps the key on your server.
 
 ## Privacy and your data
 
-**What leaves your computer.** When you send a message, AVEN sends the conversation so far, plus the mode's instructions, over HTTPS to the provider you selected. That provider processes it under its own terms and privacy policy ([Anthropic](https://www.anthropic.com/legal/privacy), [OpenAI](https://openai.com/policies/privacy-policy)). AVEN AI Desktop has no telemetry or analytics, and it does not upload files or conversations anywhere else.
+**What leaves your computer.** When you send a message, AVEN sends the conversation so far, plus the mode's instructions, over HTTPS:
+
+- **With AVEN Cloud**, it goes to the AVEN AI server, which forwards it to Anthropic. A random install ID goes along with it, used only for fair-use limits.
+- **With your own key**, it goes directly to the provider you selected.
+
+Providers process messages under their own terms and privacy policies ([Anthropic](https://www.anthropic.com/legal/privacy), [OpenAI](https://openai.com/policies/privacy-policy)). AVEN AI Desktop has no telemetry or analytics, and it does not upload files or conversations anywhere else.
 
 **What stays on your computer.**
 
@@ -215,7 +240,8 @@ aven_ai_desktop/
 │   ├── logging_setup.py         # rotating log file with secret redaction
 │   ├── application.py           # bootstrap: services, theme, main window
 │   ├── config/
-│   │   ├── aven_models.py       # AVEN Swift / Core / Ultra and default mappings
+│   │   ├── aven_models.py       # AVEN 1.0 / Ultra / Core / Light and default mappings
+│   │   ├── cloud.py             # AVEN Cloud server address (env var or assets/cloud.json)
 │   │   ├── settings.py          # settings model, JSON persistence, env overrides
 │   │   └── secrets.py           # API keys: env var → credential store → session
 │   ├── ai/
@@ -248,6 +274,8 @@ aven_ai_desktop/
 
 | Problem | What to do |
 |---|---|
+| “AVEN Cloud is not available in this build yet” | The build was made without `AVEN_CLOUD_URL`. Deploy AVEN Cloud and rebuild, or add your own key in Settings → AI Provider. |
+| “You've reached today's free message limit” | AVEN Cloud's fair-use limit. Try again tomorrow, or use your own API key. |
 | “AI provider not configured” | Add an API key in Settings → AI Provider, or set `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. |
 | “Invalid API key” | Copy the key again from the provider console. Check whether an environment variable is overriding the saved key; Settings shows where the key comes from. |
 | “Model not available” | Your account may not have access to the model behind that AVEN model. In Settings → AI Provider → Advanced, click **Load available models** and pick one. |
@@ -262,7 +290,8 @@ aven_ai_desktop/
 ## Current limitations
 
 - Text conversations only: no image or file attachments, and no web browsing.
-- Responses come from one provider at a time. Supported providers are Anthropic and OpenAI (or OpenAI-compatible).
+- Responses come from one provider at a time: AVEN Cloud, Anthropic, or OpenAI (or OpenAI-compatible).
+- AVEN Cloud needs a deployed server and an Anthropic account. Every message is billed to that account.
 - There is no automatic update system. Install new versions over the old one; your data folder is kept.
 - Release builds are not code-signed unless you sign them yourself.
 - Very long conversations send at most about the last 400,000 characters of history to the provider. All messages stay in the local database.

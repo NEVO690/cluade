@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 from app.ai.errors import AIError
 from app.ai.provider_factory import PROVIDERS, create_provider, key_required
 from app.config.aven_models import AVEN_MODELS, aven_model_name
+from app.config.cloud import cloud_url
 from app.config.secrets import CredentialStore, mask_key
 from app.config.settings import (
     MAX_MAX_TOKENS,
@@ -45,6 +46,13 @@ from app.version import APP_DISPLAY_NAME, __version__
 from app.workers.ai_worker import TaskWorker
 
 THEME_CHOICES = (("system", "Match Windows"), ("light", "Light"), ("dark", "Dark"))
+
+
+def _form_label(text: str) -> QLabel:
+    """Fixed-width form label so separate form sections line up."""
+    label = QLabel(text)
+    label.setMinimumWidth(150)
+    return label
 
 
 def _help(text: str) -> QLabel:
@@ -97,18 +105,6 @@ class SettingsDialog(QDialog):
         self.theme_combo.setCurrentIndex(max(0, [v for v, _ in THEME_CHOICES].index(self.settings.theme)))
         form.addRow("Theme", self.theme_combo)
 
-        self.aven_model = self._aven_model_combo(self.settings.aven_model)
-        self.code_model = self._aven_model_combo(self.settings.code_model)
-        form.addRow("AVEN model", self.aven_model)
-        form.addRow("AVEN CODE model", self.code_model)
-        form.addRow(
-            "",
-            _help(
-                "<b>AVEN Swift</b> - fastest replies for everyday questions.<br>"
-                "<b>AVEN Core</b> - balanced speed and quality.<br>"
-                "<b>AVEN Ultra</b> - most capable, for complex reasoning, writing and code."
-            ),
-        )
         self.enter_checkbox = QCheckBox("Press Enter to send (Shift+Enter inserts a new line)")
         self.enter_checkbox.setChecked(self.settings.send_with_enter)
         form.addRow("Composer", self.enter_checkbox)
@@ -127,10 +123,16 @@ class SettingsDialog(QDialog):
             self.provider_combo.addItem(PROVIDERS[pid].name, pid)
         self.provider_combo.setCurrentIndex(PROVIDER_IDS.index(self.settings.provider))
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
-        form.addRow("Provider", self.provider_combo)
+        form.addRow(_form_label("Provider"), self.provider_combo)
         self.provider_help = _help("")
-        form.addRow("", self.provider_help)
+        form.addRow(_form_label(""), self.provider_help)
+        outer.addLayout(form)
 
+        # Fields that only apply to providers used with a personal API key.
+        self.key_section = QWidget()
+        key_form = QFormLayout(self.key_section)
+        key_form.setContentsMargins(0, 0, 0, 0)
+        key_form.setVerticalSpacing(10)
         key_row = QHBoxLayout()
         self.key_edit = QLineEdit()
         self.key_edit.setEchoMode(QLineEdit.EchoMode.Password)
@@ -148,18 +150,18 @@ class SettingsDialog(QDialog):
         key_row.addWidget(self.key_edit, 1)
         key_row.addWidget(self.show_key)
         key_row.addWidget(self.remove_key)
-        form.addRow("API key", key_row)
+        key_form.addRow(_form_label("API key"), key_row)
         self.key_status = _help("")
-        form.addRow("", self.key_status)
+        key_form.addRow(_form_label(""), self.key_status)
 
         self.base_url_edit = QLineEdit()
         self.base_url_edit.setPlaceholderText("Optional, e.g. http://localhost:11434/v1 for a local server")
-        self.base_url_label = QLabel("Base URL")
-        form.addRow(self.base_url_label, self.base_url_edit)
+        self.base_url_label = _form_label("Base URL")
+        key_form.addRow(self.base_url_label, self.base_url_edit)
 
         advanced = QLabel("Advanced: provider model behind each AVEN model")
         advanced.setObjectName("SectionLabel")
-        form.addRow(advanced)
+        key_form.addRow(advanced)
         self.map_combos: dict[str, QComboBox] = {}
         for model in AVEN_MODELS:
             combo = QComboBox()
@@ -167,25 +169,28 @@ class SettingsDialog(QDialog):
             combo.lineEdit().setPlaceholderText("Provider model ID")
             combo.setToolTip(model.description)
             self.map_combos[model.id] = combo
-            form.addRow(model.name, combo)
-        form.addRow(
-            "",
+            key_form.addRow(_form_label(model.name), combo)
+        key_form.addRow(
+            _form_label(""),
             _help(
                 "AVEN models run on the provider selected above. Enter any model ID your account can use, "
                 "or load the list of models available to your key."
             ),
         )
+        outer.addWidget(self.key_section)
 
+        form = QFormLayout()
+        form.setVerticalSpacing(10)
         self.max_tokens = QSpinBox()
         self.max_tokens.setRange(MIN_MAX_TOKENS, MAX_MAX_TOKENS)
         self.max_tokens.setSingleStep(1024)
         self.max_tokens.setValue(self.settings.max_tokens)
-        form.addRow("Max response tokens", self.max_tokens)
+        form.addRow(_form_label("Max response tokens"), self.max_tokens)
         self.timeout = QSpinBox()
         self.timeout.setRange(MIN_TIMEOUT, MAX_TIMEOUT)
         self.timeout.setSuffix(" s")
         self.timeout.setValue(self.settings.request_timeout)
-        form.addRow("Request timeout", self.timeout)
+        form.addRow(_form_label("Request timeout"), self.timeout)
         outer.addLayout(form)
 
         actions = QHBoxLayout()
@@ -213,11 +218,13 @@ class SettingsDialog(QDialog):
         layout.addWidget(
             _help(
                 "<b>What leaves your computer.</b> When you send a message, the conversation so far and the "
-                "mode's instructions are sent over HTTPS to the AI provider you selected. The provider processes "
-                "it under its own terms and privacy policy "
+                "mode's instructions are sent over HTTPS. With <b>AVEN Cloud</b> (the default) they go to the "
+                "AVEN AI server, which forwards them to Anthropic to generate the reply, together with a random "
+                "install ID used only for fair-use limits. With your own API key they go directly to the "
+                "provider you selected. Providers process messages under their own terms and privacy policies "
                 f"(<a href='{PROVIDERS['anthropic'].privacy_url}'>Anthropic</a>, "
-                f"<a href='{PROVIDERS['openai'].privacy_url}'>OpenAI</a>). AVEN AI does not send your data "
-                "anywhere else and has no analytics or telemetry."
+                f"<a href='{PROVIDERS['openai'].privacy_url}'>OpenAI</a>). The app has no analytics or "
+                "telemetry."
             )
         )
         layout.addWidget(
@@ -276,14 +283,6 @@ class SettingsDialog(QDialog):
         layout.addStretch(1)
         return page
 
-    def _aven_model_combo(self, current: str) -> QComboBox:
-        combo = QComboBox()
-        for model in AVEN_MODELS:
-            combo.addItem(model.name, model.id)
-            combo.setItemData(combo.count() - 1, model.description, Qt.ItemDataRole.ToolTipRole)
-        combo.setCurrentIndex(max(0, combo.findData(current)))
-        return combo
-
     # --- provider fields ----------------------------------------------------------------
     def _selected_provider(self) -> str:
         return self.provider_combo.currentData()
@@ -291,13 +290,27 @@ class SettingsDialog(QDialog):
     def _load_provider_fields(self) -> None:
         pid = self._selected_provider()
         info = PROVIDERS[pid]
-        self.provider_help.setText(f"{info.key_help} <a href='{info.console_url}'>{info.console_url}</a>")
+        if pid == "aven_cloud":
+            available = bool(cloud_url())
+            self.provider_help.setText(
+                info.key_help
+                + (
+                    ""
+                    if available
+                    else " <b>AVEN Cloud is not available in this build yet</b> - choose a provider "
+                    "with your own API key instead."
+                )
+            )
+        else:
+            self.provider_help.setText(f"{info.key_help} <a href='{info.console_url}'>{info.console_url}</a>")
+        self.key_section.setVisible(pid != "aven_cloud")
+        self.list_button.setVisible(pid != "aven_cloud")
         is_openai = pid == "openai"
         self.base_url_label.setVisible(is_openai)
         self.base_url_edit.setVisible(is_openai)
         self.base_url_edit.setText(self.settings.openai_base_url)
 
-        mapping = self.settings.mapping_for(pid)
+        mapping = self.settings.mapping_for(pid) if pid != "aven_cloud" else {}
         for model_id, combo in self.map_combos.items():
             value = mapping.get(model_id, "")
             combo.clear()
@@ -311,6 +324,9 @@ class SettingsDialog(QDialog):
 
     def _refresh_key_status(self) -> None:
         pid = self._selected_provider()
+        if pid == "aven_cloud":
+            self.key_status.clear()
+            return
         lookup = self.credentials.lookup(pid)
         env_var = PROVIDERS[pid].key_env_var
         if lookup.source == "environment":
@@ -342,6 +358,8 @@ class SettingsDialog(QDialog):
         self.remove_key.setEnabled(lookup.source in ("credential store", "session"))
 
     def _store_current_models(self) -> None:
+        if self._previous_provider == "aven_cloud":
+            return
         mapping = self.settings.mapping_for(self._previous_provider)
         for model_id, combo in self.map_combos.items():
             mapping[model_id] = sanitize_model_id(combo.currentText())
@@ -359,6 +377,8 @@ class SettingsDialog(QDialog):
 
     def _make_provider(self):
         pid = self._selected_provider()
+        if pid == "aven_cloud":
+            return create_provider(pid, None, timeout=float(self.timeout.value()), client_id=self.settings.install_id)
         base_url = self.base_url_edit.text().strip() if pid == "openai" else ""
         error = validate_base_url(base_url)
         if error:
@@ -399,8 +419,11 @@ class SettingsDialog(QDialog):
         self.result_label.style().polish(self.result_label)
 
     def _on_test(self) -> None:
-        aven_model = self.aven_model.currentData()
-        model = sanitize_model_id(self.map_combos[aven_model].currentText())
+        aven_model = self.settings.model
+        if self._selected_provider() == "aven_cloud":
+            model = aven_model  # the AVEN Cloud server maps AVEN models itself
+        else:
+            model = sanitize_model_id(self.map_combos[aven_model].currentText())
         if not model:
             self._show_result(False, f"Set the provider model for {aven_model_name(aven_model)} under Advanced first.")
             return
@@ -481,14 +504,16 @@ class SettingsDialog(QDialog):
                 )
 
         self.settings.provider = pid
-        self.settings.aven_model = self.aven_model.currentData()
-        self.settings.code_model = self.code_model.currentData()
         self.settings.theme = self.theme_combo.currentData()
         self.settings.send_with_enter = self.enter_checkbox.isChecked()
         self.settings.max_tokens = self.max_tokens.value()
         self.settings.request_timeout = self.timeout.value()
         self.settings.normalized()
-        if key_required(pid, self.settings.openai_base_url) and not self.credentials.get_key(pid):
+        if (
+            pid != "aven_cloud"
+            and key_required(pid, self.settings.openai_base_url)
+            and not self.credentials.get_key(pid)
+        ):
             QMessageBox.information(
                 self, "API key needed", "Settings were saved, but no API key is configured for this provider yet."
             )

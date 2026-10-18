@@ -10,19 +10,22 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QMenu,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
     QSizePolicy,
     QStackedWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
+    QWidgetAction,
 )
 
 from app.ai.chat_service import ConfigStatus
 from app.ai.errors import AIError
 from app.ai.prompts import MODES
-from app.config.aven_models import aven_model_name
+from app.config.aven_models import AVEN_MODELS, DEFAULT_AVEN_MODEL, AvenModel, aven_model_name, get_aven_model
 from app.ui.logo import logo_pixmap
 from app.ui.message_widget import AssistantMessageWidget, ErrorWidget, UserMessageWidget
 from app.ui.theme_manager import Palette
@@ -72,10 +75,88 @@ class ComposerInput(QPlainTextEdit):
         self.setFixedHeight(lines * line_height + margins)
 
 
+class ModelOption(QFrame):
+    """One entry in the model menu: name, description and a check mark."""
+
+    clicked = Signal()
+
+    def __init__(self, model: AvenModel, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("ModelOption")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(12, 8, 12, 8)
+        texts = QVBoxLayout()
+        texts.setSpacing(1)
+        name = QLabel(model.name)
+        name.setObjectName("ModelOptionName")
+        description = QLabel(model.description)
+        description.setObjectName("ModelOptionDescription")
+        texts.addWidget(name)
+        texts.addWidget(description)
+        layout.addLayout(texts, 1)
+        self.check = QLabel("✓")
+        self.check.setObjectName("ModelOptionCheck")
+        layout.addWidget(self.check)
+
+    def set_selected(self, selected: bool) -> None:
+        self.check.setText("✓" if selected else "")
+        self.setProperty("selected", "true" if selected else "false")
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt API)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
+
+
+class ModelPicker(QToolButton):
+    """Button in the message box that opens the AVEN model menu."""
+
+    model_selected = Signal(str)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("ModelPicker")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Choose the AVEN model for your next message")
+        self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.menu_ = QMenu(self)
+        self.menu_.setObjectName("ModelMenu")
+        self.options: dict[str, ModelOption] = {}
+        for model in AVEN_MODELS:
+            option = ModelOption(model)
+            option.clicked.connect(lambda m=model.id: self._choose(m))
+            action = QWidgetAction(self.menu_)
+            action.setDefaultWidget(option)
+            self.menu_.addAction(action)
+            self.options[model.id] = option
+        self.setMenu(self.menu_)
+        self.current = ""
+        self.set_current(DEFAULT_AVEN_MODEL)
+
+    def set_current(self, model_id: str) -> None:
+        if get_aven_model(model_id) is None:
+            model_id = DEFAULT_AVEN_MODEL
+        self.current = model_id
+        self.setText(f"{aven_model_name(model_id)}  ▾")
+        for mid, option in self.options.items():
+            option.set_selected(mid == model_id)
+
+    def _choose(self, model_id: str) -> None:
+        self.menu_.close()
+        changed = model_id != self.current
+        self.set_current(model_id)
+        if changed:
+            self.model_selected.emit(model_id)
+
+
 class ChatView(QWidget):
     send_requested = Signal(str)
     stop_requested = Signal()
     mode_changed = Signal(str)
+    model_changed = Signal(str)
     settings_requested = Signal()
     retry_requested = Signal()
     regenerate_requested = Signal()
@@ -200,8 +281,8 @@ class ChatView(QWidget):
         layout.addLayout(self.suggestion_grid)
 
         privacy = QLabel(
-            "Messages are sent to the AI provider you configure and processed under its privacy policy. "
-            "Conversations are saved only on this computer."
+            "Messages are processed by AVEN Cloud and its AI provider (Anthropic), or by the provider you "
+            "set up with your own key. Conversations are saved only on this computer."
         )
         privacy.setObjectName("HelpText")
         privacy.setWordWrap(True)
@@ -261,20 +342,28 @@ class ChatView(QWidget):
         self.composer_frame = QFrame()
         self.composer_frame.setObjectName("ComposerFrame")
         self.composer_frame.setMaximumWidth(CONTENT_MAX_WIDTH)
-        frame_layout = QHBoxLayout(self.composer_frame)
+        frame_layout = QVBoxLayout(self.composer_frame)
         frame_layout.setContentsMargins(12, 8, 8, 8)
-        frame_layout.setSpacing(8)
+        frame_layout.setSpacing(4)
         self.input = ComposerInput()
         self.input.submit.connect(self._on_submit)
         self.input.textChanged.connect(self._update_send_state)
         self.input.focus_changed.connect(self._on_focus_changed)
-        frame_layout.addWidget(self.input, 1)
+        frame_layout.addWidget(self.input)
+
+        controls = QHBoxLayout()
+        controls.setSpacing(8)
+        self.model_picker = ModelPicker()
+        self.model_picker.model_selected.connect(self._on_model_selected)
+        controls.addWidget(self.model_picker)
+        controls.addStretch(1)
+        frame_layout.addLayout(controls)
         self.send_button = QPushButton("Send")
         self.send_button.setObjectName("SendButton")
         self.send_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.send_button.setMinimumSize(QSize(76, 36))
         self.send_button.clicked.connect(self._on_send_clicked)
-        frame_layout.addWidget(self.send_button, 0, Qt.AlignmentFlag.AlignBottom)
+        controls.addWidget(self.send_button)
         row.addWidget(self.composer_frame, 100)
         row.addStretch(1)
         outer.addLayout(row)
@@ -298,6 +387,12 @@ class ChatView(QWidget):
         for button, text in zip(self.suggestion_buttons, info.suggestions, strict=True):
             button.setText(text)
             button.setToolTip(text)
+
+    def set_model(self, model_id: str) -> None:
+        self.model_picker.set_current(model_id)
+
+    def _on_model_selected(self, model_id: str) -> None:
+        self.model_changed.emit(model_id)
 
     def _on_mode_clicked(self, mode: str) -> None:
         if mode != self.mode:

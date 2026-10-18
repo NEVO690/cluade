@@ -32,6 +32,8 @@ class ChatRequest:
     system_prompt: str
     messages: list[ChatMessage]
     max_tokens: int = 32_000
+    # Optional reasoning effort ("low" … "max"); providers ignore it where unsupported.
+    effort: str | None = None
     cancel_event: threading.Event = field(default_factory=threading.Event)
 
 

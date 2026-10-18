@@ -5,7 +5,8 @@
 #
 # The folder build is the recommended distribution format: it starts faster and is
 # less likely to be flagged by antivirus heuristics than a self-extracting single file.
-# No API keys or user data are bundled; users configure their own provider on first launch.
+# No API keys or user data are bundled. With assets/cloud.json (written by the build script from
+# AVEN_CLOUD_URL) users chat through the AVEN Cloud server without needing a key.
 
 import os
 import sys
@@ -20,6 +21,8 @@ ONEFILE = os.environ.get("AVEN_ONEFILE") == "1"
 ICON = ROOT / "assets" / "aven.ico"
 
 datas = [(str(ROOT / "assets" / "aven.ico"), "assets"), (str(ROOT / "assets" / "aven.png"), "assets")]
+if (ROOT / "assets" / "cloud.json").exists():
+    datas.append((str(ROOT / "assets" / "cloud.json"), "assets"))  # AVEN Cloud server address (public)
 
 hiddenimports = []
 if sys.platform == "win32":

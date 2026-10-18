@@ -18,6 +18,10 @@
 .PARAMETER Python
     Python launcher/command to use (default: "py -3.12" if available, else "python").
 
+.NOTES
+    Set the AVEN_CLOUD_URL environment variable (e.g. https://aven-cloud.onrender.com) to build an
+    app that works without an API key through your AVEN Cloud server.
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1
     powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1 -OneFile
@@ -84,6 +88,18 @@ if (-not $SkipTests) {
 # --- icon --------------------------------------------------------------------------
 Write-Host "==> Generating icon" -ForegroundColor Cyan
 Invoke-Checked $VenvPython @("scripts\generate_icon.py")
+
+# --- AVEN Cloud address -------------------------------------------------------------
+# The server address is public (no secrets). Without it, users must add their own API key.
+$CloudFile = Join-Path $ProjectRoot "assets\cloud.json"
+if ($env:AVEN_CLOUD_URL) {
+    Write-Host "==> Using AVEN Cloud server: $($env:AVEN_CLOUD_URL)" -ForegroundColor Cyan
+    @{ url = $env:AVEN_CLOUD_URL } | ConvertTo-Json | Set-Content -Encoding UTF8 $CloudFile
+} elseif (Test-Path $CloudFile) {
+    Write-Host "==> Using existing assets\cloud.json" -ForegroundColor Cyan
+} else {
+    Write-Host "==> No AVEN_CLOUD_URL set: this build needs users to add their own API key." -ForegroundColor Yellow
+}
 
 # --- PyInstaller -------------------------------------------------------------------
 if ($OneFile) { $env:AVEN_ONEFILE = "1" } else { Remove-Item Env:AVEN_ONEFILE -ErrorAction SilentlyContinue }

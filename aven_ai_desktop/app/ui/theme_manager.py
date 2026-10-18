@@ -185,6 +185,19 @@ def build_stylesheet(p: Palette) -> str:
     #SendButton:disabled {{ background: {p.hover}; color: {p.text_muted}; }}
     #SendButton[stop="true"] {{ background: {p.surface_alt}; color: {p.text}; border: 1px solid {p.border}; }}
     #ComposerHint {{ color: {p.text_muted}; font-size: 11px; }}
+    #ModelPicker {{
+        background: {p.surface_alt}; border: 1px solid {p.border}; border-radius: 9px; padding: 6px 10px;
+        color: {p.text}; font-weight: 600; font-size: 13px;
+    }}
+    #ModelPicker:hover {{ border-color: {p.accent}; }}
+    #ModelPicker::menu-indicator {{ image: none; width: 0px; }}
+    #ModelMenu {{ padding: 6px; min-width: 300px; }}
+    #ModelOption {{ border-radius: 8px; }}
+    #ModelOption:hover {{ background: {p.hover}; }}
+    #ModelOption[selected="true"] {{ background: {p.accent_soft}; }}
+    #ModelOptionName {{ font-weight: 600; background: transparent; }}
+    #ModelOptionDescription {{ color: {p.text_muted}; font-size: 12px; background: transparent; }}
+    #ModelOptionCheck {{ color: {p.accent}; font-weight: 700; background: transparent; }}
 
     /* Generic controls */
     QPushButton {{

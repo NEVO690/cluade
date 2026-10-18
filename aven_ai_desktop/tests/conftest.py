@@ -10,7 +10,15 @@ from pathlib import Path
 # Headless Qt and an isolated data directory for every test run.
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["AVEN_DATA_DIR"] = tempfile.mkdtemp(prefix="aven-test-")
-for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "AVEN_PROVIDER", "AVEN_MODEL", "AVEN_CODE_MODEL", "AVEN_BASE_URL"):
+for var in (
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "AVEN_PROVIDER",
+    "AVEN_MODEL",
+    "AVEN_CODE_MODEL",
+    "AVEN_BASE_URL",
+    "AVEN_CLOUD_URL",
+):
     os.environ.pop(var, None)
 
 ROOT = Path(__file__).resolve().parent.parent

@@ -20,6 +20,14 @@ class ProviderInfo:
 
 
 PROVIDERS: dict[str, ProviderInfo] = {
+    "aven_cloud": ProviderInfo(
+        id="aven_cloud",
+        name="AVEN Cloud",
+        key_env_var="",
+        key_help="No API key needed. Messages go to the AVEN AI server, which uses Anthropic's Claude models.",
+        console_url="",
+        privacy_url="https://www.anthropic.com/legal/privacy",
+    ),
     "anthropic": ProviderInfo(
         id="anthropic",
         name="Anthropic (Claude)",
@@ -44,12 +52,34 @@ def is_local_url(url: str) -> bool:
 
 
 def key_required(provider_id: str, base_url: str = "") -> bool:
+    if provider_id == "aven_cloud":
+        return False
     return not (provider_id == "openai" and is_local_url(base_url))
 
 
-def create_provider(provider_id: str, api_key: str | None, *, base_url: str = "", timeout: float = 600.0) -> AIProvider:
+def create_provider(
+    provider_id: str,
+    api_key: str | None,
+    *,
+    base_url: str = "",
+    timeout: float = 600.0,
+    client_id: str = "",
+) -> AIProvider:
     if provider_id not in PROVIDERS:
         raise errors.ProviderError(f"Unknown AI provider: {provider_id}")
+    if provider_id == "aven_cloud":
+        from app.ai.openai_provider import OpenAIProvider
+        from app.config.cloud import cloud_url
+
+        url = base_url or cloud_url()
+        if not url:
+            raise errors.MissingCredentialsError(
+                "AVEN Cloud is not available in this build yet. Choose a provider with your own API key "
+                "in Settings → AI Provider."
+            )
+        # AVEN Cloud speaks the OpenAI-compatible chat API. The "key" is only an anonymous
+        # install id the server uses for fair-use limits; the real provider key stays on the server.
+        return OpenAIProvider(client_id or "anonymous", base_url=url, timeout=timeout, display_name="AVEN Cloud")
     if not api_key and key_required(provider_id, base_url):
         info = PROVIDERS[provider_id]
         raise errors.MissingCredentialsError(
