@@ -249,3 +249,20 @@ def test_mask_key_hides_most_of_the_key() -> None:
     assert masked.startswith("sk-ant") and masked.endswith("mnop")
     assert "abcdefgh" not in masked
     assert mask_key("") == ""
+
+
+def test_saved_aven_cloud_switches_to_local_when_build_has_no_server(tmp_path) -> None:
+    # Earlier versions saved "aven_cloud" as the default provider; without a server that would
+    # ask users for an API key. It must fall back to AVEN Local, which needs no key.
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"provider": "aven_cloud", "model": "aven-1"}))
+    loaded = SettingsStore(path).load()
+    assert loaded.provider == "aven_local"
+    assert loaded.model == "aven-1"  # the user's model choice is kept
+
+
+def test_saved_aven_cloud_kept_when_build_has_a_server(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"provider": "aven_cloud"}))
+    assert SettingsStore(path).load().provider == "aven_cloud"

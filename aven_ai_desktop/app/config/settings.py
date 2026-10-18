@@ -98,6 +98,10 @@ class AppSettings:
             self.theme = "system"
         if self.provider not in PROVIDER_IDS:
             self.provider = default_provider()
+        if self.provider == "aven_cloud" and default_provider() != "aven_cloud":
+            # Saved by an earlier version (when AVEN Cloud was the default) but this build has
+            # no AVEN Cloud server: use AVEN Local, which needs no key, instead of asking for one.
+            self.provider = "aven_local"
         self.max_tokens = _clamp(self.max_tokens, MIN_MAX_TOKENS, MAX_MAX_TOKENS, 32_000)
         self.request_timeout = _clamp(self.request_timeout, MIN_TIMEOUT, MAX_TIMEOUT, 600)
         self.openai_base_url = (self.openai_base_url or "").strip()
