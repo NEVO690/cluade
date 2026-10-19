@@ -1,5 +1,8 @@
 # RAILBLAZE: City Run
 
+> This repository also contains **VOXEL WORLD**, a Unity 6 voxel sandbox, in the
+> [`VoxelWorld/`](VoxelWorld/README.md) folder.
+
 An original endless-runner written in Python with **pygame-ce**. You sprint down
 an endless procedurally generated city on three rail lanes, dodge trains, cars and
 barriers, grab coins and power-ups, unlock characters, boards and cosmetics, finish

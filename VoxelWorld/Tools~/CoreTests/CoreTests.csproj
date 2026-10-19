@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Runs the Unity-independent EditMode tests (voxel core, terrain, inventory) with plain .NET. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Voxel/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/World/Generation/**/*.cs" />
+    <Compile Include="../../Assets/Scripts/World/WorldEdits.cs" />
+    <Compile Include="../../Assets/Scripts/Inventory/**/*.cs" />
+    <Compile Include="../../Assets/Tests/EditMode/**/*.cs" />
+    <Compile Include="Preview/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+</Project>

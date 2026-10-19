@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the game's runtime scripts against Unity 2021.3 reference assemblies (NuGet package
+    UnityEngine.Modules) plus small stubs for uGUI and the Input System, to catch C# errors without
+    the Unity Editor. It does not replace compiling in Unity 6: newer-only APIs are not covered.
+    Pass -p:InputSystem=true to compile the Input System code path instead of the legacy one.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS0618</NoWarn>
+    <DefineConstants Condition="'$(InputSystem)' == 'true'">ENABLE_INPUT_SYSTEM;VOXEL_INPUT_SYSTEM</DefineConstants>
+    <DefineConstants Condition="'$(InputSystem)' != 'true'">ENABLE_LEGACY_INPUT_MANAGER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/**/*.cs" Exclude="../../Assets/Scripts/Editor/**" />
+    <Compile Include="Stubs/UGUI.cs;Stubs/InputSystem.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />
+  </ItemGroup>
+</Project>
