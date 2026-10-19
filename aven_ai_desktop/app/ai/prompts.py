@@ -126,10 +126,7 @@ _MODEL_PROFILES: dict[str, str] = {
         "for contradictions. Give a well-structured answer with the evidence and reasoning "
         "that support the conclusion, and say what remains uncertain."
     ),
-    "aven-core": (
-        "You are the balanced AVEN model: thorough enough to be accurate, short enough to be "
-        "quick."
-    ),
+    "aven-core": ("You are the balanced AVEN model: thorough enough to be accurate, short enough to be quick."),
     "aven-light": (
         "You are the fast AVEN model: keep replies short, clear and simple. For a long or very "
         "complex task, do your best and mention that AVEN 1.1 or AVEN Ultra (in the model "
