@@ -1,4 +1,4 @@
-"""Keeps on-device replies in the writing systems of the conversation.
+"""Keeps on-device replies in the writing systems of the conversation, with well-formed words.
 
 Small multilingual models sometimes drift into other scripts in the middle of a
 reply: Chinese characters, Korean, Cyrillic or Arabic letters appearing inside a
@@ -6,8 +6,12 @@ Hebrew sentence (measured in the AVEN evaluation suite, see ``evals/``). The
 engine supports grammar-constrained sampling, so AVEN Local passes a grammar
 that makes the characters of scripts that are *not* in the conversation
 impossible to generate. Scripts the user writes in are always allowed, and
-everything else (Latin, Hebrew, digits, punctuation, math symbols, emoji) is
-untouched.
+everything else (Latin, digits, punctuation, math symbols, emoji) is untouched.
+
+The grammar also never lets a Hebrew letter touch a Latin letter, which removes
+broken mixed words ("שינהAdapter"); correct Hebrew writes a hyphen there anyway
+("ב-Python"). When the user asks about another language or a translation, no
+limits apply, so "translate this to Chinese" still works.
 """
 
 from __future__ import annotations
@@ -16,6 +20,7 @@ import re
 
 # (name, character ranges). A script is blocked unless the conversation uses it.
 FOREIGN_SCRIPTS: tuple[tuple[str, tuple[tuple[int, int], ...]], ...] = (
+    ("hebrew", ((0x0590, 0x05FF), (0xFB1D, 0xFB4F))),
     ("cjk", ((0x2E80, 0x2FDF), (0x3000, 0x303F), (0x3040, 0x30FF), (0x3100, 0x31FF), (0x3400, 0x4DBF),
              (0x4E00, 0x9FFF), (0xF900, 0xFAFF), (0xFF00, 0xFF0F), (0xFF1A, 0xFF20), (0xFF5B, 0xFFEF))),
     ("hangul", ((0x1100, 0x11FF), (0x3130, 0x318F), (0xAC00, 0xD7AF))),
@@ -32,6 +37,13 @@ FOREIGN_SCRIPTS: tuple[tuple[str, tuple[tuple[int, int], ...]], ...] = (
 ACCENTED_LATIN = ((0x00C0, 0x00D6), (0x00D8, 0x00F6), (0x00F8, 0x024F))
 HEBREW = re.compile("[\u05d0-\u05ea]")
 LATIN = re.compile("[A-Za-z]")
+# Questions about languages or translations may need any script.
+_LANGUAGE_WORDS = (
+    "translat", "language", "hebrew", "chinese", "mandarin", "japanese", "korean", "russian", "arabic", "thai",
+    "hindi", "armenian", "georgian",
+    "תרגם", "תרגום", "שפה", "שפות", "עברית", "סינית", "יפנית", "קוריאנית", "רוסית", "ערבית",
+)  # fmt: skip
+ABOUT_LANGUAGES = re.compile("|".join(_LANGUAGE_WORDS), re.I)
 
 
 def _uses(text: str, ranges: tuple[tuple[int, int], ...]) -> bool:
@@ -48,10 +60,27 @@ def blocked_ranges(conversation: list[str], latest_user_message: str) -> list[tu
     return blocked
 
 
+def _char_class(ranges: list[tuple[int, int]]) -> str:
+    return "".join(f"\\u{lo:04X}-\\u{hi:04X}" for lo, hi in sorted(ranges))
+
+
 def reply_grammar(conversation: list[str], latest_user_message: str) -> str | None:
-    """A llama.cpp GBNF grammar allowing any text without the blocked characters (None: no limits)."""
-    ranges = blocked_ranges(conversation, latest_user_message)
-    if not ranges:
+    """A llama.cpp GBNF grammar for the reply (None: no limits).
+
+    Any text is allowed except blocked characters, and a run of Hebrew letters and a
+    run of Latin letters are always separated by some other character.
+    """
+    if ABOUT_LANGUAGES.search(latest_user_message):
         return None
-    char_class = "".join(f"\\u{lo:04X}-\\u{hi:04X}" for lo, hi in sorted(ranges))
-    return f"root ::= [^{char_class}]*\n"
+    ranges = blocked_ranges(conversation, latest_user_message)
+    hebrew_letters, latin_letters = (0x05D0, 0x05EA), [(0x41, 0x5A), (0x61, 0x7A)]
+    hebrew_allowed = not any(lo <= 0x05D0 <= hi for lo, hi in ranges)
+    other = _char_class([*ranges, hebrew_letters, *latin_letters])
+    runs = "hebrew+ | latin+" if hebrew_allowed else "latin+"
+    return (
+        "root ::= other* (run other+)* run?\n"
+        f"run ::= {runs}\n"
+        f"hebrew ::= [{_char_class([hebrew_letters])}]\n"
+        "latin ::= [A-Za-z]\n"
+        f"other ::= [^{other}]\n"
+    )

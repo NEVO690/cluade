@@ -121,8 +121,9 @@ def test_each_model_gets_its_name_and_profile(aven_model, name, profile) -> None
 def test_prompts_cover_language_honesty_and_tools() -> None:
     prompt = system_prompt_for("aven")
     for rule in (
-        "Reply in the language of the user's latest message",
-        "כתיב מלא",
+        "Always reply in the same language as the user's latest message",
+        "ktiv male",
+        "never join Hebrew and English letters in one word",
         "Never use characters from another writing system",
         "no internet access, web search, file access or code execution",
         "Never claim to have searched, browsed, opened a file or run code",

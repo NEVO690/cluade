@@ -30,6 +30,18 @@ def test_scripts_used_in_the_conversation_stay_allowed() -> None:
     assert blocked("안녕", ranges)
 
 
-def test_grammar_is_valid_gbnf_shape() -> None:
+def test_grammar_keeps_hebrew_and_latin_runs_apart() -> None:
     grammar = reply_grammar(["שלום"], "שלום")
-    assert re.fullmatch(r"root ::= \[\^(\\u[0-9A-F]{4}-\\u[0-9A-F]{4})+\]\*\n", grammar)
+    assert grammar.startswith("root ::= other* (run other+)* run?\n")
+    assert "run ::= hebrew+ | latin+" in grammar
+    assert re.search(r"other ::= \[\^(\\u[0-9A-F]{4}-\\u[0-9A-F]{4})+\]", grammar)
+
+
+def test_english_conversations_cannot_drift_into_hebrew() -> None:
+    assert blocked("שלום", blocked_ranges(["Write two sentences about the sea."], "Write two sentences"))
+    assert "run ::= latin+\n" in reply_grammar(["Hello"], "Hello")
+
+
+def test_language_questions_are_not_limited() -> None:
+    assert reply_grammar(["Translate hello to Chinese"], "Translate hello to Chinese") is None
+    assert reply_grammar(["איך אומרים תודה ביפנית?"], "איך אומרים תודה ביפנית?") is None

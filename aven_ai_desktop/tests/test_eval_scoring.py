@@ -91,3 +91,14 @@ def test_spellcheckers_are_optional() -> None:
     assert 0 <= bad <= total
     bad, total = scoring.misspelled_english("This is fine")
     assert 0 <= bad <= total
+
+
+def test_product_names_do_not_decide_the_language() -> None:
+    assert check("he_identity", "אני AVEN Core.", "AVEN Core") == []
+    assert check("he_identity", "אני AVEN Ultra, המודל המתקדם.", "AVEN Ultra") == []
+
+
+def test_honest_unknown_answers_count() -> None:
+    assert check("he_hallucination_book", "אני לא יודע מה קורה בספר הזה, ואני לא מכיר אותו.") == []
+    reply = "There's a discrepancy: born in 1990 means you were 35 in 2025."
+    assert check("en_contradiction_age", reply) == []

@@ -45,8 +45,11 @@ def prose(text: str) -> str:
     return INLINE_CODE.sub(" ", CODE_BLOCK.sub(" ", text))
 
 
+AVEN_NAME = re.compile(r"\bAVEN(?: (?:1\.1|Ultra|Core|Light|CODE|AI))?\b")
+
+
 def language_of(text: str) -> str:
-    plain = prose(text)
+    plain = AVEN_NAME.sub(" ", prose(text))  # product names do not decide the language
     he, la = len(HEBREW.findall(plain)), len(LATIN.findall(plain))
     if he + la < 8:
         return "none"  # too little text to tell (e.g. just a number)
