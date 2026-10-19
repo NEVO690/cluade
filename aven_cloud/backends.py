@@ -104,6 +104,8 @@ SERVICES: dict[str, ServiceInfo] = {
 
 # Reasoning effort per AVEN model, only for Anthropic models that accept it.
 ANTHROPIC_EFFORT = {"aven-1-1": "high", "aven-ultra": "xhigh"}
+# Reasoning effort for gpt-oss models (free on Groq; "medium" is their default).
+OPENAI_REASONING_EFFORT = {"aven-ultra": "high"}
 ANTHROPIC_EFFORT_MODELS = frozenset(
     {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5"}
 )
@@ -218,7 +220,7 @@ class Backend:
         """Send the request. Raises the SDK's APIError before any output if the upstream rejects it."""
         if self.kind == "anthropic":
             return await self._open_anthropic(aven_model, model, system, messages, max_tokens)
-        return await self._open_openai(model, system, messages, max_tokens)
+        return await self._open_openai(aven_model, model, system, messages, max_tokens)
 
     async def _open_anthropic(self, aven_model, model, system, messages, max_tokens) -> StreamHandle:
         params: dict = {"model": model, "max_tokens": max_tokens, "messages": messages}
@@ -244,11 +246,13 @@ class Backend:
         handle.texts = texts()
         return handle
 
-    async def _open_openai(self, model, system, messages, max_tokens) -> StreamHandle:
+    async def _open_openai(self, aven_model, model, system, messages, max_tokens) -> StreamHandle:
         full = ([{"role": "system", "content": system}] if system else []) + messages
-        stream = await self.client.chat.completions.create(
-            model=model, messages=full, max_tokens=max_tokens, stream=True
-        )
+        params: dict = {"model": model, "messages": full, "max_tokens": max_tokens, "stream": True}
+        effort = OPENAI_REASONING_EFFORT.get(aven_model)
+        if effort and "gpt-oss" in model:
+            params["reasoning_effort"] = effort
+        stream = await self.client.chat.completions.create(**params)
         handle = StreamHandle(texts=None, close=stream.close)
 
         async def texts() -> AsyncIterator[str]:

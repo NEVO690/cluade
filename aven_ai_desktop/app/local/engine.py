@@ -7,6 +7,7 @@ random per-session token, so other programs on the network cannot use it.
 from __future__ import annotations
 
 import atexit
+import json
 import logging
 import os
 import secrets
@@ -24,7 +25,7 @@ from app.paths import logs_dir, project_root
 
 log = logging.getLogger(__name__)
 
-CONTEXT_TOKENS = 12_288
+CONTEXT_TOKENS = 12_288  # default context window
 STARTUP_TIMEOUT = 300.0  # loading a large model from a slow disk can take a while
 
 
@@ -54,6 +55,7 @@ class LocalEngine:
         self.token = secrets.token_hex(16)
         self.port = 0
         self.model_path: Path | None = None
+        self.context = CONTEXT_TOKENS
         self.process: subprocess.Popen | None = None
         self._lock = threading.Lock()
         self._stderr_tail: deque[str] = deque(maxlen=40)
@@ -66,24 +68,41 @@ class LocalEngine:
     def base_url(self) -> str:
         return f"http://127.0.0.1:{self.port}/v1"
 
-    def ensure(self, model_path: Path) -> str:
+    def ensure(self, model_path: Path, context: int = CONTEXT_TOKENS) -> str:
         """Start (or switch) the server for ``model_path``; returns the OpenAI-compatible base URL."""
         with self._lock:
-            if self.process is not None and self.process.poll() is None and self.model_path == model_path:
+            running = self.process is not None and self.process.poll() is None
+            if running and self.model_path == model_path and self.context == context:
                 return self.base_url
             self._stop_locked()
             if not self.available():
                 raise EngineError("The local AI engine is not included in this build of AVEN AI.")
-            self._start_locked(model_path)
+            self._start_locked(model_path, context)
             return self.base_url
 
-    def _start_locked(self, model_path: Path) -> None:
+    def count_tokens(self, text: str) -> int | None:
+        """Exact token count from the running engine (None if it cannot be asked)."""
+        if not text:
+            return 0
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{self.port}/tokenize",
+            data=json.dumps({"content": text}).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token}"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310 - loopback only
+                return len(json.load(response)["tokens"])
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+
+    def _start_locked(self, model_path: Path, context: int = CONTEXT_TOKENS) -> None:
         self.port = _free_port()
+        self.context = context
         args = [
             "-m", str(model_path),
             "--host", "127.0.0.1",
             "--port", str(self.port),
-            "-c", str(CONTEXT_TOKENS),
+            "-c", str(context),
             "--jinja",
             "--api-key", self.token,
         ]  # fmt: skip

@@ -65,6 +65,15 @@ def numbers(text: str) -> list[float]:
     return out
 
 
+def final_lines(text: str) -> str:
+    """Where the final answer is: the last line, and the last line that contains a number."""
+    lines = [line for line in text.splitlines() if line.strip()]
+    if not lines:
+        return ""
+    with_number = [line for line in lines if re.search(r"\d", line)]
+    return "\n".join({lines[-1], with_number[-1]} if with_number else {lines[-1]})
+
+
 def json_payload(text: str) -> object:
     match = CODE_BLOCK.search(text)
     candidate = match.group(1) if match else text
@@ -103,6 +112,8 @@ def check_case(case: dict, reply: str, model_name: str) -> list[str]:
         pattern = pattern.replace("{model_name}", re.escape(model_name.lower()))
         if not re.search(pattern, lowered, re.M):
             failures.append(f"missing: {pattern}")
+    if "final_contains" in checks and not re.search(checks["final_contains"], final_lines(lowered)):
+        failures.append(f"final answer should match: {checks['final_contains']}")
     for pattern in checks.get("not_contains", []):
         if re.search(pattern, lowered):
             failures.append(f"should not contain: {pattern}")

@@ -122,6 +122,54 @@ def _is_safe_url(url: str) -> bool:
     return scheme in ALLOWED_LINK_SCHEMES
 
 
+_RTL_LETTER = re.compile("[\u0590-\u05ff\u0600-\u06ff\ufb1d-\ufb4f]")
+_LTR_LETTER = re.compile("[A-Za-z\u00c0-\u024f\u0370-\u03ff\u0400-\u04ff]")
+_DIRECTIONAL_TAGS = ("p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "td", "th")
+
+
+def text_direction(text: str) -> str | None:
+    """ "rtl" when at least half the letters are Hebrew/Arabic, else "ltr" (None: no letters).
+
+    Qt picks a paragraph's direction from its first letter, so a Hebrew sentence that
+    starts with an English word ("AVEN 1.1 הוא...") would otherwise be laid out left-to-right.
+    """
+    rtl, ltr = len(_RTL_LETTER.findall(text)), len(_LTR_LETTER.findall(text))
+    if rtl == ltr == 0:
+        return None
+    # Hebrew words are short, so a tie in letters usually means a Hebrew sentence.
+    return "rtl" if rtl >= ltr else "ltr"
+
+
+def _prose_text(element: ET.Element) -> str:
+    """Text of an element without inline code (code does not decide the direction)."""
+    parts = [element.text or ""]
+    for child in element:
+        if child.tag != "code":
+            parts.append(_prose_text(child))
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
+def _first_letter_direction(text: str) -> str | None:
+    match = re.search(f"{_RTL_LETTER.pattern}|{_LTR_LETTER.pattern}", text)
+    if not match:
+        return None
+    return "rtl" if _RTL_LETTER.match(match.group()) else "ltr"
+
+
+class _DirectionTree(Treeprocessor):
+    """Sets ``dir`` where Qt's first-letter guess would lay a block out the wrong way."""
+
+    def run(self, root: ET.Element) -> None:
+        for element in root.iter():
+            # A list's direction decides which side its bullets are on.
+            if element.tag in _DIRECTIONAL_TAGS or element.tag in ("ul", "ol"):
+                text = _prose_text(element)
+                direction = text_direction(text)
+                if direction and direction != _first_letter_direction(text):
+                    element.set("dir", direction)
+
+
 class _SanitizeTree(Treeprocessor):
     def run(self, root: ET.Element) -> None:
         for parent in root.iter():
@@ -155,6 +203,7 @@ class _SafeExtension(Extension):
         md.preprocessors.deregister("html_block")
         md.inlinePatterns.deregister("html")
         md.treeprocessors.register(_SanitizeTree(md), "aven_sanitize", 0)
+        md.treeprocessors.register(_DirectionTree(md), "aven_direction", -1)
 
 
 def _new_markdown() -> markdown.Markdown:

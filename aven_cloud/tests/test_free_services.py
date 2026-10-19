@@ -132,6 +132,17 @@ def test_groq_free_models(aven_model, expected) -> None:
     assert "/openai/v1/" in fake.paths[-1]
 
 
+def test_ultra_reasons_more_on_gpt_oss() -> None:
+    fake = FakeService(["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"])
+    client = app_for("groq", fake)
+    chat(client, "aven-ultra")
+    chat(client, "aven-1-1")
+    chat(client, "aven-core")
+    assert fake.chats[0]["reasoning_effort"] == "high"
+    assert "reasoning_effort" not in fake.chats[1]  # gpt-oss default (medium)
+    assert "reasoning_effort" not in fake.chats[2]  # not a reasoning model
+
+
 def test_renamed_models_are_found_automatically() -> None:
     # The service retired the exact ids we know; patterns still find suitable replacements.
     fake = FakeService(["llama-4.1-70b-versatile", "llama-4.0-8b-instant", "gpt-oss-120b-v2", "whisper-x"])

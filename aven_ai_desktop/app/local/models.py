@@ -19,6 +19,8 @@ class ModelFile:
     size: int
     sha256: str
     label: str  # e.g. "Qwen3 4B"
+    # Context window the engine opens for this file (prompt + history + reply), in tokens.
+    context: int = 12_288
 
     @property
     def url(self) -> str:
@@ -56,6 +58,8 @@ MODEL_FILES: dict[str, ModelFile] = {
         size=5_027_783_488,
         sha256="d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785",
         label="Qwen3 8B",
+        # Larger window for AVEN Ultra's thinking and longer conversations (about 2.4 GB of memory).
+        context=16_384,
     ),
 }
 
@@ -64,6 +68,8 @@ MODEL_FILES: dict[str, ModelFile] = {
 class LocalModel:
     file: ModelFile
     thinking: bool  # Qwen3 "thinking mode": reasons before answering (better, slower)
+    # Longest reply in tokens. With thinking, this also covers the hidden reasoning.
+    max_output: int = 4096
 
 
 # AVEN model -> local model. AVEN 1.1 and AVEN Ultra share one download: the 8B model
@@ -73,7 +79,7 @@ LOCAL_MODELS: dict[str, LocalModel] = {
     "aven-light": LocalModel(MODEL_FILES["qwen3-1.7b"], thinking=False),
     "aven-core": LocalModel(MODEL_FILES["qwen3-4b"], thinking=False),
     "aven-1-1": LocalModel(MODEL_FILES["qwen3-8b"], thinking=False),
-    "aven-ultra": LocalModel(MODEL_FILES["qwen3-8b"], thinking=True),
+    "aven-ultra": LocalModel(MODEL_FILES["qwen3-8b"], thinking=True, max_output=8192),
 }
 DEFAULT_LOCAL_MODEL = "aven-light"
 

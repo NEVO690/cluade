@@ -37,6 +37,11 @@ def test_cases_file_is_valid() -> None:
         ("en_current_bitcoin", "I can't check live prices, so I don't know the current price of Bitcoin."),
         ("he_current_news", "אין לי גישה לאינטרנט, ולכן אני לא יכול לדעת מה החדשות היום."),
         ("en_identity", "I'm AVEN 1.1, the main AVEN model."),
+        ("en_logic_bat_ball", "Ball = x, bat = x + 1.00, so 2x = 0.10.\n\nThe ball costs **$0.05**."),
+        (
+            "en_hallucination_paper",
+            "I don't have access to specific information about that paper; it may be fictional.",
+        ),
         ("he_identity", "אני AVEN 1.1, המודל הראשי של AVEN."),
         (
             "code_palindrome",
@@ -64,6 +69,8 @@ def test_good_replies_pass(case_id: str, reply: str) -> None:
         ("he_greeting", "Hello! I'm fine, thanks.", "wrong language"),
         ("he_explain_photosynthesis", "פוטוסינתזה 是 תהליך שבו אור וחמצן", "Chinese"),
         ("en_instr_json", "Sure, here it is: name Noa, age 30", "no valid JSON"),
+        # The right number mid-way does not count when the final answer is wrong.
+        ("en_logic_bat_ball", "2x = 0.10, so x = 0.05.\n\nSo, the ball costs 10 cents.", "final answer"),
     ],
 )
 def test_bad_replies_fail(case_id: str, reply: str, expected: str) -> None:

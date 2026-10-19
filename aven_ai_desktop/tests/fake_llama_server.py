@@ -2,7 +2,8 @@
 
 Accepts the same command-line flags, requires the API key, reports /health,
 and streams OpenAI-style chunks that echo the loaded model file and whether
-thinking was enabled.
+thinking was enabled. ``/tokenize`` counts one token per character, so tests can
+reason about context budgets exactly.
 """
 
 from __future__ import annotations
@@ -50,6 +51,12 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        if self.path == "/tokenize":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"tokens": list(range(len(body["content"])))}).encode())
+            return
         thinking = body.get("chat_template_kwargs", {}).get("enable_thinking")
         user = body["messages"][-1]["content"]
         parts = [f"model={Path(args.m).name} ", f"thinking={thinking} ", f"echo={user}"]
@@ -57,6 +64,13 @@ class Handler(BaseHTTPRequestHandler):
             parts = [f"temperature={body.get('temperature')} top_p={body.get('top_p')} top_k={body.get('top_k')}"]
         if user == "think-tags":
             parts = ["<think>secret ", "reasoning</think>", "\n\nVisible answer"]
+        if user == "grammar-info":
+            parts = [f"grammar={'grammar' in body}"]
+        if user == "context-info":
+            parts = [f"ctx={args.c} max_tokens={body.get('max_tokens')} messages={len(body['messages'])}"]
+        finish = "stop"
+        if user == "think-forever":
+            parts, finish = ["<think>still ", "thinking"], "length"
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
@@ -74,7 +88,7 @@ class Handler(BaseHTTPRequestHandler):
             "object": "chat.completion.chunk",
             "created": 0,
             "model": "local",
-            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            "choices": [{"index": 0, "delta": {}, "finish_reason": finish}],
         }
         self.wfile.write(f"data: {json.dumps(end)}\n\ndata: [DONE]\n\n".encode())
 

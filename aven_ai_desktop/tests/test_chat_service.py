@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import datetime
+
 import pytest
 
 from app.ai import errors
 from app.ai.base_provider import ChatMessage
 from app.ai.chat_service import ChatService, trim_history
-from app.ai.prompts import AVEN_CODE_SYSTEM_PROMPT, AVEN_SYSTEM_PROMPT
+from app.ai.prompts import system_prompt_for
 from app.config.secrets import CredentialStore
 from app.config.settings import AppSettings
 from tests.conftest import FakeProvider
@@ -67,8 +69,11 @@ def test_modes_use_distinct_system_prompts() -> None:
     history = [ChatMessage("user", "Hello")]
     general = svc.build_request("aven", history)
     code = svc.build_request("code", history)
-    assert general.system_prompt == AVEN_SYSTEM_PROMPT
-    assert code.system_prompt == AVEN_CODE_SYSTEM_PROMPT
+    assert general.system_prompt.startswith("You are AVEN, the general-purpose assistant")
+    assert code.system_prompt.startswith("You are AVEN CODE, the programming assistant")
+    assert general.system_prompt == system_prompt_for(
+        "aven", "aven-core", provider="anthropic", provider_name="Anthropic (Claude)"
+    )
     assert general.model == code.model == "claude-sonnet-5-5"
 
 
@@ -88,9 +93,45 @@ def test_personal_key_model_mapping_and_effort(aven_model, model, effort) -> Non
 
 
 def test_code_prompt_forbids_claiming_execution() -> None:
-    assert "Never claim that code has" in AVEN_CODE_SYSTEM_PROMPT
+    code_prompt = system_prompt_for("code")
+    assert "Never claim that code has been executed" in code_prompt
     for language in ("Roblox Luau", "Unity C#", "Unreal Engine C++", "SQL"):
-        assert language in AVEN_CODE_SYSTEM_PROMPT
+        assert language in code_prompt
+
+
+@pytest.mark.parametrize(
+    ("aven_model", "name", "profile"),
+    [
+        ("aven-1-1", "AVEN 1.1", "main AVEN model"),
+        ("aven-ultra", "AVEN Ultra", "hardest tasks"),
+        ("aven-core", "AVEN Core", "balanced"),
+        ("aven-light", "AVEN Light", "fast AVEN model"),
+    ],
+)
+def test_each_model_gets_its_name_and_profile(aven_model, name, profile) -> None:
+    prompt = system_prompt_for("aven", aven_model, today=datetime.date(2026, 10, 19))
+    assert f"You are {name}." in prompt
+    assert profile in prompt
+    assert "Today's date is Monday, 19 October 2026." in prompt
+    # Official names only; never internal labels.
+    assert "AVEN 1.1, AVEN Ultra, AVEN Core, AVEN Light" in prompt
+    assert "flagship" not in prompt.lower()
+
+
+def test_prompts_cover_language_honesty_and_tools() -> None:
+    prompt = system_prompt_for("aven")
+    for rule in (
+        "Reply in the language of the user's latest message",
+        "כתיב מלא",
+        "Never use characters from another writing system",
+        "no internet access, web search, file access or code execution",
+        "Never claim to have searched, browsed, opened a file or run code",
+        "ask them to paste the text",
+        "Never state a result\n  before you have worked it out",
+        "never inside code, JSON or formal text",
+    ):
+        assert rule in prompt
+    assert len(prompt) < 4000  # on-device models process this on the CPU for every new chat
 
 
 def test_build_request_requires_trailing_user_message() -> None:
@@ -143,6 +184,10 @@ def test_missing_credentials_from_real_factory() -> None:
 
 
 def test_prompts_keep_aven_branding_without_hiding_the_provider() -> None:
-    for prompt, name in ((AVEN_SYSTEM_PROMPT, "AVEN"), (AVEN_CODE_SYSTEM_PROMPT, "AVEN CODE")):
-        assert f"you are {name} by AVEN AI" in prompt
-        assert "do not deny using a third-party provider" in prompt
+    local = system_prompt_for("aven", provider="aven_local")
+    assert "open-source Qwen3 language model" in local
+    keyed = system_prompt_for("code", provider="anthropic", provider_name="Anthropic (Claude)")
+    assert "large language models from Anthropic (Claude)" in keyed
+    for prompt in (local, keyed):
+        assert "made by AVEN AI" in prompt
+        assert "do not deny which provider or model is used" in prompt

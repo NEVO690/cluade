@@ -220,6 +220,46 @@ def test_local_provider_uses_recommended_sampling(engine, downloaded) -> None:
     assert ask(provider, "aven-ultra", "sampling") == "temperature=0.6 top_p=0.95 top_k=20"
 
 
+def test_context_window_and_reply_budget_per_model(engine, downloaded) -> None:
+    provider = LocalProvider(engine)
+    # The 8B file opens a larger window; Ultra may use more tokens because it thinks first.
+    assert ask(provider, "aven-light", "context-info") == "ctx=12288 max_tokens=4096 messages=2"
+    assert ask(provider, "aven-1-1", "context-info") == "ctx=16384 max_tokens=4096 messages=2"
+    assert ask(provider, "aven-ultra", "context-info") == "ctx=16384 max_tokens=8192 messages=2"
+
+
+def test_history_is_fitted_by_exact_token_counts(engine, downloaded) -> None:
+    # The fake engine counts one token per character. Old turns are dropped to fit the window.
+    provider = LocalProvider(engine)
+    old = [ChatMessage("user", "x" * 4000), ChatMessage("assistant", "y" * 4000)]
+    request = ChatRequest(
+        model="aven-light", system_prompt="S", messages=[*old, *old, ChatMessage("user", "context-info")]
+    )
+    reply = "".join(e.text for e in provider.stream_chat(request) if e.kind == "text")
+    assert reply == "ctx=12288 max_tokens=4096 messages=4"  # system + one old pair + the question
+
+
+def test_fit_messages_shrinks_the_reply_before_failing() -> None:
+    from app.ai.local_provider import ContextTooLongError, fit_messages
+
+    messages = [ChatMessage("user", "a" * 9000)]
+    kept, budget = fit_messages(messages, 100, 12_288, 4096, len)
+    assert kept == messages and 1024 <= budget < 4096
+    with pytest.raises(ContextTooLongError):
+        fit_messages([ChatMessage("user", "a" * 12_000)], 100, 12_288, 4096, len)
+
+
+def test_ultra_reports_when_thinking_uses_the_whole_budget(engine, downloaded) -> None:
+    from app.ai.local_provider import ThinkingTooLongError
+
+    with pytest.raises(ThinkingTooLongError, match="thinking budget"):
+        ask(LocalProvider(engine), "aven-ultra", "think-forever")
+
+
+def test_local_provider_sends_the_script_guard(engine, downloaded) -> None:
+    assert ask(LocalProvider(engine), "aven-light", "grammar-info") == "grammar=True"
+
+
 def test_local_provider_hides_think_tags(engine, downloaded) -> None:
     assert ask(LocalProvider(engine), "aven-ultra", "think-tags") == "Visible answer"
 

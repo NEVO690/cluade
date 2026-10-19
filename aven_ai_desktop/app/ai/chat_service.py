@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 # Roughly 100k tokens of history. Older messages are left out of the request
 # (they stay in the local database) so long conversations remain usable.
 MAX_HISTORY_CHARS = 400_000
-LOCAL_HISTORY_CHARS = 20_000
+LOCAL_HISTORY_CHARS = 60_000  # upper bound; AVEN Local then fits the history by exact token counts
 
 ProviderFactory = Callable[..., AIProvider]
 
@@ -142,7 +142,12 @@ class ChatService:
             raise errors.InvalidRequestError("There is no message to send.")
         return ChatRequest(
             model=model,
-            system_prompt=system_prompt_for(mode),
+            system_prompt=system_prompt_for(
+                mode,
+                self.settings.model,
+                provider=self.settings.provider,
+                provider_name=PROVIDERS[self.settings.provider].name,
+            ),
             messages=messages,
             max_tokens=self.settings.max_tokens,
             # AVEN Cloud/Local handle reasoning themselves; personal keys apply effort here.

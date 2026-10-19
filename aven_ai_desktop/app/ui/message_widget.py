@@ -6,7 +6,15 @@ import html
 import math
 
 from PySide6.QtCore import Qt, QTimer, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QFont, QGuiApplication, QTextOption, QWheelEvent
+from PySide6.QtGui import (
+    QDesktopServices,
+    QFont,
+    QGuiApplication,
+    QTextCursor,
+    QTextDocument,
+    QTextOption,
+    QWheelEvent,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -27,11 +35,26 @@ from app.rendering.markdown_renderer import (
     highlight_code_html,
     markdown_to_html,
     split_segments,
+    text_direction,
 )
 from app.ui.logo import logo_pixmap
 from app.ui.theme_manager import CODE_FONT_FAMILIES, Palette, message_css
 
 USER_BUBBLE_MAX_RATIO = 0.78
+
+
+def apply_text_directions(document: QTextDocument) -> None:
+    """Lay out each plain-text paragraph right-to-left or left-to-right by its main script."""
+    block = document.begin()
+    while block.isValid():
+        direction = text_direction(block.text())
+        if direction:
+            fmt = block.blockFormat()
+            fmt.setLayoutDirection(
+                Qt.LayoutDirection.RightToLeft if direction == "rtl" else Qt.LayoutDirection.LeftToRight
+            )
+            QTextCursor(block).setBlockFormat(fmt)
+        block = block.next()
 
 
 def open_link_safely(url: QUrl, parent: QWidget | None) -> None:
@@ -217,6 +240,7 @@ class UserMessageWidget(QWidget):
         self.view = AutoHeightTextBrowser(wrap=True)
         self.view.document().setDocumentMargin(0)
         self.view.setPlainText(content)
+        apply_text_directions(self.view.document())
         bubble_layout.addWidget(self.view)
         row.addWidget(self.bubble)
         outer.addLayout(row)

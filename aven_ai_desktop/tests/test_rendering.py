@@ -79,3 +79,33 @@ def test_highlighting_produces_inline_styles_and_escapes() -> None:
     assert "<x>" not in html and "&lt;" in html
     plain = highlight_code_html("<b>plain</b>", "no-such-language", dark=False)
     assert "<b>" not in plain
+
+
+def test_paragraph_direction_follows_the_main_script() -> None:
+    from app.rendering.markdown_renderer import text_direction
+
+    assert text_direction("AVEN 1.1 הוא המודל הראשי.") == "rtl"  # starts in English, mostly Hebrew
+    assert text_direction("Python היא שפה") == "rtl"  # a tie leans to Hebrew (shorter words)
+    assert text_direction("Use the הגדרות menu to change it") == "ltr"
+    assert text_direction("123 + 456") is None
+
+
+def test_markdown_marks_hebrew_blocks_right_to_left() -> None:
+    html = markdown_to_html("AVEN 1.1 הוא המודל הראשי.\n\n- Python היא שפה\n- פריט שני\n\nEnglish with `קוד`.")
+    assert '<p dir="rtl">AVEN 1.1' in html
+    assert '<ul dir="rtl">' in html and '<li dir="rtl">Python' in html
+    assert "<p>English with <code>" in html  # Qt already gets this right; inline code is ignored
+    assert 'dir="ltr"' in markdown_to_html("קוד: `x` and then many English words follow here")
+
+
+def test_user_bubble_lays_out_hebrew_right_to_left(qtbot) -> None:
+    from PySide6.QtCore import Qt
+
+    from app.ui.message_widget import UserMessageWidget
+    from app.ui.theme_manager import LIGHT
+
+    widget = UserMessageWidget("AVEN 1.1 תסביר לי\nhello there", LIGHT)
+    qtbot.addWidget(widget)
+    first = widget.view.document().begin()
+    assert first.blockFormat().layoutDirection() == Qt.LayoutDirection.RightToLeft
+    assert first.next().blockFormat().layoutDirection() == Qt.LayoutDirection.LeftToRight
