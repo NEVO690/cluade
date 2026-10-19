@@ -98,7 +98,7 @@ def make(config: Config | None = None, upstream: Upstream | None = None):
     return TestClient(create_app(config, upstream.client())), upstream
 
 
-def chat(client: TestClient, model: str = "aven-1", stream: bool = True, token: str = "install123", **extra):
+def chat(client: TestClient, model: str = "aven-1-1", stream: bool = True, token: str = "install123", **extra):
     body = {
         "model": model,
         "stream": stream,
@@ -129,14 +129,14 @@ def test_streams_openai_compatible_chunks_and_maps_model() -> None:
     text = "".join(p["choices"][0]["delta"].get("content", "") for p in payloads[:-1])
     assert text == "Hello there"
     assert payloads[-2]["choices"][0]["finish_reason"] == "stop"
-    assert all(p["model"] == "aven-1" for p in payloads[:-1])  # AVEN name, not the upstream model
+    assert all(p["model"] == "aven-1-1" for p in payloads[:-1])  # AVEN name, not the upstream model
 
     sent = upstream.requests[0]
     assert sent["model"] == "claude-opus-5-5"
     assert sent["system"] == "You are AVEN."
     assert sent["messages"] == [{"role": "user", "content": "Hi"}]
     assert sent["fallbacks"] == "default"
-    assert "output_config" not in sent
+    assert sent["output_config"] == {"effort": "high"}  # AVEN 1.1 reasons more than AVEN 1.0 did
     assert upstream.headers[0]["x-api-key"] == "sk-ant-server-key"
 
 
@@ -164,7 +164,7 @@ def test_non_streaming_response() -> None:
     assert response.status_code == 200
     data = response.json()
     assert data["choices"][0]["message"]["content"] == "Hello there"
-    assert data["model"] == "aven-1"
+    assert data["model"] == "aven-1-1"
 
 
 def test_max_tokens_is_capped() -> None:
@@ -183,10 +183,18 @@ def test_truncation_and_refusal_finish_reasons() -> None:
         assert payloads[-2]["choices"][0]["finish_reason"] == finish
 
 
+def test_old_aven_1_0_requests_are_served_by_aven_1_1() -> None:
+    client, upstream = make()
+    response = chat(client, "aven-1", stream=False)
+    assert response.status_code == 200
+    assert response.json()["model"] == "aven-1-1"
+    assert upstream.requests[0]["model"] == "claude-opus-5-5"
+
+
 def test_models_and_health() -> None:
     client, _ = make()
     ids = [m["id"] for m in client.get("/v1/models").json()["data"]]
-    assert ids == ["aven-1", "aven-ultra", "aven-core", "aven-light"]
+    assert ids == ["aven-1-1", "aven-ultra", "aven-core", "aven-light"]
     assert client.get("/health").json() == {"status": "ok", "configured": True, "service": "anthropic"}
     unconfigured = TestClient(create_app(Config(service="anthropic", api_key="")))
     assert unconfigured.get("/health").json()["configured"] is False
@@ -200,10 +208,10 @@ def test_models_and_health() -> None:
     ("body", "status"),
     [
         ({"model": "claude-opus-5-5", "messages": [{"role": "user", "content": "x"}]}, 404),
-        ({"model": "aven-1", "messages": []}, 400),
-        ({"model": "aven-1", "messages": [{"role": "tool", "content": "x"}]}, 400),
-        ({"model": "aven-1", "messages": [{"role": "assistant", "content": "x"}]}, 400),
-        ({"model": "aven-1", "messages": [{"role": "user", "content": ["not", "text"]}]}, 400),
+        ({"model": "aven-1-1", "messages": []}, 400),
+        ({"model": "aven-1-1", "messages": [{"role": "tool", "content": "x"}]}, 400),
+        ({"model": "aven-1-1", "messages": [{"role": "assistant", "content": "x"}]}, 400),
+        ({"model": "aven-1-1", "messages": [{"role": "user", "content": ["not", "text"]}]}, 400),
     ],
 )
 def test_invalid_requests_rejected(body, status) -> None:
@@ -217,7 +225,7 @@ def test_invalid_requests_rejected(body, status) -> None:
 def test_oversized_conversation_rejected() -> None:
     client, upstream = make(Config(service="anthropic", api_key="k", max_input_chars=10))
     response = client.post(
-        "/v1/chat/completions", json={"model": "aven-1", "messages": [{"role": "user", "content": "x" * 50}]}
+        "/v1/chat/completions", json={"model": "aven-1-1", "messages": [{"role": "user", "content": "x" * 50}]}
     )
     assert response.status_code == 413
     assert upstream.requests == []
@@ -327,7 +335,7 @@ def test_desktop_app_provider_talks_to_server_over_http() -> None:
         assert upstream.requests[0]["model"] == "claude-opus-5-5"
         assert upstream.requests[0]["output_config"] == {"effort": "xhigh"}
         assert upstream.requests[0]["max_tokens"] == 500
-        assert provider.list_models() == ["aven-1", "aven-core", "aven-light", "aven-ultra"]
+        assert provider.list_models() == ["aven-1-1", "aven-core", "aven-light", "aven-ultra"]
     finally:
         server.should_exit = True
         thread.join(timeout=10)

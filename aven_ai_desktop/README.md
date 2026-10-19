@@ -13,7 +13,7 @@ Out of the box the app uses **AVEN Local**: open-source AI models running **on t
 
 *The screenshots were taken with a mock provider in an offscreen test harness.*
 
-Version: **1.0.0** (defined in `app/version.py`)
+Version: **1.1.0** (defined in `app/version.py`)
 
 ---
 
@@ -25,12 +25,13 @@ AVEN Local runs open-source **Qwen3** models (Apache-2.0) with the bundled **lla
 |---|---|---|---|
 | **AVEN Light** (default) | Qwen3 1.7B | 1.3 GB | Fastest; runs on almost any PC |
 | **AVEN Core** | Qwen3 4B | 2.5 GB | Smarter; 8 GB of RAM recommended |
-| **AVEN 1.0** | Qwen3 4B, with thinking mode | same file as Core | Reasons before answering: better, slower |
-| **AVEN Ultra** | Qwen3 8B, with thinking mode | 5.0 GB | Smartest locally; 16 GB of RAM recommended, slow on older PCs |
+| **AVEN 1.1** | Qwen3 8B, answering directly | 5.0 GB | Far smarter than Light and Core, close to Ultra but faster; 16 GB of RAM recommended |
+| **AVEN Ultra** | Qwen3 8B, with thinking mode | same file as 1.1 | Thinks before answering: the smartest locally, slower |
 
 Some things to know:
 
 - The engine runs on the **CPU**, so speed depends on the PC: a few words per second on older laptops, much faster on modern desktops.
+- Every model uses Qwen's recommended sampling settings (different for direct answers and thinking mode), which avoids repetitive or rambling replies.
 - It listens only on `127.0.0.1`, with a random per-session access token.
 - Models are stored in `%APPDATA%\AVEN AI\models`. Delete them in **Settings → AI Provider → Delete downloaded models**.
 - Local models are capable, but less so than large cloud models. For the best answers use AVEN Cloud or your own key.
@@ -43,7 +44,7 @@ Cloud mapping (AVEN Cloud with Anthropic, or your own Anthropic key):
 
 | AVEN model | Best for | Model behind it with your own Anthropic key |
 |---|---|---|
-| **AVEN 1.0** (default) | The main AVEN model: smart and reliable for everything | `claude-opus-5-5` |
+| **AVEN 1.1** (default) | Our best everyday model: far smarter than Light and Core, close to Ultra | `claude-opus-5-5` with deeper reasoning (`effort: high`) |
 | **AVEN Ultra** | The hardest questions, research and code: thinks longer | `claude-opus-5-5` with extra-deep reasoning (`effort: xhigh`) |
 | **AVEN Core** | Balanced speed and quality for everyday work | `claude-sonnet-5-5` |
 | **AVEN Light** | The fastest replies for quick questions | `claude-haiku-5-5` |
@@ -128,8 +129,8 @@ When you run from source, you can put a `.env` file next to `main.py` (see `.env
 | `AVEN_PROVIDER` | `aven_local`, `aven_cloud`, `anthropic` or `openai` |
 | `AVEN_LLAMA_SERVER` | Path to a `llama-server` binary (development; packaged builds bundle one) |
 | `AVEN_CLOUD_URL` | AVEN Cloud server address, for example `http://localhost:8000` when testing |
-| `AVEN_MODEL` | Selected AVEN model: `aven-1`, `aven-ultra`, `aven-core` or `aven-light` |
-| `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | Provider model ID behind each AVEN model (personal-key providers) |
+| `AVEN_MODEL` | Selected AVEN model: `aven-1-1`, `aven-ultra`, `aven-core` or `aven-light` |
+| `AVEN_1_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | Provider model ID behind each AVEN model (personal-key providers) |
 | `AVEN_BASE_URL` | Base URL for an OpenAI-compatible server |
 | `AVEN_DATA_DIR` | Use a different data folder |
 
@@ -280,7 +281,7 @@ aven_ai_desktop/
 │   ├── logging_setup.py         # rotating log file with secret redaction
 │   ├── application.py           # bootstrap: services, theme, main window
 │   ├── config/
-│   │   ├── aven_models.py       # AVEN 1.0 / Ultra / Core / Light and default mappings
+│   │   ├── aven_models.py       # AVEN 1.1 / Ultra / Core / Light and default mappings
 │   │   ├── cloud.py             # AVEN Cloud server address (env var or assets/cloud.json)
 │   │   ├── settings.py          # settings model, JSON persistence, env overrides
 │   │   └── secrets.py           # API keys: env var → credential store → session

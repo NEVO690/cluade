@@ -53,6 +53,8 @@ class Handler(BaseHTTPRequestHandler):
         thinking = body.get("chat_template_kwargs", {}).get("enable_thinking")
         user = body["messages"][-1]["content"]
         parts = [f"model={Path(args.m).name} ", f"thinking={thinking} ", f"echo={user}"]
+        if user == "sampling":
+            parts = [f"temperature={body.get('temperature')} top_p={body.get('top_p')} top_k={body.get('top_k')}"]
         if user == "think-tags":
             parts = ["<think>secret ", "reasoning</think>", "\n\nVisible answer"]
         self.send_response(200)

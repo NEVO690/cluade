@@ -31,12 +31,14 @@ from backends import AVEN_MODEL_IDS, SERVICES, UPSTREAM_ERRORS, Backend, make_cl
 log = logging.getLogger("aven_cloud")
 
 AVEN_MODELS = {
-    "aven-1": "AVEN 1.0",
+    "aven-1-1": "AVEN 1.1",
     "aven-ultra": "AVEN Ultra",
     "aven-core": "AVEN Core",
     "aven-light": "AVEN Light",
 }
 assert tuple(AVEN_MODELS) == AVEN_MODEL_IDS
+# Replaced models, still accepted from older app versions.
+LEGACY_MODELS = {"aven-1": "aven-1-1"}  # AVEN 1.0 -> AVEN 1.1
 
 
 def _env_int(name: str, default: int) -> int:
@@ -87,7 +89,7 @@ class Config:
             trust_proxy=os.environ.get("AVEN_TRUST_PROXY", "").lower() in ("1", "true", "yes"),
         )
         for model_id in AVEN_MODELS:
-            override = os.environ.get(model_id.upper().replace("-", "_") + "_MODEL", "").strip()  # AVEN_1_MODEL
+            override = os.environ.get(model_id.upper().replace("-", "_") + "_MODEL", "").strip()  # e.g. AVEN_1_1_MODEL
             if override:
                 config.overrides[model_id] = override
         return config
@@ -151,6 +153,8 @@ def parse_chat_request(body: object, config: Config) -> ParsedRequest | JSONResp
     if not isinstance(body, dict):
         return error_response(400, "The request body must be a JSON object.", "invalid_request_error")
     aven_model = body.get("model")
+    if isinstance(aven_model, str):
+        aven_model = LEGACY_MODELS.get(aven_model, aven_model)
     if aven_model not in AVEN_MODELS:
         names = ", ".join(AVEN_MODELS)
         return error_response(404, f"Unknown model. Available models: {names}.", "invalid_request_error")

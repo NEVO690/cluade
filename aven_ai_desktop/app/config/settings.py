@@ -7,8 +7,8 @@ Environment variables (useful for development, also read by packaged builds)
 take precedence over saved values for the current session only:
 
 * ``AVEN_PROVIDER``     - ``aven_local``, ``aven_cloud``, ``anthropic`` or ``openai``
-* ``AVEN_MODEL``        - selected AVEN model (``aven-1``, ``aven-ultra``, ``aven-core``, ``aven-light``)
-* ``AVEN_1_MODEL`` / ``AVEN_ULTRA_MODEL`` / ``AVEN_CORE_MODEL`` / ``AVEN_LIGHT_MODEL``
+* ``AVEN_MODEL``        - selected AVEN model (``aven-1-1``, ``aven-ultra``, ``aven-core``, ``aven-light``)
+* ``AVEN_1_1_MODEL`` / ``AVEN_ULTRA_MODEL`` / ``AVEN_CORE_MODEL`` / ``AVEN_LIGHT_MODEL``
                         - provider model ID behind each AVEN model (personal-key providers)
 * ``AVEN_BASE_URL``     - custom HTTPS base URL for the OpenAI provider
 """
@@ -22,7 +22,7 @@ import uuid
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
-from app.config.aven_models import AVEN_MODEL_IDS, DEFAULT_AVEN_MODEL, DEFAULT_MAPPINGS
+from app.config.aven_models import AVEN_MODEL_IDS, DEFAULT_AVEN_MODEL, DEFAULT_MAPPINGS, upgrade_model_id
 from app.paths import project_root, settings_path
 
 log = logging.getLogger(__name__)
@@ -105,6 +105,7 @@ class AppSettings:
         self.max_tokens = _clamp(self.max_tokens, MIN_MAX_TOKENS, MAX_MAX_TOKENS, 32_000)
         self.request_timeout = _clamp(self.request_timeout, MIN_TIMEOUT, MAX_TIMEOUT, 600)
         self.openai_base_url = (self.openai_base_url or "").strip()
+        self.model = upgrade_model_id(self.model)  # e.g. AVEN 1.0 -> AVEN 1.1
         if self.model not in AVEN_MODEL_IDS:
             self.model = default_model(self.provider)
         if not (isinstance(self.install_id, str) and len(self.install_id) == 32 and self.install_id.isalnum()):
@@ -112,11 +113,10 @@ class AppSettings:
         for pid in KEY_PROVIDER_IDS:
             mapping = self.mapping_for(pid)
             for key in list(mapping):
-                value = sanitize_model_id(mapping[key])
-                if key in AVEN_MODEL_IDS and value:
-                    mapping[key] = value
-                else:
-                    del mapping[key]
+                value = sanitize_model_id(mapping.pop(key))
+                new_key = upgrade_model_id(key)
+                if new_key in AVEN_MODEL_IDS and value and (new_key == key or new_key not in mapping):
+                    mapping[new_key] = value
         return self
 
 

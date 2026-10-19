@@ -23,7 +23,7 @@ def test_aven_cloud_is_ready_without_any_key(monkeypatch) -> None:
     status = service(key=None, settings=AppSettings(provider="aven_cloud")).status()
     assert status.ready
     assert status.provider_name == "AVEN Cloud"
-    assert status.model_name == "AVEN 1.0"
+    assert status.model_name == "AVEN 1.1"
 
 
 def test_aven_cloud_unavailable_when_build_has_no_server() -> None:
@@ -52,13 +52,13 @@ def test_personal_key_status_reports_missing_key_and_mapping() -> None:
 
     ready = service(settings=AppSettings(provider="anthropic")).status()
     assert ready.ready
-    assert ready.model_name == "AVEN 1.0"
+    assert ready.model_name == "AVEN 1.1"
     assert ready.model == "claude-opus-5-5"
 
 
 def test_local_openai_server_needs_no_key() -> None:
     settings = AppSettings(provider="openai", openai_base_url="http://localhost:11434/v1")
-    settings.mapping_for("openai")["aven-1"] = "llama3"
+    settings.mapping_for("openai")["aven-1-1"] = "llama3"
     assert service(key=None, settings=settings).status().ready
 
 
@@ -75,7 +75,7 @@ def test_modes_use_distinct_system_prompts() -> None:
 @pytest.mark.parametrize(
     ("aven_model", "model", "effort"),
     [
-        ("aven-1", "claude-opus-5-5", None),
+        ("aven-1-1", "claude-opus-5-5", "high"),
         ("aven-ultra", "claude-opus-5-5", "xhigh"),
         ("aven-core", "claude-sonnet-5-5", None),
         ("aven-light", "claude-haiku-5-5", None),

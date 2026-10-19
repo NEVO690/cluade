@@ -113,7 +113,7 @@ GROQ_MODELS = [
 @pytest.mark.parametrize(
     ("aven_model", "expected"),
     [
-        ("aven-1", "openai/gpt-oss-120b"),
+        ("aven-1-1", "openai/gpt-oss-120b"),
         ("aven-ultra", "openai/gpt-oss-120b"),
         ("aven-core", "llama-3.3-70b-versatile"),
         ("aven-light", "llama-3.1-8b-instant"),
@@ -137,7 +137,7 @@ def test_renamed_models_are_found_automatically() -> None:
     fake = FakeService(["llama-4.1-70b-versatile", "llama-4.0-8b-instant", "gpt-oss-120b-v2", "whisper-x"])
     client = app_for("groq", fake)
     for aven_model, expected in (
-        ("aven-1", "gpt-oss-120b-v2"),
+        ("aven-1-1", "gpt-oss-120b-v2"),
         ("aven-core", "llama-4.1-70b-versatile"),
         ("aven-light", "llama-4.0-8b-instant"),
     ):
@@ -165,7 +165,7 @@ def test_gemini_picks_newest_flash_models() -> None:
     fake = FakeService(models)
     client = app_for("gemini", fake)
     expected = {
-        "aven-1": "gemini-3.5-flash",
+        "aven-1-1": "gemini-3.5-flash",
         "aven-ultra": "gemini-3.5-flash",
         "aven-core": "gemini-3.5-flash",
         "aven-light": "gemini-3.5-flash-lite",
@@ -178,8 +178,8 @@ def test_gemini_picks_newest_flash_models() -> None:
 
 def test_explicit_override_wins() -> None:
     fake = FakeService(GROQ_MODELS)
-    client = app_for("groq", fake, overrides={"aven-1": "llama-3.1-8b-instant"})
-    chat(client, "aven-1")
+    client = app_for("groq", fake, overrides={"aven-1-1": "llama-3.1-8b-instant"})
+    chat(client, "aven-1-1")
     assert fake.chats[0]["model"] == "llama-3.1-8b-instant"
 
 
@@ -190,7 +190,7 @@ def test_free_service_rate_limit_becomes_friendly_busy_message() -> None:
             429, json={"error": {"message": "Rate limit reached for model on tokens per day", "type": "tokens"}}
         ),
     )
-    response = chat(app_for("groq", fake), "aven-1")
+    response = chat(app_for("groq", fake), "aven-1-1")
     assert response.status_code == 429
     assert "busy" in response.json()["error"]["message"]
     assert "free-key" not in response.text

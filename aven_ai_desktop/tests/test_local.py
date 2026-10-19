@@ -160,13 +160,13 @@ def test_pinned_model_files_are_https_and_verified() -> None:
     assert {m: v.file.key for m, v in LOCAL_MODELS.items()} == {
         "aven-light": "qwen3-1.7b",
         "aven-core": "qwen3-4b",
-        "aven-1": "qwen3-4b",
+        "aven-1-1": "qwen3-8b",  # AVEN 1.1: the big model, answering directly
         "aven-ultra": "qwen3-8b",
     }
-    assert [LOCAL_MODELS[m].thinking for m in ("aven-light", "aven-core", "aven-1", "aven-ultra")] == [
+    assert [LOCAL_MODELS[m].thinking for m in ("aven-light", "aven-core", "aven-1-1", "aven-ultra")] == [
         False,
         False,
-        True,
+        False,
         True,
     ]
 
@@ -203,10 +203,21 @@ def test_local_provider_streams_with_thinking_per_model(engine, downloaded) -> N
     assert ask(provider, "aven-light", "again").endswith("echo=again")
     assert engine.process is first_process  # same model: engine reused
 
-    assert ask(provider, "aven-1") == "model=Qwen3-4B-Q4_K_M.gguf thinking=True echo=hello"
+    assert ask(provider, "aven-ultra") == "model=Qwen3-8B-Q4_K_M.gguf thinking=True echo=hello"
     assert engine.process is not first_process  # switched model: engine restarted
     assert first_process.poll() is not None  # old engine stopped
+    second_process = engine.process
+    # AVEN 1.1 uses the same file as Ultra (no extra download, no restart) without thinking.
+    assert ask(provider, "aven-1-1") == "model=Qwen3-8B-Q4_K_M.gguf thinking=False echo=hello"
+    assert engine.process is second_process
     assert ask(provider, "aven-core").startswith("model=Qwen3-4B-Q4_K_M.gguf thinking=False")
+
+
+def test_local_provider_uses_recommended_sampling(engine, downloaded) -> None:
+    provider = LocalProvider(engine)
+    # Qwen3's recommended settings: direct answers vs. thinking mode.
+    assert ask(provider, "aven-1-1", "sampling") == "temperature=0.7 top_p=0.8 top_k=20"
+    assert ask(provider, "aven-ultra", "sampling") == "temperature=0.6 top_p=0.95 top_k=20"
 
 
 def test_local_provider_hides_think_tags(engine, downloaded) -> None:

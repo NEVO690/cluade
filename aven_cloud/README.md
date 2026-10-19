@@ -27,12 +27,14 @@ Free services rename models often, so for each AVEN model the server asks the se
 
 | AVEN model | Groq (free) | Gemini (free) | Anthropic (paid) |
 |---|---|---|---|
-| AVEN 1.0 | `openai/gpt-oss-120b`, else the newest 70B model | newest Flash | `claude-opus-5-5` |
+| AVEN 1.1 | `openai/gpt-oss-120b`, else the newest 70B model | newest Flash | `claude-opus-5-5` with deeper reasoning |
 | AVEN Ultra | `openai/gpt-oss-120b` | newest Flash | `claude-opus-5-5` with extra-deep reasoning |
 | AVEN Core | `llama-3.3-70b-versatile`, else the newest 70B model | newest Flash | `claude-sonnet-5-5` |
 | AVEN Light | `llama-3.1-8b-instant`, else the newest 8B model | newest Flash-Lite | `claude-haiku-5-5` |
 
-To pin an exact model, set `AVEN_1_MODEL`, `AVEN_ULTRA_MODEL`, `AVEN_CORE_MODEL` or `AVEN_LIGHT_MODEL`. Check `GET /health` to see which service is active.
+Requests for `aven-1` (AVEN 1.0, from older app versions) are served by AVEN 1.1.
+
+To pin an exact model, set `AVEN_1_1_MODEL`, `AVEN_ULTRA_MODEL`, `AVEN_CORE_MODEL` or `AVEN_LIGHT_MODEL`. Check `GET /health` to see which service is active.
 
 ## Free deployment: Groq + Render (about 15 minutes, $0)
 
@@ -59,7 +61,7 @@ All settings are environment variables:
 |---|---|---|
 | `GROQ_API_KEY` / `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` | - | **One is required.** Key for the AI service. |
 | `AVEN_UPSTREAM` | auto | `groq`, `gemini`, `anthropic` or `openai_compatible` |
-| `AVEN_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | automatic | Pin the exact model behind each AVEN model |
+| `AVEN_1_1_MODEL` / `AVEN_ULTRA_MODEL` / `AVEN_CORE_MODEL` / `AVEN_LIGHT_MODEL` | automatic | Pin the exact model behind each AVEN model |
 | `AVEN_REQUESTS_PER_MINUTE` | 10 | Messages per install per minute |
 | `AVEN_REQUESTS_PER_DAY` | 100 | Messages per install per day |
 | `AVEN_IP_REQUESTS_PER_MINUTE` | 30 | Messages per IP address per minute |

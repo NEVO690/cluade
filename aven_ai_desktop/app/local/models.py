@@ -66,11 +66,20 @@ class LocalModel:
     thinking: bool  # Qwen3 "thinking mode": reasons before answering (better, slower)
 
 
-# AVEN model -> local model. AVEN 1.0 and AVEN Core share one download.
+# AVEN model -> local model. AVEN 1.1 and AVEN Ultra share one download: the 8B model
+# (about 2x Core and 5x Light). AVEN 1.1 answers directly, so it is close to Ultra's
+# quality but much faster; Ultra also thinks before answering.
 LOCAL_MODELS: dict[str, LocalModel] = {
     "aven-light": LocalModel(MODEL_FILES["qwen3-1.7b"], thinking=False),
     "aven-core": LocalModel(MODEL_FILES["qwen3-4b"], thinking=False),
-    "aven-1": LocalModel(MODEL_FILES["qwen3-4b"], thinking=True),
+    "aven-1-1": LocalModel(MODEL_FILES["qwen3-8b"], thinking=False),
     "aven-ultra": LocalModel(MODEL_FILES["qwen3-8b"], thinking=True),
 }
 DEFAULT_LOCAL_MODEL = "aven-light"
+
+
+def sampling(thinking: bool) -> dict[str, float | int]:
+    """Qwen3's recommended sampling settings (greedy decoding causes repetition)."""
+    if thinking:
+        return {"temperature": 0.6, "top_p": 0.95, "top_k": 20, "min_p": 0.0}
+    return {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}

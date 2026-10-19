@@ -46,8 +46,8 @@ def test_window_initializes_with_welcome_screen(make_window) -> None:
     window, _repo, _ = make_window()
     assert window.windowTitle() == "AVEN AI Desktop"
     assert window.chat.stack.currentIndex() == 0
-    assert window.chat.model_label.text() == "AVEN · AVEN 1.0"
-    assert window.chat.model_picker.text().startswith("AVEN 1.0")
+    assert window.chat.model_label.text() == "AVEN · AVEN 1.1"
+    assert window.chat.model_picker.text().startswith("AVEN 1.1")
     assert "claude" not in window.chat.model_label.text().lower()
     assert window.chat.setup_card.isHidden()
 
@@ -73,11 +73,11 @@ def test_send_streams_response_and_persists(make_window, qtbot) -> None:
     assert conversation.title == "Write hello world"
     messages = repo.list_messages(conversation.id)
     assert [(m.role, m.content) for m in messages] == [("user", "Write hello world"), ("assistant", reply)]
-    assert messages[1].model == "aven-1"
+    assert messages[1].model == "aven-1-1"
     assistant = widgets_of(window, AssistantMessageWidget)[0]
     codes = [w for w in assistant.findChildren(CodeBlockWidget)]
     assert len(codes) == 1 and codes[0]._code == "print('hi')"
-    assert assistant.meta_label.text() == "AVEN 1.0"
+    assert assistant.meta_label.text() == "AVEN 1.1"
     assert window.chat.input.toPlainText() == ""
     assert window.chat.send_button.text() == "Send"
 
@@ -212,7 +212,7 @@ def test_settings_dialog_saves_key_and_models(make_window, qtbot, monkeypatch) -
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: notices.append(a[1]))
     dialog = SettingsDialog(window.settings, window.credentials, window)
     qtbot.addWidget(dialog)
-    assert dialog.map_combos["aven-1"].currentText() == "claude-opus-5-5"
+    assert dialog.map_combos["aven-1-1"].currentText() == "claude-opus-5-5"
     dialog.key_edit.setText("sk-ant-new-key-987654")
     dialog.map_combos["aven-light"].setCurrentText("claude-haiku-4-5")
     dialog.theme_combo.setCurrentIndex(2)
@@ -245,7 +245,7 @@ def test_connection_test_reports_real_result(make_window, qtbot, monkeypatch) ->
     monkeypatch.setattr(dialog, "_make_provider", lambda: FakeProvider(reply="OK"))
     dialog._on_test()
     qtbot.waitUntil(lambda: dialog.test_button.isEnabled(), timeout=5000)
-    assert dialog.result_label.text().startswith("✓ AVEN 1.0 is ready.")
+    assert dialog.result_label.text().startswith("✓ AVEN 1.1 is ready.")
     assert "OK" in dialog.result_label.text()
 
     monkeypatch.setattr(
@@ -261,7 +261,7 @@ def test_model_picker_in_composer_switches_model(make_window, qtbot) -> None:
     provider = FakeProvider(reply="ok")
     window, repo, _ = make_window(provider)
     picker = window.chat.model_picker
-    assert list(picker.options) == ["aven-1", "aven-ultra", "aven-core", "aven-light"]
+    assert list(picker.options) == ["aven-1-1", "aven-ultra", "aven-core", "aven-light"]
 
     picker.options["aven-light"].clicked.emit()
     assert window.settings.model == "aven-light"
@@ -288,7 +288,7 @@ def test_aven_cloud_chat_works_without_any_key(make_window, qtbot, monkeypatch) 
     assert window.chat.setup_card.isHidden()
     window.send_message("hello")
     qtbot.waitUntil(lambda: window.generation is None, timeout=5000)
-    assert provider.requests[0].model == "aven-1"
+    assert provider.requests[0].model == "aven-1-1"
     assert repo.list_messages(repo.list_conversations()[0].id)[-1].content == "Hi from AVEN Cloud"
 
 

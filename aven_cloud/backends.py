@@ -25,7 +25,7 @@ import openai
 
 log = logging.getLogger("aven_cloud")
 
-AVEN_MODEL_IDS = ("aven-1", "aven-ultra", "aven-core", "aven-light")
+AVEN_MODEL_IDS = ("aven-1-1", "aven-ultra", "aven-core", "aven-light")
 
 # Model ids that are never used for chat (speech, images, embeddings, safety classifiers, previews).
 NON_CHAT_WORDS = (
@@ -66,7 +66,7 @@ SERVICES: dict[str, ServiceInfo] = {
         key_env="GROQ_API_KEY",
         base_url="https://api.groq.com/openai/v1",
         candidates={
-            "aven-1": ("openai/gpt-oss-120b", "llama-3.3-70b-versatile", "~gpt-oss-120b", "~70b"),
+            "aven-1-1": ("openai/gpt-oss-120b", "llama-3.3-70b-versatile", "~gpt-oss-120b", "~70b"),
             "aven-ultra": ("openai/gpt-oss-120b", "~gpt-oss-120b", "llama-3.3-70b-versatile", "~70b"),
             "aven-core": ("llama-3.3-70b-versatile", "~70b", "openai/gpt-oss-20b", "~gpt-oss"),
             "aven-light": ("llama-3.1-8b-instant", "~8b", "openai/gpt-oss-20b", "~gpt-oss-20b"),
@@ -78,7 +78,7 @@ SERVICES: dict[str, ServiceInfo] = {
         key_env="GEMINI_API_KEY",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         candidates={
-            "aven-1": ("~gemini flash -lite",),
+            "aven-1-1": ("~gemini flash -lite",),
             # Free-tier access to Pro models is very limited, so Ultra also uses Flash by default.
             "aven-ultra": ("~gemini flash -lite",),
             "aven-core": ("~gemini flash -lite",),
@@ -91,7 +91,7 @@ SERVICES: dict[str, ServiceInfo] = {
         key_env="ANTHROPIC_API_KEY",
         base_url="",
         candidates={
-            "aven-1": ("claude-opus-5-5",),
+            "aven-1-1": ("claude-opus-5-5",),
             "aven-ultra": ("claude-opus-5-5",),
             "aven-core": ("claude-sonnet-5-5",),
             "aven-light": ("claude-haiku-5-5",),
@@ -103,7 +103,7 @@ SERVICES: dict[str, ServiceInfo] = {
 }
 
 # Reasoning effort per AVEN model, only for Anthropic models that accept it.
-ANTHROPIC_EFFORT = {"aven-ultra": "xhigh"}
+ANTHROPIC_EFFORT = {"aven-1-1": "high", "aven-ultra": "xhigh"}
 ANTHROPIC_EFFORT_MODELS = frozenset(
     {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5"}
 )

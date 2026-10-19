@@ -10,7 +10,7 @@ from app.ai.openai_provider import OpenAIProvider
 from app.config.aven_models import aven_model_name
 from app.local.downloader import is_downloaded, model_path
 from app.local.engine import EngineError, LocalEngine
-from app.local.models import LOCAL_MODELS
+from app.local.models import LOCAL_MODELS, sampling
 
 # Replies are kept short enough to fit the local context window next to the history.
 LOCAL_MAX_TOKENS = 4096
@@ -105,8 +105,9 @@ class LocalProvider(AIProvider):
             base_url=base_url,
             timeout=self.timeout,
             display_name="AVEN Local",
-            # Qwen3: turn "thinking mode" on or off for this AVEN model.
-            extra_body={"chat_template_kwargs": {"enable_thinking": local.thinking}},
+            # Qwen3: turn "thinking mode" on or off for this AVEN model, with the matching
+            # recommended sampling settings.
+            extra_body={"chat_template_kwargs": {"enable_thinking": local.thinking}, **sampling(local.thinking)},
         )
         local_request = ChatRequest(
             model=local.file.key,

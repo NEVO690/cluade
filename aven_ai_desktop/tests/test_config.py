@@ -32,24 +32,24 @@ def test_defaults_use_aven_cloud_when_the_build_has_a_server(monkeypatch) -> Non
     monkeypatch.setenv("AVEN_CLOUD_URL", "https://cloud.aven.example")
     settings = AppSettings().normalized()
     assert settings.provider == "aven_cloud"
-    assert settings.model == "aven-1"
+    assert settings.model == "aven-1-1"
 
 
 def test_personal_key_mapping_defaults() -> None:
     settings = AppSettings(provider="anthropic")
     assert settings.mapping_for() == {
-        "aven-1": "claude-opus-5-5",
+        "aven-1-1": "claude-opus-5-5",
         "aven-ultra": "claude-opus-5-5",
         "aven-core": "claude-sonnet-5-5",
         "aven-light": "claude-haiku-5-5",
     }
     assert settings.resolved_model() == "claude-opus-5-5"
     assert settings.mapping_for("openai") == {}  # no guessed OpenAI model IDs
-    assert AVEN_EFFORT == {"aven-ultra": "xhigh"}
+    assert AVEN_EFFORT == {"aven-1-1": "high", "aven-ultra": "xhigh"}
 
 
 def test_aven_model_names() -> None:
-    assert [m.name for m in AVEN_MODELS] == ["AVEN 1.0", "AVEN Ultra", "AVEN Core", "AVEN Light"]
+    assert [m.name for m in AVEN_MODELS] == ["AVEN 1.1", "AVEN Ultra", "AVEN Core", "AVEN Light"]
     assert aven_model_name("aven-core") == "AVEN Core"
     assert aven_model_name("legacy-raw-id") == "legacy-raw-id"
     assert aven_model_name(None) == ""
@@ -58,7 +58,7 @@ def test_aven_model_names() -> None:
 def test_settings_round_trip(tmp_path) -> None:
     store = SettingsStore(tmp_path / "settings.json")
     settings = AppSettings(theme="dark", provider="openai", max_tokens=4096, model="aven-light")
-    settings.mapping_for("openai").update({"aven-light": "my-fast-model", "aven-1": "my-big-model"})
+    settings.mapping_for("openai").update({"aven-light": "my-fast-model", "aven-1-1": "my-big-model"})
     store.save(settings)
 
     loaded = store.load()
@@ -84,7 +84,7 @@ def test_invalid_model_choices_are_normalized(tmp_path) -> None:
         )
     )
     loaded = SettingsStore(path).load()
-    assert loaded.model == "aven-1"
+    assert loaded.model == "aven-1-1"
     assert len(loaded.install_id) == 32 and loaded.install_id.isalnum()
     assert "aven-core" not in loaded.mapping_for("anthropic")
     assert "x" not in loaded.mapping_for("anthropic")
@@ -114,17 +114,17 @@ def test_env_overrides(monkeypatch) -> None:
     monkeypatch.setenv("AVEN_PROVIDER", "openai")
     monkeypatch.setenv("AVEN_MODEL", "aven-light")
     monkeypatch.setenv("AVEN_LIGHT_MODEL", "local-small")
-    monkeypatch.setenv("AVEN_1_MODEL", "local-large")
+    monkeypatch.setenv("AVEN_1_1_MODEL", "local-large")
     monkeypatch.setenv("AVEN_BASE_URL", "javascript:alert(1)")
     settings = apply_env_overrides(AppSettings())
     assert settings.provider == "openai"
     assert settings.model == "aven-light"
     assert settings.resolved_model() == "local-small"
-    assert settings.mapping_for()["aven-1"] == "local-large"
+    assert settings.mapping_for()["aven-1-1"] == "local-large"
     assert settings.openai_base_url == ""  # invalid URL ignored
 
     monkeypatch.setenv("AVEN_MODEL", "not-a-model")
-    assert apply_env_overrides(AppSettings(provider="anthropic")).model == "aven-1"
+    assert apply_env_overrides(AppSettings(provider="anthropic")).model == "aven-1-1"
 
 
 def test_cloud_url_from_env_and_build_file(monkeypatch, tmp_path) -> None:
@@ -255,10 +255,10 @@ def test_saved_aven_cloud_switches_to_local_when_build_has_no_server(tmp_path) -
     # Earlier versions saved "aven_cloud" as the default provider; without a server that would
     # ask users for an API key. It must fall back to AVEN Local, which needs no key.
     path = tmp_path / "settings.json"
-    path.write_text(json.dumps({"provider": "aven_cloud", "model": "aven-1"}))
+    path.write_text(json.dumps({"provider": "aven_cloud", "model": "aven-1-1"}))
     loaded = SettingsStore(path).load()
     assert loaded.provider == "aven_local"
-    assert loaded.model == "aven-1"  # the user's model choice is kept
+    assert loaded.model == "aven-1-1"  # the user's model choice is kept
 
 
 def test_saved_aven_cloud_kept_when_build_has_a_server(tmp_path, monkeypatch) -> None:
@@ -266,3 +266,22 @@ def test_saved_aven_cloud_kept_when_build_has_a_server(tmp_path, monkeypatch) ->
     path = tmp_path / "settings.json"
     path.write_text(json.dumps({"provider": "aven_cloud"}))
     assert SettingsStore(path).load().provider == "aven_cloud"
+
+
+def test_aven_1_0_choice_is_upgraded_to_aven_1_1(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(
+        json.dumps(
+            {
+                "provider": "anthropic",
+                "model": "aven-1",
+                "model_map": {"anthropic": {"aven-1": "my-model", "aven-light": "claude-haiku-5-5"}},
+            }
+        )
+    )
+    loaded = SettingsStore(path).load()
+    assert loaded.model == "aven-1-1"
+    assert loaded.mapping_for("anthropic") == {"aven-1-1": "my-model", "aven-light": "claude-haiku-5-5"}
+    assert aven_model_name("aven-1") == "AVEN 1.0"  # old messages keep their name
+    assert aven_model_name("aven-1-1") == "AVEN 1.1"
+    assert AVEN_EFFORT["aven-1-1"] == "high"

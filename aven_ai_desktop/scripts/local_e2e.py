@@ -58,7 +58,7 @@ def main() -> int:
         code = ask(provider, "aven-light", "Write a one-line Python expression that reverses a string s.", "code")
         assert "[::-1]" in code, "unexpected code answer"
 
-        # Same model file with thinking mode on (as AVEN 1.0 / Ultra use it): only the answer is shown.
+        # Same model file with thinking mode on (as AVEN Ultra uses it): only the answer is shown.
         thinking = LocalProvider(engine)
         original = LOCAL_MODELS["aven-light"]
         LOCAL_MODELS["aven-light"] = type(original)(original.file, thinking=True)
