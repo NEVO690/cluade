@@ -1,6 +1,6 @@
 [project]
 name = "aven-ai-desktop"
-version = "1.1.0"
+version = "1.2.0"
 description = "AVEN AI Desktop - AI assistant (AVEN) and programming assistant (AVEN CODE) for Windows"
 requires-python = ">=3.11"
 

@@ -13,7 +13,7 @@ Out of the box the app uses **AVEN Local**: open-source AI models running **on t
 
 *The screenshots were taken with a mock provider in an offscreen test harness.*
 
-Version: **1.1.0** (defined in `app/version.py`)
+Version: **1.2.0** (defined in `app/version.py`)
 
 ---
 
@@ -35,6 +35,20 @@ Some things to know:
 - It listens only on `127.0.0.1`, with a random per-session access token.
 - Models are stored in `%APPDATA%\AVEN AI\models`. Delete them in **Settings → AI Provider → Delete downloaded models**.
 - Local models are capable, but less so than large cloud models. For the best answers use AVEN Cloud or your own key.
+- Replies stay in the writing systems of the conversation: the engine cannot produce stray Chinese, Korean, Cyrillic, Arabic or Greek words inside a Hebrew or English reply, or Hebrew and English letters glued into one word. Questions about other languages or translations have no such limits.
+- Long conversations are fitted to each model's memory using exact token counts. AVEN 1.1 and Ultra use a 16K-token window; Ultra may spend up to 8,192 tokens thinking and answering.
+
+## Answer quality
+
+Every request carries instructions written for the selected model:
+
+- **Language**: reply in the user's language; natural, correctly spelled Hebrew; code, names and links kept unchanged.
+- **Honesty and verification**: AVEN has no web search, file access or code execution in this app, so it says when it cannot check current information (news, prices, weather), asks you to paste files, never claims to have searched or run something, and says so when it does not recognize a book, paper or name instead of inventing details.
+- **Reasoning**: for calculations and multi-step problems it works through the steps first and gives the final answer at the end.
+- **Style**: friendly and to the point, with an occasional emoji, never inside code.
+- **Identity**: today's date, the official model name, and what powers it.
+
+Quality is measured with the evaluation suite in [`evals/`](evals/README.md): real answers from the real models, scored with deterministic checks. See the release notes for the latest before/after numbers.
 
 ## AVEN models
 
@@ -291,14 +305,15 @@ aven_ai_desktop/
 │   │   ├── openai_provider.py
 │   │   ├── provider_factory.py  # provider registry and construction
 │   │   ├── chat_service.py      # config status, request building, history trimming
-│   │   ├── prompts.py           # AVEN and AVEN CODE system instructions
+│   │   ├── prompts.py           # system instructions per mode and AVEN model
 │   │   └── errors.py            # user-facing error types
 │   ├── storage/
 │   │   ├── database.py          # SQLite connection and migrations
 │   │   └── conversation_repository.py
 │   ├── rendering/
 │   │   └── markdown_renderer.py # safe Markdown, code segmentation, highlighting
-│   ├── local/                   # AVEN Local: model catalog, verified downloader, llama-server engine
+│   ├── local/                   # AVEN Local: model catalog, verified downloader, llama-server engine,
+│   │                            #   script guard (keeps replies in the conversation's writing systems)
 │   ├── workers/
 │   │   └── ai_worker.py         # background streaming and task threads
 │   └── ui/
@@ -309,6 +324,7 @@ aven_ai_desktop/
 │       ├── settings_dialog.py
 │       ├── theme_manager.py     # light and dark palettes, stylesheet
 │       └── logo.py              # vector-drawn AVEN logo
+├── evals/                       # answer-quality evaluation with real models (see evals/README.md)
 └── tests/                       # pytest + pytest-qt
 ```
 
@@ -334,7 +350,8 @@ aven_ai_desktop/
 
 ## Current limitations
 
-- Text conversations only: no image or file attachments, and no web browsing.
+- Text conversations only: no image or file attachments, and no web search or browsing. AVEN says so instead of guessing current information.
+- The on-device models are small. AVEN Light in particular still makes factual and Hebrew mistakes; AVEN 1.1 or Ultra are much more reliable.
 - Responses come from one provider at a time: AVEN Cloud, Anthropic, or OpenAI (or OpenAI-compatible).
 - AVEN Cloud needs a deployed server and a key for an AI service. Free tiers (Groq, Gemini) cost nothing, but their limits are shared by all users of the server.
 - There is no automatic update system. Install new versions over the old one; your data folder is kept.

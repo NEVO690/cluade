@@ -9,6 +9,7 @@ Work through this list on a clean **Windows 11 x64** machine for every public re
 
 ## 2. Quality gates
 - [ ] `ruff check .` passes
+- [ ] The **Evaluate AVEN models** workflow ran on the release commit: no model scores below its baseline runs, and no new language problems
 - [ ] `python -m pytest -q` passes (the build script runs this)
 - [ ] Search for secrets: no API keys in source, `.env`, test fixtures or `assets/`
   (for example `git grep -nE "sk-[A-Za-z0-9]{20,}"`)

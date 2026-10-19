@@ -1,12 +1,12 @@
 ; Inno Setup script for AVEN AI Desktop.
-; Built by scripts/build_windows.ps1:  iscc /DAppVersion=1.1.0 installer\aven_ai.iss
+; Built by scripts/build_windows.ps1:  iscc /DAppVersion=1.2.0 installer\aven_ai.iss
 ;
 ; Installs per user (no administrator rights needed) into %LOCALAPPDATA%\Programs\AVEN AI,
 ; adds Start menu (and optional desktop) shortcuts and a normal Windows uninstaller.
 ; Conversations and downloaded models live in %APPDATA%\AVEN AI and are kept on uninstall.
 
 #ifndef AppVersion
-  #define AppVersion "1.1.0"
+  #define AppVersion "1.2.0"
 #endif
 
 [Setup]
