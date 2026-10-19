@@ -21,7 +21,8 @@ EMOJI = re.compile(r"[\U0001f300-\U0001faff\u2600-\u27bf\u2b50\u2b55]")
 CODE_BLOCK = re.compile(r"```[^\n]*\n(.*?)(?:```|$)", re.S)
 INLINE_CODE = re.compile(r"`[^`\n]*`")
 URL = re.compile(r"https?://\S+", re.I)
-NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+# A minus sign only after a space, "(" or "=" (or at the start): "\u05de-240" is a Hebrew prefix, not -240.
+NUMBER = re.compile(r"(?:(?<![^\s(=])-)?\d[\d,]*(?:\.\d+)?")
 
 LIMITATION = re.compile(
     r"(can't|cannot|can not|don't|do not|unable to|not able to|no) "

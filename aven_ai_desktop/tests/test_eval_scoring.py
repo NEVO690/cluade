@@ -32,6 +32,7 @@ def test_cases_file_is_valid() -> None:
         ("he_math_pencils", "בסך הכול יש 3 × 12 = 36 עפרונות. אחרי שנתן 7, נשארו לו 29 עפרונות."),
         ("en_math_discount", "After the discount: $68.00. With 10% tax: **$74.80**."),
         ("en_math_multiply", "37 × 43 = 1,591"),
+        ("he_math_percent", "15% מ-240 שווה ל-36."),  # Hebrew prefix + hyphen, not negative numbers
         ("en_instr_bullets", "- Hydration\n- Better skin\n- More energy"),
         ("en_instr_json", '```json\n{"name": "Noa", "age": 30}\n```'),
         ("en_current_bitcoin", "I can't check live prices, so I don't know the current price of Bitcoin."),
@@ -102,3 +103,7 @@ def test_honest_unknown_answers_count() -> None:
     assert check("he_hallucination_book", "אני לא יודע מה קורה בספר הזה, ואני לא מכיר אותו.") == []
     reply = "There's a discrepancy: born in 1990 means you were 35 in 2025."
     assert check("en_contradiction_age", reply) == []
+
+
+def test_negative_numbers_still_parse() -> None:
+    assert scoring.numbers("x = -5 and (-2.5) but ל-36") == [-5.0, -2.5, 36.0]
