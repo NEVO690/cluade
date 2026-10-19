@@ -1,0 +1,80 @@
+name: Evaluate AVEN models
+
+# Real answers from the real on-device models, scored with deterministic checks
+# (aven_ai_desktop/evals). Each model runs twice with the same cases: on the baseline
+# release and on the current code, so improvements and regressions are measured.
+on:
+  push:
+    paths:
+      - "aven_ai_desktop/app/ai/**"
+      - "aven_ai_desktop/app/local/**"
+      - "aven_ai_desktop/app/config/**"
+      - "aven_ai_desktop/evals/**"
+      - ".github/workflows/evaluate-aven-models.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # AVEN AI 1.1.0 as released (before the quality work).
+  BASELINE_REF: b99113c75e7b078138867fb1626c999b3699c0ac
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [aven-1-1, aven-ultra, aven-core, aven-light]
+        variant: [baseline, current]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: current
+      - uses: actions/checkout@v4
+        if: matrix.variant == 'baseline'
+        with:
+          ref: ${{ env.BASELINE_REF }}
+          path: baseline
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install spellcheckers (hspell for Hebrew, aspell for English)
+        run: sudo apt-get update && sudo apt-get install -y hspell aspell aspell-en
+      - run: pip install -r current/aven_ai_desktop/requirements.txt
+      - name: Fetch the llama.cpp engine
+        working-directory: current/aven_ai_desktop
+        run: python scripts/fetch_engine.py --platform linux-x64
+      - name: Cache downloaded models
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/aven-data/models
+          key: aven-models-${{ matrix.model }}-v1
+      - name: Evaluate ${{ matrix.model }} (${{ matrix.variant }})
+        working-directory: current/aven_ai_desktop
+        env:
+          AVEN_DATA_DIR: ${{ runner.temp }}/aven-data
+          APP_ROOT: ${{ matrix.variant == 'baseline' && '../../baseline/aven_ai_desktop' || '.' }}
+        run: >
+          python evals/run_eval.py --model ${{ matrix.model }} --label ${{ matrix.variant }}
+          --app-root "$APP_ROOT" --out "${{ runner.temp }}/results-${{ matrix.model }}-${{ matrix.variant }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-${{ matrix.model }}-${{ matrix.variant }}
+          path: ${{ runner.temp }}/results-*.json
+          if-no-files-found: ignore
+
+  compare:
+    needs: evaluate
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: eval-*
+          path: results
+      - run: python aven_ai_desktop/evals/compare.py results
