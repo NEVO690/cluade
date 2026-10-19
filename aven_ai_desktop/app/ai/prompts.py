@@ -170,7 +170,7 @@ def system_prompt_for(
     model_name = aven_model_name(aven_model)
     parts = [
         _CODE_ROLE if mode == "code" else _GENERAL_ROLE,
-        f"Today's date is {today:%A, %d %B %Y}.",
+        f"Today's date is {today:%A, %d %B %Y} (mention it only when it is relevant).",
         _SHARED_RULES,
         _identity(model_name, provider, provider_name or "a third-party AI provider"),
     ]

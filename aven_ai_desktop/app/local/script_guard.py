@@ -30,7 +30,10 @@ FOREIGN_SCRIPTS: tuple[tuple[str, tuple[tuple[int, int], ...]], ...] = (
     ("devanagari", ((0x0900, 0x097F),)),
     ("armenian", ((0x0530, 0x058F),)),
     ("georgian", ((0x10A0, 0x10FF),)),
+    # Greek words; the letters common in math and science stay allowed (see MATH_GREEK).
+    ("greek", ((0x0370, 0x03FF), (0x1F00, 0x1FFF))),
 )  # fmt: skip
+MATH_GREEK = "αβγδεθλμπρσφωΔΣΠΦΩ"
 
 # Accented Latin letters ("é", "ß"). Blocked only when the user writes Hebrew, where they
 # only appear as broken words; × and ÷ stay allowed.
@@ -50,10 +53,25 @@ def _uses(text: str, ranges: tuple[tuple[int, int], ...]) -> bool:
     return any(lo <= ord(ch) <= hi for ch in text for lo, hi in ranges)
 
 
+def _allow(ranges: list[tuple[int, int]], chars: str) -> list[tuple[int, int]]:
+    """Split ``ranges`` so that ``chars`` are not blocked."""
+    out = []
+    for lo, hi in ranges:
+        start = lo
+        for code in sorted(ord(c) for c in chars if lo <= ord(c) <= hi):
+            if start <= code - 1:
+                out.append((start, code - 1))
+            start = code + 1
+        if start <= hi:
+            out.append((start, hi))
+    return out
+
+
 def blocked_ranges(conversation: list[str], latest_user_message: str) -> list[tuple[int, int]]:
     """Character ranges the reply may not contain."""
     text = "\n".join(conversation)
     blocked = [r for _name, ranges in FOREIGN_SCRIPTS if not _uses(text, ranges) for r in ranges]
+    blocked = _allow(blocked, MATH_GREEK)
     hebrew = len(HEBREW.findall(latest_user_message)) > len(LATIN.findall(latest_user_message))
     if hebrew and not _uses(text, ACCENTED_LATIN):
         blocked.extend(ACCENTED_LATIN)

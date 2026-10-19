@@ -112,7 +112,7 @@ def test_each_model_gets_its_name_and_profile(aven_model, name, profile) -> None
     prompt = system_prompt_for("aven", aven_model, today=datetime.date(2026, 10, 19))
     assert f"You are {name}." in prompt
     assert profile in prompt
-    assert "Today's date is Monday, 19 October 2026." in prompt
+    assert "Today's date is Monday, 19 October 2026 (mention it only when it is relevant)." in prompt
     # Official names only; never internal labels.
     assert "AVEN 1.1, AVEN Ultra, AVEN Core, AVEN Light" in prompt
     assert "flagship" not in prompt.lower()

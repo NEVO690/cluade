@@ -11,10 +11,10 @@ def blocked(text: str, ranges) -> bool:
 
 def test_hebrew_conversation_blocks_foreign_scripts_and_accented_latin() -> None:
     ranges = blocked_ranges(["שלום, מה שלומך?"], "שלום, מה שלומך?")
-    for leaked in ("听", "책", "мир", "اسم", "ß", "é", "カ"):
+    for leaked in ("听", "책", "мир", "اسم", "ß", "é", "カ", "Είναι"):
         assert blocked(leaked, ranges), leaked
     # Hebrew, English, digits, math symbols and emoji stay allowed.
-    for allowed in ("שלום", "Python 3.12", "3 × 4 ÷ 2 = 6", "🙂🚀⚠️", "“quotes” — dash", "π ≈ 3.14"):
+    for allowed in ("שלום", "Python 3.12", "3 × 4 ÷ 2 = 6", "🙂🚀⚠️", "“quotes” — dash", "π ≈ 3.14", "Σ α β Δ Ω"):
         assert not blocked(allowed, ranges), allowed
 
 
