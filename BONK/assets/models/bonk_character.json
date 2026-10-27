@@ -1,0 +1,88 @@
+{
+  "model": "bonk_character.glb",
+  "generated_by": "blender/export_assets.py (Blender 5.2.3 LTS)",
+  "height": 1.45,
+  "bones": [
+    "root",
+    "hips",
+    "spine",
+    "head",
+    "antenna",
+    "arm.L",
+    "hand.L",
+    "arm.R",
+    "hand.R",
+    "leg.L",
+    "foot.L",
+    "leg.R",
+    "foot.R"
+  ],
+  "material_zones": {
+    "body": "Bonk_Body",
+    "accent": "Bonk_Accent",
+    "visor": "Bonk_Visor",
+    "eyes": "Bonk_Eyes"
+  },
+  "default_colors": {
+    "body": "#ff8a3d",
+    "accent": "#ffe066",
+    "visor": "#1d1840",
+    "eyes": "#9ff7ff"
+  },
+  "accessory_joint": "head",
+  "accessory_joint_rest": [
+    0,
+    0,
+    1.05
+  ],
+  "animations": {
+    "Idle": {
+      "frames": 49,
+      "duration": 2.0,
+      "loop": true,
+      "native_speed": 0.0
+    },
+    "Walk": {
+      "frames": 13,
+      "duration": 0.5,
+      "loop": true,
+      "native_speed": 1.8
+    },
+    "Run": {
+      "frames": 11,
+      "duration": 0.4166666666666667,
+      "loop": true,
+      "native_speed": 3.4
+    },
+    "Jump": {
+      "frames": 9,
+      "duration": 0.3333333333333333,
+      "loop": false,
+      "native_speed": 0.0
+    },
+    "Fall": {
+      "frames": 13,
+      "duration": 0.5,
+      "loop": true,
+      "native_speed": 0.0
+    },
+    "Land": {
+      "frames": 7,
+      "duration": 0.25,
+      "loop": false,
+      "native_speed": 0.0
+    },
+    "Victory": {
+      "frames": 25,
+      "duration": 1.0,
+      "loop": true,
+      "native_speed": 0.0
+    },
+    "Elimination": {
+      "frames": 25,
+      "duration": 1.0,
+      "loop": false,
+      "native_speed": 0.0
+    }
+  }
+}
