@@ -169,8 +169,8 @@ class PlayerProfile:
                     st["best_times"][m] = r["time"]
         deltas = {k: st[k] - before[k] for k in st if isinstance(st[k], int)}
 
-        # -- rank
-        delta = self.ranks.points_for_report(report, total_rounds)
+        # -- rank (local rank only counts shows against bots; online standing is kept by the server)
+        delta = 0 if report.mode == "online" else self.ranks.points_for_report(report, total_rounds)
         summary.rank_delta = delta
         summary.rank_before, summary.rank_after = self.ranks.apply(delta)
 

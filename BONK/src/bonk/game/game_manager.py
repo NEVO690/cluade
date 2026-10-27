@@ -159,9 +159,12 @@ class GameManager:
         """Leave the show early (pause menu -> quit).  Produces a report for the local player."""
         if self.state in (GameState.GAME_OVER, GameState.LOBBY):
             return
-        if self.round is not None and self.local_player_id and not self.local_out:
-            self.round.remove_participant(self.local_player_id, "left")
-        self._build_local_report(quit_early=True)
+        if self.local_player_id and not self.local_out:
+            # Leaving while still in the show counts as a quit.
+            if self.round is not None:
+                self.round.remove_participant(self.local_player_id, "left")
+            self._build_local_report(quit_early=True)
+        # Already eliminated: the report from the elimination stays as it is.
         self.state = GameState.GAME_OVER
         self._emit("state", GameState.GAME_OVER)
 

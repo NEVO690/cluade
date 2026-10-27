@@ -104,6 +104,7 @@ class RoundSimulation:
         world.update(self.t, dt)
         for ch in self.characters:
             ch.events.clear()
+            ch.prev_pos = (ch.x, ch.y, ch.z)  # renderers interpolate between ticks
         for ch in self.characters:
             if not ch.active or ch.eliminated:
                 continue

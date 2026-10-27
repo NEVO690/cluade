@@ -31,6 +31,9 @@ def material(name, color, roughness=0.5, metallic=0.0, emission=None, emission_s
         bsdf.inputs["Emission Color"].default_value = hex_to_linear(emission)
         bsdf.inputs["Emission Strength"].default_value = emission_strength
     mat.diffuse_color = rgba
+    # Closed meshes: export single-sided (glTF doubleSided=false).  Double-sided
+    # materials make the game's shadow map self-shadow ("shadow acne").
+    mat.use_backface_culling = True
     return mat
 
 
