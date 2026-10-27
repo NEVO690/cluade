@@ -1,0 +1,66 @@
+{
+  "levels": {
+    "max_level": 50,
+    "base_xp": 100,
+    "xp_step": 40,
+    "coin_reward_base": 50,
+    "coin_reward_per_level": 10,
+    "milestones": {"5": 250, "10": 500, "20": 1000, "30": 1500, "50": 3000}
+  },
+  "rewards": {
+    "coins": {"participation": 15, "per_round_qualified": 20, "per_finish": 10, "win": 100, "podium": 25, "quit": 0},
+    "xp": {"participation": 40, "per_round_qualified": 35, "per_finish": 15, "win": 150, "per_obstacle": 2, "obstacle_cap": 40, "quit": 10}
+  },
+  "ranks": {
+    "tiers": [
+      {"id": "ROOKIE", "min_points": 0, "color": "#b8c2d6"},
+      {"id": "BRONZE", "min_points": 100, "color": "#cd7f32"},
+      {"id": "SILVER", "min_points": 250, "color": "#d6dee8"},
+      {"id": "GOLD", "min_points": 450, "color": "#ffcc33"},
+      {"id": "PLATINUM", "min_points": 700, "color": "#7ff0e0"},
+      {"id": "DIAMOND", "min_points": 1000, "color": "#6fb8ff"},
+      {"id": "MASTER", "min_points": 1400, "color": "#b65cff"},
+      {"id": "BONK LEGEND", "min_points": 2000, "color": "#ff3d8b"}
+    ],
+    "points": {"win": 60, "reached_final": 30, "per_round_qualified": 10, "first_round_out": -10, "quit": -15},
+    "difficulty_multiplier": {"EASY": 0.5, "NORMAL": 1.0, "HARD": 1.5, "CHAOTIC": 1.2, "MIXED": 1.0}
+  },
+  "titles": [
+    {"id": "rookie_runner", "name": "ROOKIE RUNNER", "rarity": "COMMON", "description": "Play your first show.", "condition": {"stat": "games_played", "min": 1}},
+    {"id": "first_bonk", "name": "FIRST BONK", "rarity": "COMMON", "description": "Land on another player's head.", "condition": {"stat": "bonks", "min": 1}},
+    {"id": "survivor", "name": "SURVIVOR", "rarity": "RARE", "description": "Qualify from 10 rounds.", "condition": {"stat": "rounds_qualified", "min": 10}},
+    {"id": "jump_master", "name": "JUMP MASTER", "rarity": "RARE", "description": "Jump over 100 obstacles and gaps.", "condition": {"stat": "obstacles", "min": 100}},
+    {"id": "speed_demon", "name": "SPEED DEMON", "rarity": "EPIC", "description": "Finish BONK! Starter Run in 24 seconds or less.", "condition": {"best_time": "starter_run", "max": 24.0}},
+    {"id": "tile_dancer", "name": "TILE DANCER", "rarity": "EPIC", "description": "Finish Vanishing Tiles 5 times.", "condition": {"map_finishes": "vanishing_tiles", "min": 5}},
+    {"id": "crown_chaser", "name": "CROWN CHASER", "rarity": "EPIC", "description": "Win 3 shows.", "condition": {"stat": "wins", "min": 3}},
+    {"id": "unstoppable", "name": "UNSTOPPABLE", "rarity": "LEGENDARY", "description": "Win 3 shows in a row.", "condition": {"stat": "best_streak", "min": 3}},
+    {"id": "bonk_legend", "name": "BONK LEGEND", "rarity": "MYTHIC", "description": "Reach the BONK LEGEND rank.", "condition": {"rank": "BONK LEGEND"}}
+  ],
+  "achievements": [
+    {"id": "first_steps", "name": "First Steps", "description": "Play 1 show.", "stat": "games_played", "target": 1, "reward": 50},
+    {"id": "regular", "name": "Regular", "description": "Play 3 shows.", "stat": "games_played", "target": 3, "reward": 100},
+    {"id": "veteran", "name": "Veteran", "description": "Play 25 shows.", "stat": "games_played", "target": 25, "reward": 300},
+    {"id": "finisher", "name": "Finisher", "description": "Cross 10 finish lines.", "stat": "finishes", "target": 10, "reward": 150},
+    {"id": "hurdler", "name": "Hurdler", "description": "Jump over 50 obstacles and gaps.", "stat": "obstacles", "target": 50, "reward": 150},
+    {"id": "high_flyer", "name": "High Flyer", "description": "Jump 500 times.", "stat": "jumps", "target": 500, "reward": 150},
+    {"id": "champion", "name": "Champion", "description": "Win a show.", "stat": "wins", "target": 1, "reward": 200},
+    {"id": "triple_crown", "name": "Triple Crown", "description": "Win 3 shows.", "stat": "wins", "target": 3, "reward": 400},
+    {"id": "on_fire", "name": "On Fire", "description": "Win 2 shows in a row.", "stat": "best_streak", "target": 2, "reward": 300},
+    {"id": "bonk_master", "name": "Bonk Master", "description": "Bonk 25 heads.", "stat": "bonks", "target": 25, "reward": 200},
+    {"id": "collector", "name": "Collector", "description": "Own 5 skins.", "stat": "skins_owned", "target": 5, "reward": 300},
+    {"id": "level_10", "name": "Double Digits", "description": "Reach level 10.", "stat": "level", "target": 10, "reward": 300}
+  ],
+  "quests": {
+    "per_day": 3,
+    "templates": [
+      {"id": "play_games", "text": "Play {n} shows", "stat": "games_played", "n": [2, 3], "coins": 80, "xp": 60},
+      {"id": "finish_courses", "text": "Finish {n} courses", "stat": "finishes", "n": [1, 3], "coins": 90, "xp": 70},
+      {"id": "qualify_rounds", "text": "Qualify from {n} rounds", "stat": "rounds_qualified", "n": [2, 4], "coins": 100, "xp": 80},
+      {"id": "clear_obstacles", "text": "Jump over {n} obstacles", "stat": "obstacles", "n": [10, 20], "coins": 80, "xp": 60},
+      {"id": "jumps", "text": "Jump {n} times", "stat": "jumps", "n": [40, 80], "coins": 60, "xp": 50},
+      {"id": "win_show", "text": "Win a show", "stat": "wins", "n": [1, 1], "coins": 150, "xp": 120},
+      {"id": "bonk_heads", "text": "Bonk {n} heads", "stat": "bonks", "n": [1, 3], "coins": 70, "xp": 60},
+      {"id": "win_streak", "text": "Win {n} shows in a row", "stat": "streak", "n": [2, 2], "coins": 200, "xp": 150}
+    ]
+  }
+}
