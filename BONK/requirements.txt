@@ -1,0 +1,9 @@
+# BONK! runtime dependencies.
+# Full game tested with Python 3.13 on Linux (Ubuntu 24.04).  Game logic + tests also
+# verified on Python 3.11 and 3.12.  Older versions are untested.
+panda3d==1.10.16
+panda3d-gltf==1.3.0
+
+# Optional, only to rebuild the 3D assets from source (blender/export_assets.py):
+#   either install the Blender application (5.x) and run  blender -b -P blender/export_assets.py
+#   or:  pip install bpy==5.2.3   (Python 3.13 only, ~400 MB)

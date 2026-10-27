@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest import mock
 
-from helpers import report, temp_profile, win_report
+from helpers import temp_profile, win_report
 
 from bonk.economy.currency_manager import InsufficientFunds
 

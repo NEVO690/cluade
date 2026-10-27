@@ -8,7 +8,7 @@ import math
 
 from . import constants as C
 from .character import MoveState
-from .geometry import approach, circle_overlaps_rect, circle_rect_push, wrap_angle
+from .geometry import circle_overlaps_rect, circle_rect_push, wrap_angle
 
 SUPPORT_RADIUS = C.CHAR_RADIUS * 0.6  # how far over an edge you can stand before slipping off
 

@@ -95,9 +95,12 @@ class _SkinBrowser(BaseScreen):
         self.detail.destroy()
         self.detail = DirectFrame(parent=self.root, frameColor=(0, 0, 0, 0))
         rar = prof.catalog.rarity_of(skin)
-        label(self.detail, th, skin.name, (-0.95, 0.6), 0.075, "text", "title")
-        label(self.detail, th, rar.id, (-0.95, 0.53), 0.045, rar.color, "title")
-        label(self.detail, th, skin.description, (-0.95, -0.38), 0.038, "muted", "body", wordwrap=28)
+        # Dark backing panels keep the text readable over the bright 3D preview.
+        top = panel(self.detail, th, (-0.5, 0.5, -0.1, 0.09), "bg", 0.8, 0.06, shadow=False, pos=(-0.95, 0, 0.57))
+        label(top, th, skin.name, (0, 0.0), 0.065, "text", "title")
+        label(top, th, rar.id, (0, -0.07), 0.04, rar.color, "title")
+        info = panel(self.detail, th, (-0.55, 0.55, -0.08, 0.08), "bg", 0.8, 0.06, shadow=False, pos=(-0.95, 0, -0.42))
+        label(info, th, skin.description, (0, 0.015), 0.036, "text", "body", wordwrap=28)
         owned = prof.skins.is_owned(skin.id)
         if owned:
             eq = prof.skins.equipped == skin.id

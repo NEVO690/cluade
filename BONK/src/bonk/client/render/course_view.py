@@ -9,7 +9,7 @@ what the physics uses.
 import math
 import random
 
-from panda3d.core import (Fog, NodePath, TransparencyAttrib)
+from panda3d.core import Fog, NodePath
 
 from .character_view import model_file
 from .model_utils import srgb_fix

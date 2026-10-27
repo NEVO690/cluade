@@ -3,8 +3,8 @@
 import logging
 import sys
 
-from panda3d.core import (AmbientLight, AntialiasAttrib, CullFaceAttrib, DirectionalLight, RenderState,
-                          loadPrcFileData)
+from panda3d.core import (AmbientLight, AntialiasAttrib, ClockObject, CullFaceAttrib, DirectionalLight,
+                          RenderState, loadPrcFileData)
 
 from .. import VERSION
 from ..maps.map_manager import MapManager
@@ -170,7 +170,7 @@ class BonkApp(ShowBase):
 
     # ------------------------------------------------------------------ loop
     def _update(self, task):
-        dt = min(globalClock.getDt(), 0.1)  # noqa: F821  (Panda3D builtin)
+        dt = min(ClockObject.getGlobalClock().getDt(), 0.1)
         if self.session is not None:
             self.session.update(dt)
         else:

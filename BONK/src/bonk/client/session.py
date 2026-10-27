@@ -239,6 +239,18 @@ class GameSession:
             self.spectate_id = alive[0].id if alive else rnd.characters[0].id
         return rnd.by_id(self.spectate_id)
 
+    def _camera_target(self, focus):
+        """Where the camera looks: never down into the goo, and it waits while respawning."""
+        v = self.views.get(focus.id)
+        pos = tuple(v.root.getPos()) if v is not None and v.visible else (focus.x, focus.y, focus.z)
+        last = getattr(self, "_last_cam_target", None)
+        if focus.state == "RESPAWNING" and last is not None:
+            return last
+        floor = self.course_view.void_z + 2.0 if self.course_view is not None else -50.0
+        pos = (pos[0], pos[1], max(pos[2], floor))
+        self._last_cam_target = pos
+        return pos
+
     def cycle_spectate(self, step):
         rnd = self.gm.round
         if rnd is None:
@@ -286,8 +298,7 @@ class GameSession:
         self.course_view.update(max(0.0, t_vis), dt, self.app.camera.getPos())
         focus = self.focus_char()
         if focus is not None:
-            v = self.views.get(focus.id)
-            pos = v.root.getPos() if v is not None else (focus.x, focus.y, focus.z)
+            pos = self._camera_target(focus)
             self.camera.update(pos[0], pos[1], pos[2], focus.grounded, dt)
             # Shadow camera follows the action.
             self.sun.setPos(pos[0] + 10, pos[1] - 6, pos[2] + 25)

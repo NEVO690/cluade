@@ -165,9 +165,27 @@ class AutoPlay:
             if gm.state == GameState.COUNTDOWN and 1.5 < el <= 1.5 + dt:
                 self.shot(tag)
             if gm.state == GameState.ROUND_ACTIVE:
+                self.race_frames = getattr(self, "race_frames", 0) + 1
+                self.race_time = getattr(self, "race_time", 0.0) + dt
                 for at in (4.0, 12.0, 22.0):
                     if at < el <= at + dt:
                         self.shot("%s_%02ds" % (tag, at))
+                if gm.round_index == 0 and 8.0 < el <= 8.0 + dt and not getattr(self, "_paused_once", False):
+                    self._paused_once = True
+                    app.screens.show("pause", session=s)
+                    self._pause_wait = 0.0
+            if getattr(self, "_pause_wait", None) is not None:
+                # The game is frozen while paused; wait for the menu fade-in, then resume.
+                self._pause_wait += dt
+                frozen_at = getattr(self, "_frozen_rt", None)
+                if frozen_at is None:
+                    self._frozen_rt = gm.round.race_time
+                if self._pause_wait > 0.8:
+                    self.shot("pause_menu")
+                    self.report["pause_froze_game"] = abs(gm.round.race_time - self._frozen_rt) < 1e-6
+                    app.screens.get("pause")._resume()
+                    self.report["pause_tested"] = not s.paused
+                    self._pause_wait = None
             if gm.state == GameState.ROUND_END and 1.0 < el <= 1.0 + dt:
                 self.shot(tag)
             if gm.state == GameState.RESULTS and not hud.results.isHidden():
@@ -267,6 +285,8 @@ class AutoPlay:
                 "level_after": app.profile.xp.level,
                 "rank_after": app.profile.ranks.tier["id"],
             })
+        if getattr(self, "race_time", 0) > 0:
+            self.report["race_fps"] = round(self.race_frames / self.race_time, 1)
         out = os.path.join(self.shots or ".", "autoplay_report.json")
         with open(out, "w") as fh:
             json.dump(self.report, fh, indent=2)
