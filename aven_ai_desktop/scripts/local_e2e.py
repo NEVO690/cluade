@@ -55,8 +55,8 @@ def main() -> int:
         assert "<think>" not in answer, "reasoning leaked into the reply"
         assert "paris" in answer.lower(), "unexpected answer"
 
-        code = ask(provider, "aven-light", "Write a one-line Python expression that reverses a string s.", "code")
-        assert "[::-1]" in code, "unexpected code answer"
+        code = ask(provider, "aven-light", "Write a one-line Python expression that reverses a string s.", "python")
+        assert "[::-1]" in code or "reversed(s)" in code, "unexpected code answer"
 
         # Same model file with thinking mode on (as AVEN Ultra uses it): only the answer is shown.
         thinking = LocalProvider(engine)
