@@ -106,7 +106,7 @@ class ModelOption(QFrame):
         if not model.available:
             self.base_description += " · " + ("In development" if model.status == "in_development" else "Unavailable")
             self.setEnabled(False)
-        self.description = QLabel(model.description)
+        self.description = QLabel(self.base_description)
         self.description.setObjectName("ModelOptionDescription")
         texts.addWidget(name)
         texts.addWidget(self.description)

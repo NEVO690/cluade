@@ -375,3 +375,20 @@ def test_upgrade_from_1x_keeps_conversations_and_settings(tmp_path) -> None:
     settings_file.write_text(json.dumps({"provider": "anthropic", "model": "aven-1-1", "theme": "dark"}))
     loaded = SettingsStore(settings_file).load()
     assert loaded.model == "aven-2" and loaded.theme == "dark" and loaded.category == "aven"
+
+
+def test_a_model_marked_in_development_is_not_offered_as_working(monkeypatch, qtbot) -> None:
+    import dataclasses
+
+    from app.ui.chat_view import ModelOption
+
+    models = catalog().models
+    monkeypatch.setitem(models, "aven-ultra", dataclasses.replace(models["aven-ultra"], status="in_development"))
+    credentials = CredentialStore(use_keyring=False)
+    credentials.save_key("anthropic", "sk-test-key-123456")
+    service = ChatService(AppSettings(provider="anthropic", model="aven-ultra"), credentials, account=FakeAccount())
+    status = service.status("aven")
+    assert not status.ready and "still in development" in status.problem
+    option = ModelOption(models["aven-ultra"])
+    qtbot.addWidget(option)
+    assert not option.isEnabled() and "In development" in option.description.text()
