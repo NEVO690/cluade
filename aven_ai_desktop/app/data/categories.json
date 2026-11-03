@@ -1,0 +1,77 @@
+{
+  "notes": "The AVEN AI categories. access: free | paid (paid needs 'entitlement', which only the AVEN Cloud server grants). kind: chat | studio.",
+  "categories": [
+    {
+      "id": "aven", "name": "AVEN AI", "kind": "chat", "icon": "◆", "access": "free",
+      "tagline": "Your friendly assistant for questions, writing, research and everyday code.",
+      "description": "Conversations, answers, writing and rewriting, explanations, research help and coding basics.",
+      "placeholder": "Message AVEN…",
+      "suggestions": [
+        "Explain how vaccines train the immune system",
+        "Rewrite this paragraph so it sounds more professional",
+        "Help me plan a productive week",
+        "Write a Python function that removes duplicates from a list"
+      ],
+      "models": ["aven-2", "aven-ultra", "aven-core", "aven-light"], "default_model": "aven-2",
+      "validators": []
+    },
+    {
+      "id": "python", "name": "AVEN Python", "kind": "chat", "icon": "Py", "access": "free",
+      "tagline": "A Python specialist: programs, projects, debugging, refactoring and libraries.",
+      "description": "Complete Python programs and projects, error explanations, refactoring, desktop apps and automation scripts. Code in replies is checked for syntax errors and undefined names.",
+      "placeholder": "Describe the Python program, or paste code and the error…",
+      "suggestions": [
+        "Create a command-line to-do app with JSON storage and tests",
+        "Explain this error: TypeError: 'NoneType' object is not subscriptable",
+        "Refactor a long function into smaller, testable pieces",
+        "Build a small PySide6 desktop app with a file picker"
+      ],
+      "models": ["aven-2", "aven-ultra", "aven-core", "aven-light"], "default_model": "aven-2",
+      "validators": ["python"]
+    },
+    {
+      "id": "unity", "name": "AVEN Unity", "kind": "chat", "icon": "U", "access": "free",
+      "tagline": "A Unity specialist: C# gameplay, controllers, UI, physics and debugging.",
+      "description": "Unity C# scripts, gameplay systems, player controllers, UI, physics and scene workflows. C# in replies is checked for syntax errors and common Unity mistakes.",
+      "placeholder": "Describe the Unity feature, or paste the script and the Console error…",
+      "suggestions": [
+        "Write a third-person player controller with jumping and a CharacterController",
+        "Why do I get NullReferenceException in my Start() method?",
+        "Create a health system with UI hearts and damage events",
+        "Make a door that opens when the player presses E nearby"
+      ],
+      "models": ["aven-2", "aven-ultra", "aven-core", "aven-light"], "default_model": "aven-2",
+      "validators": ["csharp", "unity"]
+    },
+    {
+      "id": "code", "name": "AVEN CODE", "kind": "chat", "icon": "</>", "access": "paid",
+      "entitlement": "aven_code",
+      "tagline": "Professional coding across languages: projects, repositories, debugging and reviews.",
+      "description": "Multi-language development (Python, JavaScript, TypeScript, HTML/CSS, C#, Java, C++, SQL and more), work with your project files, architecture plans, refactoring and code review. Code in replies is syntax-checked per language.",
+      "placeholder": "Describe the task, or add your project files and ask about them…",
+      "suggestions": [
+        "Review the attached files for bugs and security issues",
+        "Design a REST API with authentication and write the TypeScript server",
+        "Find why this React component re-renders on every keystroke",
+        "Plan the architecture for a multi-tenant SaaS backend"
+      ],
+      "models": ["aven-2", "aven-ultra", "aven-core", "aven-light"], "default_model": "aven-2",
+      "validators": ["auto"]
+    },
+    {
+      "id": "made", "name": "Made With AVEN", "kind": "studio", "icon": "▶", "access": "free",
+      "pricing_note": "Preview. Pricing is not final yet; free while in preview.",
+      "tagline": "Describe a game and AVEN plans it, builds it, checks it and lets you play it.",
+      "description": "Creates 2D browser games (HTML5 canvas) from a description: a design plan, the game code, automatic checks and repairs, and a playable preview.",
+      "placeholder": "Describe your game…",
+      "suggestions": [
+        "A top-down adventure: explore a village, collect coins, avoid slimes",
+        "A space shooter with waves of enemies and power-ups",
+        "A platformer with moving platforms, a timer and three levels",
+        "A city driving game: deliver packages before time runs out"
+      ],
+      "models": ["aven-2", "aven-ultra", "aven-core", "aven-light"], "default_model": "aven-2",
+      "validators": ["javascript"]
+    }
+  ]
+}

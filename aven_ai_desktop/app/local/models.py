@@ -1,91 +1,27 @@
 """Open-source models AVEN Local runs on the user's own computer.
 
-All files are Qwen3 models (Apache-2.0 licence) in GGUF format. Each download
-is pinned to an exact repository revision and verified against its SHA-256
-checksum, so a changed or tampered file is rejected.
+The files and which AVEN model uses which file are defined in the catalog
+(``app/data/models.json``). Each download is pinned to an exact repository revision
+and verified against its SHA-256 checksum, so a changed or tampered file is rejected.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from app.config.catalog import LocalBackend, ModelFile, catalog
 
+__all__ = ["DEFAULT_LOCAL_MODEL", "LOCAL_MODELS", "MODEL_FILES", "LocalModel", "ModelFile", "sampling"]
 
-@dataclass(frozen=True)
-class ModelFile:
-    key: str
-    repo: str
-    revision: str
-    filename: str
-    size: int
-    sha256: str
-    label: str  # e.g. "Qwen3 4B"
-    # Context window the engine opens for this file (prompt + history + reply), in tokens.
-    context: int = 12_288
-
-    @property
-    def url(self) -> str:
-        return f"https://huggingface.co/{self.repo}/resolve/{self.revision}/{self.filename}"
-
-    @property
-    def size_text(self) -> str:
-        return f"{self.size / 1_000_000_000:.1f} GB"
-
-
-MODEL_FILES: dict[str, ModelFile] = {
-    "qwen3-1.7b": ModelFile(
-        key="qwen3-1.7b",
-        repo="ggml-org/Qwen3-1.7B-GGUF",
-        revision="daeb8e2d528a760970442092f6bf1e55c3b659eb",
-        filename="Qwen3-1.7B-Q4_K_M.gguf",
-        size=1_282_439_264,
-        sha256="d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
-        label="Qwen3 1.7B",
-    ),
-    "qwen3-4b": ModelFile(
-        key="qwen3-4b",
-        repo="ggml-org/Qwen3-4B-GGUF",
-        revision="2f3b082b1356a6123f7ed71e65aea340da25d53c",
-        filename="Qwen3-4B-Q4_K_M.gguf",
-        size=2_497_280_640,
-        sha256="ab27b9bfa375a178d6cba48f3ad892b94b7739659dcc7aae8058ce0ffed6b328",
-        label="Qwen3 4B",
-    ),
-    "qwen3-8b": ModelFile(
-        key="qwen3-8b",
-        repo="Qwen/Qwen3-8B-GGUF",
-        revision="7c41481f57cb95916b40956ab2f0b139b296d974",
-        filename="Qwen3-8B-Q4_K_M.gguf",
-        size=5_027_783_488,
-        sha256="d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785",
-        label="Qwen3 8B",
-        # Larger window for AVEN Ultra's thinking and longer conversations (about 2.4 GB of memory).
-        context=16_384,
-    ),
-}
-
-
-@dataclass(frozen=True)
-class LocalModel:
-    file: ModelFile
-    thinking: bool  # Qwen3 "thinking mode": reasons before answering (better, slower)
-    # Longest reply in tokens. With thinking, this also covers the hidden reasoning.
-    max_output: int = 4096
-
-
-# AVEN model -> local model. AVEN 1.1 and AVEN Ultra share one download: the 8B model
-# (about 2x Core and 5x Light). AVEN 1.1 answers directly, so it is close to Ultra's
-# quality but much faster; Ultra also thinks before answering.
-LOCAL_MODELS: dict[str, LocalModel] = {
-    "aven-light": LocalModel(MODEL_FILES["qwen3-1.7b"], thinking=False),
-    "aven-core": LocalModel(MODEL_FILES["qwen3-4b"], thinking=False),
-    "aven-1-1": LocalModel(MODEL_FILES["qwen3-8b"], thinking=False),
-    "aven-ultra": LocalModel(MODEL_FILES["qwen3-8b"], thinking=True, max_output=8192),
-}
+LocalModel = LocalBackend
+MODEL_FILES: dict[str, ModelFile] = dict(catalog().files)
+# AVEN model -> local model. Several AVEN models may share one download.
+LOCAL_MODELS: dict[str, LocalBackend] = {mid: m.local for mid, m in catalog().models.items() if m.local}
 DEFAULT_LOCAL_MODEL = "aven-light"
 
 
-def sampling(thinking: bool) -> dict[str, float | int]:
-    """Qwen3's recommended sampling settings (greedy decoding causes repetition)."""
-    if thinking:
+def sampling(local: LocalBackend) -> dict[str, float | int]:
+    """Sampling settings for a local model (the model makers' recommendations, from the catalog)."""
+    if local.sampling:
+        return dict(local.sampling)
+    if local.thinking:
         return {"temperature": 0.6, "top_p": 0.95, "top_k": 20, "min_p": 0.0}
     return {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}

@@ -163,7 +163,7 @@ class LocalProvider(AIProvider):
 
         # Qwen3: turn "thinking mode" on or off for this AVEN model, with the matching
         # recommended sampling settings.
-        extra_body: dict = {"chat_template_kwargs": {"enable_thinking": local.thinking}, **sampling(local.thinking)}
+        extra_body: dict = {"chat_template_kwargs": {"enable_thinking": local.thinking}, **sampling(local)}
         # Keep the reply in the conversation's writing systems (no stray Chinese, Cyrillic…).
         grammar = reply_grammar([m.content for m in messages], messages[-1].content)
         if grammar:

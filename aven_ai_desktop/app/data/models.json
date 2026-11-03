@@ -1,0 +1,71 @@
+{
+  "notes": "AVEN models. 'local' is the open-source model AVEN Local runs on this computer; 'providers' are the models used with a personal API key; AVEN Cloud maps model ids on the server. status: available | unavailable | in_development. access: free | paid.",
+  "files": {
+    "qwen3.5-2b-q8": {
+      "repo": "unsloth/Qwen3.5-2B-GGUF", "revision": "f6d5376be1edb4d416d56da11e5397a961aca8ae",
+      "filename": "Qwen3.5-2B-Q8_0.gguf", "size": 2012012800,
+      "sha256": "1b04acba824817554f4ce23639bc8495ff70453b8fcb047900c731521021f2c1",
+      "label": "Qwen3.5 2B", "license": "Apache-2.0", "context": 12288
+    },
+    "qwen3.5-4b": {
+      "repo": "unsloth/Qwen3.5-4B-GGUF", "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+      "filename": "Qwen3.5-4B-Q4_K_M.gguf", "size": 2740937888,
+      "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+      "label": "Qwen3.5 4B", "license": "Apache-2.0", "context": 12288
+    },
+    "qwen3.5-9b": {
+      "repo": "unsloth/Qwen3.5-9B-GGUF", "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+      "filename": "Qwen3.5-9B-Q4_K_M.gguf", "size": 5680522464,
+      "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+      "label": "Qwen3.5 9B", "license": "Apache-2.0", "context": 16384
+    },
+    "qwen3-8b": {
+      "repo": "Qwen/Qwen3-8B-GGUF", "revision": "7c41481f57cb95916b40956ab2f0b139b296d974",
+      "filename": "Qwen3-8B-Q4_K_M.gguf", "size": 5027783488,
+      "sha256": "d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785",
+      "label": "Qwen3 8B", "license": "Apache-2.0", "context": 16384
+    }
+  },
+  "models": [
+    {
+      "id": "aven-2", "name": "AVEN 2.0", "version": "2.0", "status": "available", "access": "free",
+      "released": "2026-11-03",
+      "description": "Our flagship: the smartest everyday model, for writing, research and code.",
+      "profile": "You are the AVEN flagship model. Before answering, identify every requirement in the request and make sure the answer meets all of them. State the final answer clearly.",
+      "local": {"file": "qwen3.5-9b", "thinking": false, "max_output": 4096,
+                "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
+      "providers": {"anthropic": "claude-opus-5-5"}, "effort": "high"
+    },
+    {
+      "id": "aven-ultra", "name": "AVEN Ultra", "version": "1.0", "status": "available", "access": "free",
+      "released": "2026-10-19",
+      "description": "Thinks longer for the hardest questions, research and code.",
+      "profile": "You are the AVEN model for the hardest tasks: complex reasoning, research questions, code analysis and multi-step planning. Work through the problem carefully, consider alternatives and edge cases, verify every calculation and important claim, and look for contradictions. Give a well-structured answer with the evidence and reasoning that support the conclusion, and say what remains uncertain.",
+      "local": {"file": "qwen3-8b", "thinking": true, "max_output": 8192,
+                "sampling": {"temperature": 0.6, "top_p": 0.95, "top_k": 20, "min_p": 0.0}},
+      "providers": {"anthropic": "claude-opus-5-5"}, "effort": "xhigh"
+    },
+    {
+      "id": "aven-core", "name": "AVEN Core", "version": "1.1", "status": "available", "access": "free",
+      "released": "2026-11-03",
+      "description": "Balanced speed and quality for everyday work.",
+      "profile": "You are the balanced AVEN model: thorough enough to be accurate, short enough to be quick.",
+      "local": {"file": "qwen3.5-4b", "thinking": false, "max_output": 4096,
+                "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
+      "providers": {"anthropic": "claude-sonnet-5-5"}
+    },
+    {
+      "id": "aven-light", "name": "AVEN Light", "version": "1.1", "status": "available", "access": "free",
+      "released": "2026-11-03",
+      "description": "The fastest replies for quick questions.",
+      "profile": "You are the fast AVEN model: keep replies short, clear and simple. For a long or very complex task, do your best and mention that AVEN 2.0 or AVEN Ultra (in the model picker) can handle it in more depth.",
+      "local": {"file": "qwen3.5-2b-q8", "thinking": false, "max_output": 4096,
+                "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
+      "providers": {"anthropic": "claude-haiku-5-5"}
+    }
+  ],
+  "legacy": {
+    "aven-1": ["aven-2", "AVEN 1.0"],
+    "aven-1-1": ["aven-2", "AVEN 1.1"]
+  }
+}
