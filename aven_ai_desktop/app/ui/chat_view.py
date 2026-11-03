@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
-    QButtonGroup,
+    QFileDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QMenu,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
@@ -25,12 +28,20 @@ from PySide6.QtWidgets import (
 from app.ai.chat_service import ConfigStatus
 from app.ai.errors import AIError
 from app.ai.prompts import MODES
+from app.code.files import AttachedFile, collect_folder, read_attachment
 from app.config.aven_models import AVEN_MODELS, DEFAULT_AVEN_MODEL, AvenModel, aven_model_name, get_aven_model
+from app.ui.category_nav import access_badge
 from app.ui.logo import logo_pixmap
 from app.ui.message_widget import AssistantMessageWidget, ErrorWidget, UserMessageWidget
 from app.ui.theme_manager import Palette
 
 CONTENT_MAX_WIDTH = 860
+WELCOME_TITLES = {
+    "aven": "How can I help you today?",
+    "python": "What are we building in Python?",
+    "unity": "What are we making in Unity?",
+    "code": "What are we building today?",
+}
 MAX_INPUT_CHARS = 100_000
 COMPOSER_MAX_LINES = 10
 
@@ -88,9 +99,13 @@ class ModelOption(QFrame):
         layout.setContentsMargins(12, 8, 12, 8)
         texts = QVBoxLayout()
         texts.setSpacing(1)
-        name = QLabel(model.name)
+        name = QLabel(model.display_name)
         name.setObjectName("ModelOptionName")
+        self.available = model.available
         self.base_description = model.description
+        if not model.available:
+            self.base_description += " · " + ("In development" if model.status == "in_development" else "Unavailable")
+            self.setEnabled(False)
         self.description = QLabel(model.description)
         self.description.setObjectName("ModelOptionDescription")
         texts.addWidget(name)
@@ -110,7 +125,7 @@ class ModelOption(QFrame):
         self.style().polish(self)
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt API)
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and self.available:
             self.clicked.emit()
         super().mouseReleaseEvent(event)
 
@@ -129,6 +144,7 @@ class ModelPicker(QToolButton):
         self.menu_ = QMenu(self)
         self.menu_.setObjectName("ModelMenu")
         self.options: dict[str, ModelOption] = {}
+        self.actions_: dict[str, QWidgetAction] = {}
         for model in AVEN_MODELS:
             option = ModelOption(model)
             option.clicked.connect(lambda m=model.id: self._choose(m))
@@ -136,9 +152,17 @@ class ModelPicker(QToolButton):
             action.setDefaultWidget(option)
             self.menu_.addAction(action)
             self.options[model.id] = option
+            self.actions_[model.id] = action
         self.setMenu(self.menu_)
         self.current = ""
+        self.allowed: tuple[str, ...] = tuple(self.options)
         self.set_current(DEFAULT_AVEN_MODEL)
+
+    def set_allowed(self, model_ids: tuple[str, ...]) -> None:
+        """Show only the models offered in the current category."""
+        self.allowed = model_ids or tuple(self.options)
+        for model_id, action in self.actions_.items():
+            action.setVisible(model_id in self.allowed)
 
     def set_current(self, model_id: str) -> None:
         if get_aven_model(model_id) is None:
@@ -161,10 +185,32 @@ class ModelPicker(QToolButton):
             self.model_selected.emit(model_id)
 
 
+class AttachmentChip(QFrame):
+    removed = Signal(str)
+
+    def __init__(self, path: str, size: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("AttachmentChip")
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 2, 2, 2)
+        layout.setSpacing(4)
+        label = QLabel(f"📄 {path}  ·  {max(1, size // 1000)} KB")
+        label.setObjectName("AttachmentLabel")
+        remove = QToolButton()
+        remove.setObjectName("AttachmentRemove")
+        remove.setText("✕")
+        remove.setToolTip(f"Remove {path}")
+        remove.clicked.connect(lambda: self.removed.emit(path))
+        layout.addWidget(label)
+        layout.addWidget(remove)
+
+
 class ChatView(QWidget):
     send_requested = Signal(str)
     stop_requested = Signal()
     mode_changed = Signal(str)
+    subscribe_requested = Signal()
+    refresh_access_requested = Signal()
     model_changed = Signal(str)
     settings_requested = Signal()
     download_requested = Signal()
@@ -213,26 +259,9 @@ class ChatView(QWidget):
         titles.addStretch(1)
         layout.addLayout(titles, 1)
 
-        switch = QFrame()
-        switch.setObjectName("ModeSwitch")
-        switch_layout = QHBoxLayout(switch)
-        switch_layout.setContentsMargins(3, 3, 3, 3)
-        switch_layout.setSpacing(2)
-        self.mode_group = QButtonGroup(self)
-        self.mode_buttons: dict[str, QPushButton] = {}
-        for mode_id in ("aven", "code"):
-            button = QPushButton(MODES[mode_id].name)
-            button.setObjectName("ModeButton")
-            button.setCheckable(True)
-            button.setCursor(Qt.CursorShape.PointingHandCursor)
-            button.setToolTip(MODES[mode_id].tagline)
-            button.clicked.connect(lambda _=False, m=mode_id: self._on_mode_clicked(m))
-            self.mode_group.addButton(button)
-            self.mode_buttons[mode_id] = button
-            switch_layout.addWidget(button)
-        self.mode_buttons["aven"].setChecked(True)
-        switch.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        layout.addWidget(switch, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.access_badge = QLabel("Free")
+        self.access_badge.setObjectName("AccessBadge")
+        layout.addWidget(self.access_badge, 0, Qt.AlignmentFlag.AlignVCenter)
         return header
 
     def _build_welcome(self) -> QWidget:
@@ -270,7 +299,12 @@ class ChatView(QWidget):
         self.setup_button = QPushButton("Open Settings")
         self.setup_button.setObjectName("PrimaryButton")
         self.setup_button.clicked.connect(self._on_setup_clicked)
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setToolTip("Check your subscription again")
+        self.refresh_button.clicked.connect(self.refresh_access_requested.emit)
+        self.refresh_button.hide()
         setup_layout.addWidget(self.setup_label, 1)
+        setup_layout.addWidget(self.refresh_button)
         setup_layout.addWidget(self.setup_button)
         layout.addSpacing(6)
         layout.addWidget(self.setup_card)
@@ -355,6 +389,13 @@ class ChatView(QWidget):
         frame_layout = QVBoxLayout(self.composer_frame)
         frame_layout.setContentsMargins(12, 8, 8, 8)
         frame_layout.setSpacing(4)
+        self.attachments: list[AttachedFile] = []
+        self.attachment_row = QHBoxLayout()
+        self.attachment_row.setSpacing(6)
+        self.attachment_holder = QWidget()
+        self.attachment_holder.setLayout(self.attachment_row)
+        self.attachment_holder.hide()
+        frame_layout.addWidget(self.attachment_holder)
         self.input = ComposerInput()
         self.input.submit.connect(self._on_submit)
         self.input.textChanged.connect(self._update_send_state)
@@ -366,6 +407,17 @@ class ChatView(QWidget):
         self.model_picker = ModelPicker()
         self.model_picker.model_selected.connect(self._on_model_selected)
         controls.addWidget(self.model_picker)
+        self.attach_button = QToolButton()
+        self.attach_button.setObjectName("AttachButton")
+        self.attach_button.setText("📎 Add files")
+        self.attach_button.setToolTip("Attach project files so AVEN can read them")
+        self.attach_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.attach_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        attach_menu = QMenu(self.attach_button)
+        attach_menu.addAction("Files…", self._pick_files)
+        attach_menu.addAction("Project folder…", self._pick_folder)
+        self.attach_button.setMenu(attach_menu)
+        controls.addWidget(self.attach_button)
         controls.addStretch(1)
         frame_layout.addLayout(controls)
         self.send_button = QPushButton("Send")
@@ -388,15 +440,84 @@ class ChatView(QWidget):
 
     # --- mode / header -------------------------------------------------------------
     def set_mode(self, mode: str) -> None:
+        """Show a chat category (AVEN AI, AVEN Python, AVEN Unity or AVEN CODE)."""
         self.mode = mode
-        self.mode_buttons[mode].setChecked(True)
         info = MODES[mode]
         self.input.setPlaceholderText(info.placeholder)
-        self.welcome_title.setText("What are we building today?" if mode == "code" else "How can I help you today?")
-        self.welcome_subtitle.setText(info.tagline)
-        for button, text in zip(self.suggestion_buttons, info.suggestions, strict=True):
+        self.welcome_title.setText(WELCOME_TITLES.get(mode, "How can I help you today?"))
+        self.welcome_subtitle.setText(info.description or info.tagline)
+        for button, text in zip(self.suggestion_buttons, info.suggestions, strict=False):
             button.setText(text)
             button.setToolTip(text)
+        text, kind = access_badge(info)
+        self.access_badge.setText(text)
+        self.access_badge.setProperty("kind", kind)
+        self.access_badge.style().unpolish(self.access_badge)
+        self.access_badge.style().polish(self.access_badge)
+        self.access_badge.setToolTip(info.pricing_note or ("AVEN CODE needs a subscription." if info.paid else "Free"))
+        self.model_picker.set_allowed(info.models)
+        # Attaching files is for the coding categories.
+        self.attach_button.setVisible(bool(info.validators))
+        if not info.validators:
+            self.clear_attachments()
+
+    # --- attachments -------------------------------------------------------------
+    def _pick_files(self) -> None:
+        paths, _ = QFileDialog.getOpenFileNames(self, "Attach files")
+        files, problems = [], []
+        for path in paths:
+            try:
+                files.append(read_attachment(Path(path)))
+            except (OSError, ValueError) as exc:
+                problems.append(str(exc))
+        self.add_attachments(files, problems)
+
+    def _pick_folder(self) -> None:
+        folder = QFileDialog.getExistingDirectory(self, "Attach a project folder")
+        if folder:
+            files, problems = collect_folder(Path(folder))
+            if not files:
+                problems.insert(0, "No text files were found in that folder.")
+            self.add_attachments(files, problems)
+
+    def add_attachments(self, files: list[AttachedFile], problems: list[str] | None = None) -> None:
+        known = {f.path for f in self.attachments}
+        self.attachments += [f for f in files if f.path not in known]
+        self._render_attachments()
+        if problems:
+            QMessageBox.information(self, "Some files were not attached", "\n".join(problems[:12]))
+
+    def remove_attachment(self, path: str) -> None:
+        self.attachments = [f for f in self.attachments if f.path != path]
+        self._render_attachments()
+
+    def clear_attachments(self) -> None:
+        self.attachments = []
+        self._render_attachments()
+
+    def _render_attachments(self) -> None:
+        while self.attachment_row.count():
+            item = self.attachment_row.takeAt(0)
+            if item.widget() is not None:
+                item.widget().deleteLater()
+        shown = self.attachments[:6]
+        for f in shown:
+            chip = AttachmentChip(f.path, f.size)
+            chip.removed.connect(self.remove_attachment)
+            self.attachment_row.addWidget(chip)
+        if len(self.attachments) > len(shown):
+            more = QLabel(f"+{len(self.attachments) - len(shown)} more")
+            more.setObjectName("HelpText")
+            self.attachment_row.addWidget(more)
+        clear = QToolButton()
+        clear.setObjectName("AttachmentRemove")
+        clear.setText("Clear all")
+        clear.clicked.connect(self.clear_attachments)
+        if self.attachments:
+            self.attachment_row.addWidget(clear)
+        self.attachment_row.addStretch(1)
+        self.attachment_holder.setVisible(bool(self.attachments))
+        self._update_send_state()
 
     def set_model(self, model_id: str) -> None:
         self.model_picker.set_current(model_id)
@@ -404,20 +525,21 @@ class ChatView(QWidget):
     def _on_model_selected(self, model_id: str) -> None:
         self.model_changed.emit(model_id)
 
-    def _on_mode_clicked(self, mode: str) -> None:
-        if mode != self.mode:
-            self.set_mode(mode)
-            self.mode_changed.emit(mode)
-
     def set_title(self, title: str) -> None:
         self.title_label.setText(title)
         self.title_label.setToolTip(title)
 
     def set_status(self, status: ConfigStatus) -> None:
         self._status = status
+        self.refresh_button.setVisible(status.needs_subscription and "Subscribe" in status.problem)
         if status.ready:
             self.model_label.setText(f"{MODES[self.mode].name} · {status.model_name}")
             self.setup_card.hide()
+        elif status.needs_subscription:
+            self.model_label.setText(f"{MODES[self.mode].name} · subscription needed")
+            self.setup_label.setText(status.problem)
+            self.setup_button.setText("Subscribe" if "Subscribe" in status.problem else "Learn more")
+            self.setup_card.show()
         elif status.needs_download:
             self.model_label.setText(f"{MODES[self.mode].name} · {status.model_name} · download needed")
             self.setup_label.setText(status.problem)
@@ -430,7 +552,9 @@ class ChatView(QWidget):
             self.setup_card.show()
 
     def _on_setup_clicked(self) -> None:
-        if self._status is not None and self._status.needs_download:
+        if self._status is not None and self._status.needs_subscription:
+            self.subscribe_requested.emit()
+        elif self._status is not None and self._status.needs_download:
             self.download_requested.emit()
         else:
             self.settings_requested.emit()

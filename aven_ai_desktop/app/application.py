@@ -16,6 +16,7 @@ from app.logging_setup import setup_logging
 from app.paths import database_path, is_frozen, logs_dir
 from app.storage.conversation_repository import ConversationRepository
 from app.storage.database import Database, StorageError
+from app.studio.projects import ProjectStore
 from app.ui.logo import app_icon
 from app.ui.main_window import MainWindow
 from app.ui.theme_manager import ThemeManager
@@ -81,7 +82,10 @@ def run(argv: list[str]) -> int:
         return 2
 
     repository = ConversationRepository(database)
-    window = MainWindow(settings, settings_store, credentials, repository, theme, ChatService(settings, credentials))
+    window = MainWindow(
+        settings, settings_store, credentials, repository, theme, ChatService(settings, credentials),
+        ProjectStore(database),
+    )  # fmt: skip
     window.show()
     try:
         return app.exec()

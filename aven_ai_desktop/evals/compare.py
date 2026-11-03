@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-ORDER = ["aven-1-1", "aven-ultra", "aven-core", "aven-light"]
+ORDER = ["main", "ultra", "core", "light", "aven-2", "aven-1-1", "aven-ultra", "aven-core", "aven-light"]
 METRICS = [
     ("Cases passed", lambda s: f"{s['passed']}/{s['total']}"),
     ("Replies with language problems", lambda s: s["language_problem_replies"]),
@@ -27,11 +27,11 @@ def main(folder: str) -> int:
     reports: dict[tuple[str, str], dict] = {}
     for path in Path(folder).rglob("*.json"):
         data = json.loads(path.read_text(encoding="utf-8"))
-        reports[(data["model"], data["label"])] = data
+        reports[(data.get("slot") or data["model"], data["label"])] = data
     lines = ["## AVEN model evaluation: baseline vs current\n"]
     for model in [m for m in ORDER if any(k[0] == m for k in reports)]:
         base, cur = reports.get((model, "baseline")), reports.get((model, "current"))
-        name = (cur or base)["model_name"]
+        name = " vs ".join(dict.fromkeys(r["model_name"] for r in (cur, base) if r))
         lines += [f"### {name}\n", "| Metric | Baseline | Current |", "|---|---|---|"]
         for label, get in METRICS:
             lines.append(

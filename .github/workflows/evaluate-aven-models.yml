@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 env:
-  # AVEN AI 1.1.0 as released (before the quality work).
-  BASELINE_REF: b99113c75e7b078138867fb1626c999b3699c0ac
+  # AVEN AI 1.2.0 as released (before the 2.0 models).
+  BASELINE_REF: b0e59c95a1b1e047e1f022810e0ca9fb92182923
 
 jobs:
   evaluate:
@@ -27,8 +27,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        model: [aven-1-1, aven-ultra, aven-core, aven-light]
-        variant: [baseline, current]
+        # Each slot compares the 2.0 model with the 1.2.0 model it replaces.
+        include:
+          - {slot: main, variant: baseline, model: aven-1-1}
+          - {slot: main, variant: current, model: aven-2}
+          - {slot: core, variant: baseline, model: aven-core}
+          - {slot: core, variant: current, model: aven-core}
+          - {slot: light, variant: baseline, model: aven-light}
+          - {slot: light, variant: current, model: aven-light}
+          - {slot: ultra, variant: baseline, model: aven-ultra}
+          - {slot: ultra, variant: current, model: aven-ultra}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,19 +59,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/aven-data/models
-          key: aven-models-${{ matrix.model }}-v1
+          key: aven-models-${{ matrix.slot }}-${{ matrix.variant }}-v2
       - name: Evaluate ${{ matrix.model }} (${{ matrix.variant }})
         working-directory: current/aven_ai_desktop
         env:
           AVEN_DATA_DIR: ${{ runner.temp }}/aven-data
           APP_ROOT: ${{ matrix.variant == 'baseline' && '../../baseline/aven_ai_desktop' || '.' }}
         run: >
-          python evals/run_eval.py --model ${{ matrix.model }} --label ${{ matrix.variant }}
-          --app-root "$APP_ROOT" --out "${{ runner.temp }}/results-${{ matrix.model }}-${{ matrix.variant }}.json"
+          python evals/run_eval.py --model ${{ matrix.model }} --label ${{ matrix.variant }} --slot ${{ matrix.slot }}
+          --app-root "$APP_ROOT" --out "${{ runner.temp }}/results-${{ matrix.slot }}-${{ matrix.variant }}.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: eval-${{ matrix.model }}-${{ matrix.variant }}
+          name: eval-${{ matrix.slot }}-${{ matrix.variant }}
           path: ${{ runner.temp }}/results-*.json
           if-no-files-found: ignore
 

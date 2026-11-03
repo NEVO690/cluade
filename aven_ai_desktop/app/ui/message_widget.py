@@ -28,6 +28,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.ai.errors import AIError
+from app.code.files import split_attachments
+from app.code.validation import Report
 from app.rendering.markdown_renderer import (
     ALLOWED_LINK_SCHEMES,
     Segment,
@@ -237,11 +239,19 @@ class UserMessageWidget(QWidget):
         self.bubble.setObjectName("UserBubble")
         bubble_layout = QVBoxLayout(self.bubble)
         bubble_layout.setContentsMargins(14, 10, 14, 10)
+        typed, attached = split_attachments(content)
         self.view = AutoHeightTextBrowser(wrap=True)
         self.view.document().setDocumentMargin(0)
-        self.view.setPlainText(content)
+        self.view.setPlainText(typed or "(files only)")
         apply_text_directions(self.view.document())
         bubble_layout.addWidget(self.view)
+        if attached:
+            names = ", ".join(attached[:4]) + (f" and {len(attached) - 4} more" if len(attached) > 4 else "")
+            self.files_label = QLabel(f"📎 {len(attached)} file{'s' if len(attached) != 1 else ''}: {names}")
+            self.files_label.setObjectName("MessageMeta")
+            self.files_label.setWordWrap(True)
+            self.files_label.setToolTip("\n".join(attached))
+            bubble_layout.addWidget(self.files_label)
         row.addWidget(self.bubble)
         outer.addLayout(row)
 
@@ -275,9 +285,48 @@ class UserMessageWidget(QWidget):
         self.view.update_height()
 
 
+class ChecksPanel(QFrame):
+    """Result of AVEN's code checks for one reply (no code is run)."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("ChecksPanel")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(4)
+        self.title = QLabel("")
+        self.title.setObjectName("ChecksTitle")
+        self.details = QLabel("")
+        self.details.setObjectName("ChecksDetails")
+        self.details.setWordWrap(True)
+        self.details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.title)
+        layout.addWidget(self.details)
+        self.hide()
+
+    def set_report(self, report: Report | None) -> None:
+        summary = report.summary() if report else ""
+        if not summary:
+            self.hide()
+            return
+        state = "error" if report.errors else ("warning" if report.warnings else "ok")
+        icon = {"error": "⚠", "warning": "!", "ok": "✓"}[state]
+        self.title.setText(f"{icon}  Code checks: {summary}")
+        self.setProperty("state", state)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        lines = [str(f) for f in report.findings if f.severity in ("error", "warning")][:8]
+        if report.unchecked:
+            lines.append("Not checked (no checker for this language): " + ", ".join(report.unchecked[:5]))
+        lines.append("Checked for syntax and common mistakes only; the code was not run.")
+        self.details.setText("\n".join(lines))
+        self.show()
+
+
 class AssistantMessageWidget(QWidget):
     copy_requested = Signal()
     regenerate_requested = Signal()
+    save_files_requested = Signal(object)  # the widget
 
     def __init__(self, assistant_name: str, palette: Palette, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -321,14 +370,24 @@ class AssistantMessageWidget(QWidget):
         self.status_note.hide()
         outer.addWidget(self.status_note)
 
+        checks_row = QHBoxLayout()
+        checks_row.setContentsMargins(30, 0, 0, 0)
+        self.checks = ChecksPanel()
+        checks_row.addWidget(self.checks)
+        outer.addLayout(checks_row)
+
         actions = QHBoxLayout()
         actions.setContentsMargins(24, 0, 0, 0)
         self.copy_button = _action_button("Copy", "Copy the whole response as Markdown")
         self.copy_button.clicked.connect(self._copy)
         self.regenerate_button = _action_button("Regenerate", "Ask for a new response")
         self.regenerate_button.clicked.connect(self.regenerate_requested.emit)
+        self.save_button = _action_button("Save files…", "Save the files in this reply to a folder")
+        self.save_button.clicked.connect(lambda: self.save_files_requested.emit(self))
+        self.save_button.hide()
         actions.addWidget(self.copy_button)
         actions.addWidget(self.regenerate_button)
+        actions.addWidget(self.save_button)
         actions.addStretch(1)
         self.actions_widget = QWidget()
         self.actions_widget.setLayout(actions)
@@ -386,6 +445,11 @@ class AssistantMessageWidget(QWidget):
 
     def set_can_regenerate(self, value: bool) -> None:
         self.regenerate_button.setVisible(value)
+
+    def set_code_report(self, report: Report | None, has_files: bool) -> None:
+        """Show the code check results and offer saving when the reply names files."""
+        self.checks.set_report(report)
+        self.save_button.setVisible(has_files)
 
     def apply_palette(self, palette: Palette) -> None:
         self.palette_ = palette

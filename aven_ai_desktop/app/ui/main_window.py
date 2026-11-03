@@ -6,32 +6,42 @@ import contextlib
 import logging
 import threading
 from dataclasses import dataclass
+from pathlib import Path
 
 from PySide6.QtCore import QByteArray, Qt, QTimer
 from PySide6.QtGui import QCloseEvent, QKeySequence, QShortcut
-from PySide6.QtWidgets import QInputDialog, QMainWindow, QMessageBox, QSplitter
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMainWindow, QMessageBox, QSplitter, QStackedWidget
 
 from app.ai import errors
 from app.ai.base_provider import ChatMessage
 from app.ai.chat_service import ChatService
 from app.ai.prompts import MODES
+from app.code.blocks import extract_blocks
+from app.code.files import attachment_block, plan_save, write_files
+from app.code.validation import validate_reply
+from app.config.catalog import catalog
 from app.config.secrets import CredentialStore
 from app.config.settings import AppSettings, SettingsStore
 from app.storage.conversation_repository import Conversation, ConversationRepository, generate_title
 from app.storage.database import StorageError
+from app.studio.projects import ProjectStore
 from app.ui.chat_view import ChatView
 from app.ui.logo import app_icon
 from app.ui.message_widget import AssistantMessageWidget
 from app.ui.settings_dialog import SettingsDialog
 from app.ui.sidebar import Sidebar
+from app.ui.studio_view import StudioView
 from app.ui.theme_manager import ThemeManager
-from app.version import APP_DISPLAY_NAME
+from app.version import APP_DISPLAY_NAME, __version__
 from app.workers.ai_worker import StreamWorker
 
 log = logging.getLogger(__name__)
 
 # Number of messages rendered when a conversation opens; older ones load on demand.
 PAGE_SIZE = 60
+# How much attached file text goes into one message (on-device models have a smaller memory).
+ATTACH_CHARS_LOCAL = 30_000
+ATTACH_CHARS_CLOUD = 300_000
 RENDER_INTERVAL_MS = 50
 
 
@@ -57,6 +67,7 @@ class MainWindow(QMainWindow):
         repository: ConversationRepository,
         theme_manager: ThemeManager,
         chat_service: ChatService | None = None,
+        project_store: ProjectStore | None = None,
     ) -> None:
         super().__init__()
         self.settings = settings
@@ -65,9 +76,11 @@ class MainWindow(QMainWindow):
         self.repo = repository
         self.theme = theme_manager
         self.chat_service = chat_service or ChatService(settings, credentials)
+        self.projects = project_store or ProjectStore(repository.db)
 
         self.current: Conversation | None = None
-        self.mode = "aven"
+        self.category = settings.category if catalog().category(settings.category) else "aven"
+        self.mode = self.category if self.category in MODES else "aven"
         self.generation: Generation | None = None
         self._generation_counter = 0
         self._loaded_offset = 0  # index of the first rendered message in the current conversation
@@ -77,15 +90,19 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(APP_DISPLAY_NAME)
         self.setWindowIcon(app_icon())
-        self.setMinimumSize(760, 520)
+        self.setMinimumSize(900, 640)
         self.resize(1240, 820)
 
         palette = self.theme.palette
         self.sidebar = Sidebar(palette)
         self.chat = ChatView(palette)
+        self.studio = StudioView(self.projects, self.chat_service, palette)
+        self.main_stack = QStackedWidget()
+        self.main_stack.addWidget(self.chat)
+        self.main_stack.addWidget(self.studio)
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self.sidebar)
-        splitter.addWidget(self.chat)
+        splitter.addWidget(self.main_stack)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([270, 970])
@@ -97,12 +114,17 @@ class MainWindow(QMainWindow):
         self._install_shortcuts()
         self.theme.changed.connect(self._on_theme_changed)
         self.chat.set_send_with_enter(settings.send_with_enter)
-        self.chat.set_model(settings.model)
         self.chat.set_mode(self.mode)
         self._restore_geometry()
 
-        self.refresh_sidebar()
-        self.new_conversation()
+        # Keep the model the user chose (including one saved by AVEN AI 1.x) for the category it was used in.
+        category = catalog().category(self.category)
+        if self.category not in self.settings.category_models and self.settings.model in category.models:
+            self.settings.category_models[self.category] = self.settings.model
+        self.set_category(self.category, force=True)
+        if self.settings.last_seen_version != __version__:
+            QTimer.singleShot(400, self.show_whats_new)
+        QTimer.singleShot(1500, self.refresh_access_quietly)
 
     # --- wiring -----------------------------------------------------------------------
     def _connect_signals(self) -> None:
@@ -112,6 +134,15 @@ class MainWindow(QMainWindow):
         self.sidebar.delete_requested.connect(self.delete_conversation)
         self.sidebar.settings_requested.connect(self.open_settings)
         self.sidebar.theme_toggle_requested.connect(self.toggle_theme)
+        self.sidebar.category_selected.connect(self.set_category)
+        self.sidebar.whats_new_requested.connect(self.show_whats_new)
+        self.sidebar.account_requested.connect(self.open_account)
+        self.chat.subscribe_requested.connect(self.open_account)
+        self.chat.refresh_access_requested.connect(self.refresh_access)
+        self.studio.projects_changed.connect(self.refresh_sidebar)
+        self.studio.download_requested.connect(self.download_selected_model)
+        self.studio.settings_requested.connect(lambda: self.open_settings(provider_tab=True))
+        self.studio.model_changed.connect(self.set_model)
         self.chat.send_requested.connect(self.send_message)
         self.chat.stop_requested.connect(self.stop_generation)
         self.chat.mode_changed.connect(self.set_mode)
@@ -127,12 +158,8 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+,"), self, activated=self.open_settings)
         QShortcut(QKeySequence("Escape"), self, activated=self._on_escape)
         QShortcut(QKeySequence("Ctrl+L"), self, activated=self.chat.focus_input)
-        QShortcut(QKeySequence("Ctrl+1"), self, activated=lambda: self._switch_mode_from_shortcut("aven"))
-        QShortcut(QKeySequence("Ctrl+2"), self, activated=lambda: self._switch_mode_from_shortcut("code"))
-
-    def _switch_mode_from_shortcut(self, mode: str) -> None:
-        self.chat.set_mode(mode)
-        self.set_mode(mode)
+        for index, category_id in enumerate(catalog().categories, start=1):
+            QShortcut(QKeySequence(f"Ctrl+{index}"), self, activated=lambda c=category_id: self.set_category(c))
 
     def _on_escape(self) -> None:
         if self.generation is not None:
@@ -146,15 +173,57 @@ class MainWindow(QMainWindow):
     # --- conversations ---------------------------------------------------------------------
     def refresh_sidebar(self) -> None:
         try:
-            conversations = self.repo.list_conversations()
+            if self.category == "made":
+                entries = self.projects.list()
+                current = self.studio.project.id if self.studio.project else None
+            else:
+                entries = self.repo.list_conversations(self.category)
+                current = self.current.id if self.current else None
         except StorageError as exc:
             self._storage_failed(exc)
             return
-        self.sidebar.set_conversations(conversations, self.current.id if self.current else None)
+        self.sidebar.set_conversations(entries, current)
 
     def update_status(self) -> None:
-        self.chat.set_status(self.chat_service.status())
-        self.chat.model_picker.set_notes(self._model_notes())
+        status = self.chat_service.status(self.category)
+        notes = self._model_notes()
+        if self.category == "made":
+            self.studio.set_status(status)
+            self.studio.model_picker.set_notes(notes)
+        else:
+            self.chat.set_status(status)
+            self.chat.model_picker.set_notes(notes)
+
+    # --- categories -------------------------------------------------------------------------
+    def set_category(self, category_id: str, force: bool = False) -> None:
+        category = catalog().category(category_id)
+        if category is None or (category_id == self.category and not force):
+            return
+        if self.studio.busy and category_id != "made":
+            QMessageBox.information(self, "Made With AVEN", "The game is still being built. Press Stop first.")
+            self.sidebar.set_category(self.category)
+            return
+        self.stop_generation()
+        self.category = category_id
+        self.settings.category = category_id
+        model = self.settings.category_models.get(category_id, category.default_model)
+        self.settings.model = model if model in category.models else category.default_model
+        self.save_settings()
+        self.sidebar.set_category(category_id)
+        if category.kind == "studio":
+            self.main_stack.setCurrentWidget(self.studio)
+            self.studio.model_picker.set_current(self.settings.model)
+            self.studio.show_dashboard()
+            self.current = None
+            self.refresh_sidebar()
+            self.update_status()
+        else:
+            self.main_stack.setCurrentWidget(self.chat)
+            self.mode = category_id
+            self.chat.set_mode(category_id)
+            self.chat.set_model(self.settings.model)
+            self.new_conversation()
+            self.refresh_sidebar()
 
     def _model_notes(self) -> dict[str, str]:
         if self.settings.provider != "aven_local":
@@ -177,6 +246,10 @@ class MainWindow(QMainWindow):
         return ok
 
     def new_conversation(self) -> None:
+        if self.category == "made":
+            self.studio.show_dashboard()
+            self.studio.description_input.setFocus()
+            return
         self.stop_generation()
         self.current = None
         self.chat.clear_messages()
@@ -188,6 +261,9 @@ class MainWindow(QMainWindow):
         self.chat.focus_input()
 
     def open_conversation(self, conversation_id: int) -> None:
+        if self.category == "made":
+            self.studio.open_project(conversation_id)
+            return
         if self.current is not None and self.current.id == conversation_id:
             return
         self.stop_generation()
@@ -201,7 +277,7 @@ class MainWindow(QMainWindow):
             self.refresh_sidebar()
             return
         self.current = conversation
-        self.mode = conversation.mode
+        self.mode = conversation.mode if conversation.mode in MODES else "aven"
         self.chat.set_mode(self.mode)
         self.chat.set_title(conversation.title)
         self.chat.clear_messages()
@@ -226,6 +302,7 @@ class MainWindow(QMainWindow):
                 self._assistant_name(), message.content, message.model, message.id, at_top=at_top
             )
             widget.finish(message.status)
+            self._check_code(widget)
 
     def load_earlier(self) -> None:
         if self.current is None or self._loaded_offset == 0:
@@ -243,6 +320,9 @@ class MainWindow(QMainWindow):
         self.chat.refresh_regenerate_buttons()
 
     def rename_conversation(self, conversation_id: int) -> None:
+        if self.category == "made":
+            self._rename_project(conversation_id)
+            return
         try:
             conversation = self.repo.get_conversation(conversation_id)
         except StorageError as exc:
@@ -264,6 +344,9 @@ class MainWindow(QMainWindow):
         self.refresh_sidebar()
 
     def delete_conversation(self, conversation_id: int) -> None:
+        if self.category == "made":
+            self._delete_project(conversation_id)
+            return
         answer = QMessageBox.question(
             self,
             "Delete conversation?",
@@ -283,6 +366,38 @@ class MainWindow(QMainWindow):
             return
         if is_current:
             self.new_conversation()
+        self.refresh_sidebar()
+
+    def _rename_project(self, project_id: int) -> None:
+        project = self.projects.get(project_id)
+        if project is None:
+            return
+        title, ok = QInputDialog.getText(self, "Rename game", "Title:", text=project.title)
+        if ok and title.strip():
+            self.projects.rename(project, title)
+            if self.studio.project is not None and self.studio.project.id == project_id:
+                self.studio.open_project(project_id)
+            self.refresh_sidebar()
+
+    def _delete_project(self, project_id: int) -> None:
+        project = self.projects.get(project_id)
+        if project is None or self.studio.busy:
+            return
+        answer = QMessageBox.question(
+            self,
+            "Delete game?",
+            f"“{project.title}” and all its versions will be permanently deleted from this computer.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            self.projects.delete(project)
+        except (StorageError, OSError) as exc:
+            QMessageBox.warning(self, "Delete failed", str(exc))
+            return
+        self.studio.show_dashboard()
         self.refresh_sidebar()
 
     def delete_all_conversations(self) -> None:
@@ -313,11 +428,14 @@ class MainWindow(QMainWindow):
         if model_id == self.settings.model:
             return
         self.settings.model = model_id
+        self.settings.category_models[self.category] = model_id
         self.save_settings()
+        self.chat.set_model(model_id)
+        self.studio.model_picker.set_current(model_id)
         self.update_status()
 
     def _assistant_name(self) -> str:
-        return MODES[self.mode].name
+        return MODES[self.mode].name if self.mode in MODES else "AVEN AI"
 
     # --- sending & generation ---------------------------------------------------------------
     def send_message(self, text: str) -> None:
@@ -326,7 +444,11 @@ class MainWindow(QMainWindow):
         text = text.strip()
         if not text:
             return
-        status = self.chat_service.status()
+        status = self.chat_service.status(self.category)
+        if not status.ready and status.needs_subscription:
+            self.update_status()
+            self.open_account()
+            return
         if not status.ready and status.needs_download:
             if self.download_selected_model():
                 self.send_message(text)
@@ -345,18 +467,37 @@ class MainWindow(QMainWindow):
                 self.open_settings(provider_tab=True)
             return
 
+        content = text
+        if self.chat.attachments:
+            limit = ATTACH_CHARS_LOCAL if self.settings.provider == "aven_local" else ATTACH_CHARS_CLOUD
+            block, left_out = attachment_block(self.chat.attachments, limit)
+            if (
+                left_out
+                and QMessageBox.question(
+                    self,
+                    "Some files do not fit",
+                    f"{len(left_out)} file(s) do not fit in what this model can read at once and will be left out:\n"
+                    + "\n".join(left_out[:10])
+                    + "\n\nSend anyway?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                != QMessageBox.StandardButton.Yes
+            ):
+                return
+            content = f"{text}\n\n{block}"
         try:
             if self.current is None:
                 self.current = self.repo.create_conversation(self.mode, generate_title(text))
                 self.chat.set_title(self.current.title)
-            message = self.repo.add_message(self.current.id, "user", text)
+            message = self.repo.add_message(self.current.id, "user", content)
         except StorageError as exc:
             self._storage_failed(exc)
             return
 
         self.chat.clear_input()
+        self.chat.clear_attachments()
         self.chat.remove_errors()
-        self.chat.add_user_message(text, message.id)
+        self.chat.add_user_message(content, message.id)
         self.chat.scroll_to_bottom()
         self.refresh_sidebar()
         self.start_generation()
@@ -371,7 +512,7 @@ class MainWindow(QMainWindow):
             return
         try:
             request = self.chat_service.build_request(self.mode, history)
-            provider = self.chat_service.create_provider()
+            provider = self.chat_service.create_provider(category=self.mode)
         except errors.AIError as exc:
             self.chat.show_error(exc)
             self.update_status()
@@ -458,6 +599,7 @@ class MainWindow(QMainWindow):
         except StorageError as exc:
             self._storage_failed(exc)
         generation.widget.finish(status)
+        self._check_code(generation.widget)
         self.chat.set_busy(False)
         self.update_status()
         self.refresh_sidebar()
@@ -499,10 +641,103 @@ class MainWindow(QMainWindow):
         self.chat.remove_widget(last)
         self.start_generation()
 
+    # --- code categories ----------------------------------------------------------------------
+    def _check_code(self, widget: AssistantMessageWidget) -> None:
+        """Run the category's static code checks on a reply (nothing is executed)."""
+        category = catalog().category(self.mode)
+        if category is None or not category.validators or not widget.content:
+            return
+        try:
+            report = validate_reply(widget.content, category.validators)
+        except Exception:  # a checker problem must never break the chat
+            log.exception("Code checks failed")
+            return
+        has_files = any(block.path for block in extract_blocks(widget.content))
+        widget.set_code_report(report, has_files)
+        if has_files and not getattr(widget, "_save_connected", False):
+            widget.save_files_requested.connect(self.save_files)
+            widget._save_connected = True
+
+    def save_files(self, widget: AssistantMessageWidget) -> None:
+        folder = QFileDialog.getExistingDirectory(self, "Save the files into this folder")
+        if not folder:
+            return
+        files, problems = plan_save(extract_blocks(widget.content), Path(folder))
+        if not files:
+            QMessageBox.warning(self, "Nothing to save", "\n".join(problems) or "This reply names no files.")
+            return
+        existing = [str(f.relative) for f in files if f.exists]
+        summary = "\n".join(str(f.relative) for f in files[:20])
+        question = f"Save {len(files)} file(s) into {folder}?\n\n{summary}"
+        if existing:
+            question += f"\n\n{len(existing)} existing file(s) will be overwritten:\n" + "\n".join(existing[:10])
+        if problems:
+            question += "\n\nSkipped (unsafe paths):\n" + "\n".join(problems[:10])
+        if (
+            QMessageBox.question(
+                self, "Save files", question, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            != QMessageBox.StandardButton.Yes
+        ):
+            return
+        try:
+            written = write_files(files)
+        except OSError as exc:
+            QMessageBox.warning(self, "Save failed", str(exc))
+            return
+        QMessageBox.information(self, "Files saved", f"Saved {len(written)} file(s) to {folder}.")
+
+    # --- account, access and release notes --------------------------------------------------------
+    def open_account(self) -> None:
+        from app.ui.account_dialog import AccountDialog
+
+        dialog = AccountDialog(self.chat_service.account, self)
+        dialog.access_changed.connect(self.update_status)
+        dialog.exec()
+        self.update_status()
+
+    def refresh_access(self) -> None:
+        from app.ai.errors import ProviderError
+        from app.workers.ai_worker import TaskWorker
+
+        def work():
+            from app.account.service import AccountError
+
+            try:
+                return self.chat_service.account.refresh()
+            except AccountError as exc:
+                raise ProviderError(str(exc)) from exc
+
+        worker = TaskWorker(work)
+        worker.signals.succeeded.connect(lambda _status: self.update_status())
+        worker.signals.failed.connect(lambda exc: QMessageBox.warning(self, "Subscription", exc.user_message))
+        worker.start()
+
+    def refresh_access_quietly(self) -> None:
+        """At startup, renew the signed entitlement of an existing account (errors are ignored)."""
+        account = self.chat_service.account
+        if not (account.available and account.account_id):
+            return
+        from app.workers.ai_worker import TaskWorker
+
+        worker = TaskWorker(account.refresh)
+        worker.signals.succeeded.connect(lambda _status: self.update_status())
+        worker.start()
+
+    def show_whats_new(self) -> None:
+        from app.ui.whats_new import WhatsNewDialog
+
+        dialog = WhatsNewDialog(self)
+        dialog.setModal(False)  # the app stays usable while it is open
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.show()
+        self.settings.last_seen_version = __version__
+        self.save_settings()
+
     # --- settings & theme ---------------------------------------------------------------------
     def open_settings(self, provider_tab: bool = False) -> None:
         dialog = SettingsDialog(self.settings, self.credentials, self)
-        if provider_tab or not self.chat_service.status().ready:
+        if provider_tab or not self.chat_service.status(self.category).ready:
             dialog.tabs.setCurrentIndex(1)
         dialog.delete_all_requested.connect(self.delete_all_conversations)
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
@@ -524,7 +759,7 @@ class MainWindow(QMainWindow):
         self.chat.set_send_with_enter(self.settings.send_with_enter)
         self.update_status()
         # Just switched to AVEN Local: offer the one-time model download straight away.
-        status = self.chat_service.status()
+        status = self.chat_service.status(self.category)
         if self.settings.provider == "aven_local" and status.needs_download:
             self.download_selected_model()
 
@@ -536,6 +771,7 @@ class MainWindow(QMainWindow):
     def _on_theme_changed(self, palette) -> None:
         self.sidebar.apply_palette(palette)
         self.chat.apply_palette(palette)
+        self.studio.apply_palette(palette)
 
     def save_settings(self) -> None:
         try:

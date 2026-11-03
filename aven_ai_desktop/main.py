@@ -6,6 +6,10 @@ import sys
 
 
 def main() -> int:
+    if "--self-test" in sys.argv:  # used by CI to verify a packaged build
+        from app.selftest import main as self_test
+
+        return self_test(sys.argv)
     try:
         from app.application import run
 

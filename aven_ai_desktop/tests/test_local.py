@@ -221,20 +221,20 @@ def test_local_provider_uses_recommended_sampling(engine, downloaded) -> None:
 def test_context_window_and_reply_budget_per_model(engine, downloaded) -> None:
     provider = LocalProvider(engine)
     # The 8B file opens a larger window; Ultra may use more tokens because it thinks first.
-    assert ask(provider, "aven-light", "context-info") == "ctx=12288 max_tokens=4096 messages=2"
-    assert ask(provider, "aven-2", "context-info") == "ctx=16384 max_tokens=4096 messages=2"
+    assert ask(provider, "aven-light", "context-info") == "ctx=12288 max_tokens=8192 messages=2"
+    assert ask(provider, "aven-2", "context-info") == "ctx=16384 max_tokens=8192 messages=2"
     assert ask(provider, "aven-ultra", "context-info") == "ctx=16384 max_tokens=8192 messages=2"
 
 
 def test_history_is_fitted_by_exact_token_counts(engine, downloaded) -> None:
     # The fake engine counts one token per character. Old turns are dropped to fit the window.
     provider = LocalProvider(engine)
-    old = [ChatMessage("user", "x" * 4000), ChatMessage("assistant", "y" * 4000)]
+    old = [ChatMessage("user", "x" * 2000), ChatMessage("assistant", "y" * 2000)]
     request = ChatRequest(
         model="aven-light", system_prompt="S", messages=[*old, *old, ChatMessage("user", "context-info")]
     )
     reply = "".join(e.text for e in provider.stream_chat(request) if e.kind == "text")
-    assert reply == "ctx=12288 max_tokens=4096 messages=4"  # system + one old pair + the question
+    assert reply == "ctx=12288 max_tokens=8192 messages=4"  # system + one old pair + the question
 
 
 def test_fit_messages_shrinks_the_reply_before_failing() -> None:

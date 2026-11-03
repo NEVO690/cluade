@@ -36,6 +36,22 @@ _MIGRATIONS: list[str] = [
     CREATE INDEX idx_messages_conversation ON messages(conversation_id, id);
     CREATE INDEX idx_conversations_updated ON conversations(updated_at DESC);
     """,
+    # 2.0: Made With AVEN projects and app metadata. Additive only: existing data is untouched.
+    """
+    CREATE TABLE game_projects (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        title       TEXT    NOT NULL,
+        description TEXT    NOT NULL,
+        status      TEXT    NOT NULL DEFAULT 'draft',
+        model       TEXT,
+        version     INTEGER NOT NULL DEFAULT 0,
+        folder      TEXT    NOT NULL UNIQUE,
+        created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+    CREATE INDEX idx_game_projects_updated ON game_projects(updated_at DESC);
+    CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    """,
 ]
 
 SCHEMA_VERSION = len(_MIGRATIONS)
@@ -55,6 +71,7 @@ class Database:
             if self.path != ":memory:":
                 self.conn.execute("PRAGMA journal_mode = WAL")
             self._migrate()
+            self._record_version()
         except sqlite3.Error as exc:
             raise StorageError(f"Could not open the conversation database: {exc}") from exc
 
@@ -69,6 +86,20 @@ class Database:
             with self.conn:
                 self.conn.executescript(_MIGRATIONS[version])
                 self.conn.execute(f"PRAGMA user_version = {version + 1}")
+
+    def _record_version(self) -> None:
+        from app.version import __version__
+
+        with self.conn:
+            self.conn.execute(
+                "INSERT INTO app_meta (key, value) VALUES ('app_version', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (__version__,),
+            )
+
+    def meta(self, key: str) -> str | None:
+        row = self.conn.execute("SELECT value FROM app_meta WHERE key = ?", (key,)).fetchone()
+        return row[0] if row else None
 
     def close(self) -> None:
         with contextlib.suppress(sqlite3.Error):

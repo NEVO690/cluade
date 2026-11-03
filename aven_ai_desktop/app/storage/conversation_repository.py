@@ -11,7 +11,8 @@ from typing import ParamSpec, TypeVar
 
 from app.storage.database import Database, StorageError
 
-MODES = ("aven", "code")
+# Chat categories a conversation can belong to (Made With AVEN keeps projects, not conversations).
+MODES = ("aven", "python", "unity", "code")
 DEFAULT_TITLE = "New conversation"
 TITLE_MAX_LENGTH = 48
 
@@ -67,6 +68,7 @@ def generate_title(text: str) -> str:
 
 class ConversationRepository:
     def __init__(self, db: Database) -> None:
+        self.db = db
         self.conn = db.conn
 
     # --- conversations ---------------------------------------------------------
@@ -88,8 +90,14 @@ class ConversationRepository:
         return Conversation(**dict(row)) if row else None
 
     @_wrap_errors
-    def list_conversations(self) -> list[Conversation]:
-        rows = self.conn.execute("SELECT * FROM conversations ORDER BY updated_at DESC, id DESC").fetchall()
+    def list_conversations(self, mode: str | None = None) -> list[Conversation]:
+        """All conversations, newest first, or only those of one category (``mode``)."""
+        if mode is None:
+            rows = self.conn.execute("SELECT * FROM conversations ORDER BY updated_at DESC, id DESC").fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM conversations WHERE mode = ? ORDER BY updated_at DESC, id DESC", (mode,)
+            ).fetchall()
         return [Conversation(**dict(r)) for r in rows]
 
     @_wrap_errors

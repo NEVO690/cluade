@@ -87,6 +87,11 @@ jobs:
           Stop-Process -Id $proc.Id -Force
           if (-not (Test-Path (Join-Path $env:AVEN_DATA_DIR "conversations.db"))) { throw "Database was not created" }
           Get-Content (Join-Path $env:AVEN_DATA_DIR "logs\aven.log")
+          # Every 2.0 component (catalog, code checkers, game sandbox, entitlements) must work in the build.
+          $report = Join-Path $env:RUNNER_TEMP "selftest.json"
+          $test = Start-Process -FilePath "dist\AVEN AI\AVEN AI.exe" -ArgumentList "--self-test", "`"$report`"" -Wait -PassThru
+          Get-Content $report
+          if ($test.ExitCode -ne 0) { throw "Self-test of the packaged build failed (exit code $($test.ExitCode))" }
           # The bundled AVEN Local engine must start on Windows.
           & "dist\AVEN AI\_internal\engine\llama-server.exe" --version
           if ($LASTEXITCODE -ne 0) { throw "Bundled llama-server failed to run" }

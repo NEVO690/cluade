@@ -18,6 +18,7 @@ for var in (
     "AVEN_CODE_MODEL",
     "AVEN_BASE_URL",
     "AVEN_CLOUD_URL",
+    "AVEN_ENTITLEMENT_PUBLIC_KEY",
 ):
     os.environ.pop(var, None)
 
@@ -43,8 +44,10 @@ class FakeProvider(AIProvider):
         error: AIError | None = None,
         delay: float = 0.0,
         chunk: int = 5,
+        replies: list[str] | None = None,
     ) -> None:
         self.reply = reply
+        self.replies = list(replies or [])  # one reply per request, in order (then ``reply``)
         self.error = error
         self.delay = delay
         self.chunk = chunk
@@ -55,12 +58,13 @@ class FakeProvider(AIProvider):
         yield StreamEvent("model", request.model)
         if self.error is not None:
             raise self.error
-        for i in range(0, len(self.reply), self.chunk):
+        reply = self.replies.pop(0) if self.replies else self.reply
+        for i in range(0, len(reply), self.chunk):
             if request.cancel_event.is_set():
                 return
             if self.delay:
                 time.sleep(self.delay)
-            yield StreamEvent("text", self.reply[i : i + self.chunk])
+            yield StreamEvent("text", reply[i : i + self.chunk])
 
     def list_models(self) -> list[str]:
         return ["fake-model"]

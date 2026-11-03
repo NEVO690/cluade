@@ -1,1 +1,55 @@
-{"releases": []}
+{
+  "notes": "What's New entries, newest first. Only list features that are released and working.",
+  "releases": [
+    {
+      "version": "2.0.0",
+      "date": "2026-11-03",
+      "title": "AVEN AI 2.0",
+      "items": [
+        {
+          "title": "AVEN 2.0",
+          "body": "Our new main model. On this computer it runs Qwen3.5 9B, a newer and stronger generation than the model behind AVEN 1.1. It replaces AVEN 1.1; conversations with older models keep their names."
+        },
+        {
+          "title": "AVEN Light 1.1 and AVEN Core 1.1",
+          "body": "Both move to the newer Qwen3.5 generation (2B in 8-bit precision for Light, 4B for Core). The new models are a one-time download."
+        },
+        {
+          "title": "Five categories",
+          "body": "AVEN AI, AVEN Python, AVEN Unity, AVEN CODE and Made With AVEN, each with its own instructions, conversations and remembered model. Switch from the sidebar or with Ctrl+1 to Ctrl+5."
+        },
+        {
+          "title": "AVEN Python (free)",
+          "body": "A Python specialist for programs, projects, debugging and refactoring. Attach files or a whole project folder, and save the files from a reply into a folder. Code in replies is checked for syntax errors and undefined names (it is not run)."
+        },
+        {
+          "title": "AVEN Unity (free)",
+          "body": "A Unity specialist for C# gameplay, controllers, UI and physics. C# in replies is checked for syntax errors and common Unity mistakes, such as a class name that does not match its file or GetComponent called every frame."
+        },
+        {
+          "title": "AVEN CODE (subscription)",
+          "body": "The professional multi-language coding category, with project files, architecture plans, reviews and per-language syntax checks. It needs a subscription managed through the AVEN AI server and Stripe; it becomes available once the server is connected to this build."
+        },
+        {
+          "title": "Made With AVEN (preview)",
+          "body": "Describe a game and AVEN designs it, writes it, checks it in a sandbox, repairs problems and lets you play it in your browser. Games are 2D for now. Save projects, request changes, and export a .zip. Free while in preview."
+        },
+        {
+          "title": "Also new",
+          "body": "This What's New page, a refreshed sidebar with Free, Paid and Preview badges, and your existing conversations and settings carried over unchanged."
+        }
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "date": "2026-10-19",
+      "title": "Better answers",
+      "items": [
+        {
+          "title": "Answer quality",
+          "body": "Instructions per model, cleaner Hebrew (no stray characters from other languages), right-to-left fixes and honest answers about what AVEN cannot check."
+        }
+      ]
+    }
+  ]
+}

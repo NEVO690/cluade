@@ -1,4 +1,4 @@
-"""Sidebar with branding, new-conversation button, search and conversation history."""
+"""Sidebar: branding, the five categories, and the conversations or projects of the current one."""
 
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.storage.conversation_repository import Conversation
+from app.config.catalog import catalog
+from app.ui.category_nav import CategoryNav
 from app.ui.logo import logo_pixmap
 from app.ui.theme_manager import Palette
 from app.version import __version__
@@ -28,20 +29,22 @@ ID_ROLE = Qt.ItemDataRole.UserRole
 
 
 def _mode_icon(mode: str, palette: Palette) -> QIcon:
-    """Small glyph distinguishing AVEN (◆) and AVEN CODE (</>) conversations."""
+    """Small glyph for the category an entry belongs to (◆, Py, U, </>, ▶)."""
+    category = catalog().category(mode)
+    glyph = category.icon if category else "◆"
     size = 18
     pixmap = QPixmap(size * 2, size * 2)
     pixmap.setDevicePixelRatio(2)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    color = QColor(palette.accent if mode == "code" else palette.text_muted)
+    color = QColor(palette.text_muted if mode == "aven" else palette.accent)
     painter.setPen(color)
     font = QFont()
-    font.setPixelSize(10 if mode == "code" else 12)
+    font.setPixelSize(12 if len(glyph) == 1 else 9)
     font.setBold(True)
     painter.setFont(font)
-    painter.drawText(QRectF(0, 0, size, size), Qt.AlignmentFlag.AlignCenter, "</>" if mode == "code" else "◆")
+    painter.drawText(QRectF(0, 0, size, size), Qt.AlignmentFlag.AlignCenter, glyph)
     painter.end()
     return QIcon(pixmap)
 
@@ -71,6 +74,9 @@ class Sidebar(QFrame):
     delete_requested = Signal(int)
     settings_requested = Signal()
     theme_toggle_requested = Signal()
+    category_selected = Signal(str)
+    whats_new_requested = Signal()
+    account_requested = Signal()
 
     def __init__(self, palette: Palette, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -78,8 +84,9 @@ class Sidebar(QFrame):
         self.setMinimumWidth(240)
         self.setMaximumWidth(340)
         self.palette_ = palette
-        self._conversations: list[Conversation] = []
+        self._entries: list = []  # Conversation or Project objects (id, title, updated_at, mode)
         self._current_id: int | None = None
+        self._noun = "conversations"
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 16, 14, 12)
@@ -102,7 +109,15 @@ class Sidebar(QFrame):
         brand.addLayout(names)
         brand.addStretch(1)
         layout.addLayout(brand)
-        layout.addSpacing(4)
+        layout.addSpacing(2)
+
+        self.categories = CategoryNav()
+        self.categories.category_selected.connect(self.category_selected.emit)
+        layout.addWidget(self.categories)
+        divider = QFrame()
+        divider.setObjectName("SidebarDivider")
+        divider.setFixedHeight(1)
+        layout.addWidget(divider)
 
         self.new_button = QPushButton("＋  New conversation")
         self.new_button.setObjectName("NewChatButton")
@@ -135,7 +150,17 @@ class Sidebar(QFrame):
 
         footer = QVBoxLayout()
         footer.setSpacing(2)
-        self.theme_button = QPushButton("◐  Toggle theme")
+        self.whats_new_button = QPushButton("✦  What's new")
+        self.whats_new_button.setObjectName("SidebarFooterButton")
+        self.whats_new_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.whats_new_button.clicked.connect(self.whats_new_requested.emit)
+        self.account_button = QPushButton("◎  Account && subscription")
+        self.account_button.setObjectName("SidebarFooterButton")
+        self.account_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.account_button.clicked.connect(self.account_requested.emit)
+        footer.addWidget(self.whats_new_button)
+        footer.addWidget(self.account_button)
+        self.theme_button = QPushButton("◐  Theme")
         self.theme_button.setObjectName("SidebarFooterButton")
         self.theme_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.theme_button.clicked.connect(self.theme_toggle_requested.emit)
@@ -144,13 +169,25 @@ class Sidebar(QFrame):
         self.settings_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_button.setToolTip("Settings (Ctrl+,)")
         self.settings_button.clicked.connect(self.settings_requested.emit)
-        footer.addWidget(self.theme_button)
-        footer.addWidget(self.settings_button)
+        row = QHBoxLayout()  # theme and settings side by side to leave room for the list
+        row.setSpacing(2)
+        row.addWidget(self.theme_button)
+        row.addWidget(self.settings_button)
+        footer.addLayout(row)
         layout.addLayout(footer)
 
     # --- data ------------------------------------------------------------------
-    def set_conversations(self, conversations: list[Conversation], current_id: int | None) -> None:
-        self._conversations = conversations
+    def set_category(self, category_id: str) -> None:
+        self.categories.set_current(category_id)
+        studio = category_id == "made"
+        self._noun = "projects" if studio else "conversations"
+        self.new_button.setText("＋  New game" if studio else "＋  New conversation")
+        self.new_button.setToolTip("Start a new game project" if studio else "Start a new conversation (Ctrl+N)")
+        self.search.setPlaceholderText(f"Search {self._noun}")
+
+    def set_conversations(self, conversations: list, current_id: int | None) -> None:
+        """Entries for the current category (conversations, or game projects in Made With AVEN)."""
+        self._entries = conversations
         self._current_id = current_id
         self._rebuild()
 
@@ -170,7 +207,7 @@ class Sidebar(QFrame):
         now = datetime.now(UTC)
         last_group = None
         shown = 0
-        for conversation in self._conversations:
+        for conversation in self._entries:
             if query and query not in conversation.title.lower():
                 continue
             group = _group_label(conversation.updated_at, now)
@@ -184,13 +221,15 @@ class Sidebar(QFrame):
                 header.setForeground(QColor(self.palette_.text_muted))
                 self.list.addItem(header)
                 last_group = group
-            item = QListWidgetItem(_mode_icon(conversation.mode, self.palette_), conversation.title)
+            mode = getattr(conversation, "mode", "made")
+            category = catalog().category(mode)
+            item = QListWidgetItem(_mode_icon(mode, self.palette_), conversation.title)
             item.setData(ID_ROLE, conversation.id)
-            item.setToolTip(f"{conversation.title}\n{'AVEN CODE' if conversation.mode == 'code' else 'AVEN'}")
+            item.setToolTip(f"{conversation.title}\n{category.name if category else mode}")
             self.list.addItem(item)
             shown += 1
         self.empty_label.setVisible(shown == 0)
-        self.empty_label.setText("No matching conversations." if query else "No conversations yet.")
+        self.empty_label.setText(f"No matching {self._noun}." if query else f"No {self._noun} yet.")
         self.set_current(self._current_id)
 
     # --- interaction -----------------------------------------------------------------

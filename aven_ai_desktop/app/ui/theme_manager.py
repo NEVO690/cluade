@@ -126,6 +126,25 @@ def build_stylesheet(p: Palette) -> str:
     }}
     #SidebarFooterButton:hover {{ background: {p.hover}; }}
 
+    /* Categories */
+    #CategoryButton {{ border-radius: 10px; background: transparent; }}
+    #CategoryButton:hover {{ background: {p.hover}; }}
+    #CategoryButton[selected="true"] {{ background: {p.accent_soft}; }}
+    #CategoryIcon {{
+        background: {p.surface_alt}; border: 1px solid {p.border}; border-radius: 8px;
+        color: {p.accent}; font-weight: 800; font-size: 12px;
+    }}
+    #CategoryButton[selected="true"] #CategoryIcon {{ background: {p.accent}; color: {p.accent_text}; border: none; }}
+    #CategoryName {{ font-weight: 600; font-size: 13px; background: transparent; }}
+    #AccessBadge {{
+        border-radius: 7px; padding: 2px 7px; font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+        background: {p.surface_alt}; color: {p.text_muted}; border: 1px solid {p.border};
+    }}
+    #AccessBadge[kind="free"] {{ color: {p.success}; border-color: {p.success}; background: transparent; }}
+    #AccessBadge[kind="paid"] {{ color: {p.accent_text}; background: {p.accent}; border: none; }}
+    #AccessBadge[kind="preview"] {{ color: {p.text}; background: {p.warning_soft}; }}
+    #SidebarDivider {{ background: {p.border}; }}
+
     /* Header */
     #ChatHeader {{ background: {p.window}; border-bottom: 1px solid {p.border}; }}
     #ConversationTitle {{ font-size: 15px; font-weight: 600; }}
@@ -198,6 +217,39 @@ def build_stylesheet(p: Palette) -> str:
     #ModelOptionName {{ font-weight: 600; background: transparent; }}
     #ModelOptionDescription {{ color: {p.text_muted}; font-size: 12px; background: transparent; }}
     #ModelOptionCheck {{ color: {p.accent}; font-weight: 700; background: transparent; }}
+
+    /* Coding categories */
+    #AttachButton {{
+        background: transparent; border: 1px solid {p.border}; border-radius: 9px; padding: 6px 10px;
+        color: {p.text_muted}; font-size: 13px;
+    }}
+    #AttachButton:hover {{ color: {p.text}; border-color: {p.accent}; }}
+    #AttachButton::menu-indicator {{ image: none; width: 0px; }}
+    #AttachmentChip {{ background: {p.surface_alt}; border: 1px solid {p.border}; border-radius: 8px; }}
+    #AttachmentLabel {{ font-size: 12px; background: transparent; }}
+    #AttachmentRemove {{ background: transparent; border: none; color: {p.text_muted}; padding: 2px 6px; }}
+    #AttachmentRemove:hover {{ color: {p.danger}; }}
+    #ChecksPanel {{ background: {p.surface_alt}; border: 1px solid {p.border}; border-radius: 10px; }}
+    #ChecksPanel[state="ok"] {{ border-color: {p.success}; }}
+    #ChecksPanel[state="warning"] {{ border-color: {p.warning_soft}; background: {p.warning_soft}; }}
+    #ChecksPanel[state="error"] {{ border-color: {p.danger}; background: {p.danger_soft}; }}
+    #ChecksTitle {{ font-weight: 600; font-size: 12px; background: transparent; }}
+    #ChecksDetails {{ color: {p.text_muted}; font-size: 12px; background: transparent; }}
+
+    /* Made With AVEN */
+    #StudioPage {{ background: {p.window}; }}
+    #StudioCard, #ProjectCard {{ background: {p.surface}; border: 1px solid {p.border}; border-radius: 14px; }}
+    #ProjectCard:hover {{ border-color: {p.accent}; background: {p.surface_alt}; }}
+    #ProjectTitle {{ font-weight: 700; font-size: 15px; background: transparent; }}
+    #SectionTitle {{ font-weight: 700; font-size: 13px; color: {p.text_muted}; letter-spacing: 0.4px; }}
+    #StudioInput, #PlanView, #ProgressList, #CodeViewer, #ChecksView, #WhatsNewView {{
+        background: {p.surface}; border: 1px solid {p.border}; border-radius: 10px; padding: 6px;
+    }}
+    #StudioInput:focus {{ border-color: {p.accent}; }}
+    #StatusChip {{ border-radius: 7px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+        background: {p.surface_alt}; color: {p.text_muted}; }}
+    #StatusChip[state="validated"] {{ color: {p.success}; border: 1px solid {p.success}; }}
+    #StatusChip[state="needs_fixes"] {{ color: {p.danger}; border: 1px solid {p.danger}; }}
 
     /* Generic controls */
     QPushButton {{

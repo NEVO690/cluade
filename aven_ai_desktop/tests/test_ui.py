@@ -46,7 +46,7 @@ def test_window_initializes_with_welcome_screen(make_window) -> None:
     window, _repo, _ = make_window()
     assert window.windowTitle() == "AVEN AI Desktop"
     assert window.chat.stack.currentIndex() == 0
-    assert window.chat.model_label.text() == "AVEN · AVEN 2.0"
+    assert window.chat.model_label.text() == "AVEN AI · AVEN 2.0"
     assert window.chat.model_picker.text().startswith("AVEN 2.0")
     assert "claude" not in window.chat.model_label.text().lower()
     assert window.chat.setup_card.isHidden()
@@ -146,15 +146,16 @@ def test_regenerate_replaces_last_answer(make_window, qtbot) -> None:
     assert [m.content for m in messages] == ["question", "Second answer."]
 
 
-def test_mode_switch_is_saved_and_changes_prompt(make_window, qtbot) -> None:
+def test_category_switch_is_saved_and_changes_prompt(make_window, qtbot) -> None:
     provider = FakeProvider(reply="ok")
     window, repo, _ = make_window(provider)
-    qtbot.mouseClick(window.chat.mode_buttons["code"], Qt.MouseButton.LeftButton)
-    assert window.mode == "code"
+    qtbot.mouseClick(window.sidebar.categories.buttons["python"], Qt.MouseButton.LeftButton)
+    assert window.mode == "python" and window.settings.category == "python"
+    assert window.chat.access_badge.text() == "Free"
     window.send_message("fix my code")
     qtbot.waitUntil(lambda: window.generation is None, timeout=5000)
-    assert repo.list_conversations()[0].mode == "code"
-    assert "AVEN CODE" in provider.requests[0].system_prompt
+    assert repo.list_conversations()[0].mode == "python"
+    assert provider.requests[0].system_prompt.startswith("You are AVEN Python, the Python specialist")
 
 
 def test_open_rename_and_delete_conversations(make_window, monkeypatch) -> None:
@@ -265,8 +266,8 @@ def test_model_picker_in_composer_switches_model(make_window, qtbot) -> None:
 
     picker.options["aven-light"].clicked.emit()
     assert window.settings.model == "aven-light"
-    assert picker.text().startswith("AVEN Light")
-    assert window.chat.model_label.text() == "AVEN · AVEN Light"
+    assert picker.text().startswith("AVEN Light 1.1")
+    assert window.chat.model_label.text() == "AVEN AI · AVEN Light 1.1"
 
     window.send_message("quick question")
     qtbot.waitUntil(lambda: window.generation is None, timeout=5000)
@@ -278,7 +279,7 @@ def test_model_picker_in_composer_switches_model(make_window, qtbot) -> None:
     qtbot.waitUntil(lambda: window.generation is None, timeout=5000)
     assert (provider.requests[1].model, provider.requests[1].effort) == ("claude-opus-5-5", "xhigh")
     names = [w.meta_label.text() for w in widgets_of(window, AssistantMessageWidget)]
-    assert names == ["AVEN Light", "AVEN Ultra"]
+    assert names == ["AVEN Light 1.1", "AVEN Ultra 1.0"]
 
 
 def test_aven_cloud_chat_works_without_any_key(make_window, qtbot, monkeypatch) -> None:

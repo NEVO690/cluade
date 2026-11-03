@@ -7,6 +7,8 @@ on:
       - "aven_ai_desktop/app/data/models.json"
       - "aven_ai_desktop/scripts/check_models.py"
       - "aven_ai_desktop/scripts/fetch_engine.py"
+      - "aven_ai_desktop/scripts/studio_e2e.py"
+      - "aven_ai_desktop/app/studio/**"
       - ".github/workflows/check-models.yml"
   workflow_dispatch:
 
@@ -35,3 +37,32 @@ jobs:
         run: python scripts/check_models.py ${{ matrix.model }}
         env:
           AVEN_DATA_DIR: ${{ runner.temp }}/aven-data
+
+  # Made With AVEN end to end with real on-device models: the game must pass every check.
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [aven-core, aven-2]
+    defaults:
+      run:
+        working-directory: aven_ai_desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python scripts/fetch_engine.py --platform linux-x64
+      - name: Build a game with ${{ matrix.model }}
+        run: python scripts/studio_e2e.py ${{ matrix.model }} "${{ runner.temp }}/studio"
+        env:
+          AVEN_DATA_DIR: ${{ runner.temp }}/aven-data
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-game-${{ matrix.model }}
+          path: ${{ runner.temp }}/studio
+          if-no-files-found: ignore

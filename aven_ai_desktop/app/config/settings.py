@@ -70,6 +70,11 @@ class AppSettings:
     window_geometry: str = ""
     # Random identifier sent to AVEN Cloud for fair-use limits (not linked to any account).
     install_id: str = field(default_factory=lambda: uuid.uuid4().hex)
+    # Last used category, and the AVEN model chosen in each category.
+    category: str = "aven"
+    category_models: dict[str, str] = field(default_factory=dict)
+    # Version whose What's New the user has seen ("" = never shown).
+    last_seen_version: str = ""
 
     def __post_init__(self) -> None:
         if not self.model:
@@ -108,6 +113,19 @@ class AppSettings:
         self.model = upgrade_model_id(self.model)  # e.g. AVEN 1.0 -> AVEN 1.1
         if self.model not in AVEN_MODEL_IDS:
             self.model = default_model(self.provider)
+        from app.config.catalog import catalog
+
+        categories = catalog().categories
+        if self.category not in categories:
+            self.category = "aven"
+        if not isinstance(self.category_models, dict):
+            self.category_models = {}
+        self.category_models = {
+            str(c): upgrade_model_id(str(m))
+            for c, m in self.category_models.items()
+            if c in categories and upgrade_model_id(str(m)) in categories[c].models
+        }
+        self.last_seen_version = str(self.last_seen_version or "")[:20]
         if not (isinstance(self.install_id, str) and len(self.install_id) == 32 and self.install_id.isalnum()):
             self.install_id = uuid.uuid4().hex
         for pid in KEY_PROVIDER_IDS:

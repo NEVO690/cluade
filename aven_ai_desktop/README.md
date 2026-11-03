@@ -13,7 +13,7 @@ Out of the box the app uses **AVEN Local**: open-source AI models running **on t
 
 *The screenshots were taken with a mock provider in an offscreen test harness.*
 
-Version: **1.2.0** (defined in `app/version.py`)
+Version: **2.0.0** (defined in `app/version.py`)
 
 ---
 

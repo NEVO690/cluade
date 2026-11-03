@@ -32,7 +32,7 @@
       "released": "2026-11-03",
       "description": "The smartest everyday AVEN model, for writing, research and code.",
       "profile": "You are the main AVEN model, the most capable one for everyday work. Before answering, identify every requirement in the request and make sure the answer meets all of them. State the final answer clearly.",
-      "local": {"file": "qwen3.5-9b", "thinking": false, "max_output": 4096,
+      "local": {"file": "qwen3.5-9b", "thinking": false, "max_output": 8192,
                 "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
       "providers": {"anthropic": "claude-opus-5-5"}, "effort": "high"
     },
@@ -50,7 +50,7 @@
       "released": "2026-11-03",
       "description": "Balanced speed and quality for everyday work.",
       "profile": "You are the balanced AVEN model: thorough enough to be accurate, short enough to be quick.",
-      "local": {"file": "qwen3.5-4b", "thinking": false, "max_output": 4096,
+      "local": {"file": "qwen3.5-4b", "thinking": false, "max_output": 8192,
                 "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
       "providers": {"anthropic": "claude-sonnet-5-5"}
     },
@@ -59,7 +59,7 @@
       "released": "2026-11-03",
       "description": "The fastest replies for quick questions.",
       "profile": "You are the fast AVEN model: keep replies short, clear and simple. For a long or very complex task, do your best and mention that AVEN 2.0 or AVEN Ultra (in the model picker) can handle it in more depth.",
-      "local": {"file": "qwen3.5-2b-q8", "thinking": false, "max_output": 4096,
+      "local": {"file": "qwen3.5-2b-q8", "thinking": false, "max_output": 8192,
                 "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
       "providers": {"anthropic": "claude-haiku-5-5"}
     }

@@ -26,7 +26,16 @@ if (ROOT / "engine").is_dir():
 if (ROOT / "assets" / "cloud.json").exists():
     datas.append((str(ROOT / "assets" / "cloud.json"), "assets"))  # AVEN Cloud server address (public)
 
-hiddenimports = []
+# AVEN AI 2.0 data: the catalog (models, categories, release notes) and the game engine.
+datas.append((str(ROOT / "app" / "data"), "app/data"))
+datas.append((str(ROOT / "app" / "studio" / "runtime"), "app/studio/runtime"))
+
+# Code checkers are loaded by name at run time, so PyInstaller cannot see them on its own.
+hiddenimports = [
+    "tree_sitter", "tree_sitter_c_sharp", "tree_sitter_javascript", "tree_sitter_typescript", "tree_sitter_java",
+    "tree_sitter_cpp", "tree_sitter_html", "tree_sitter_css", "pyflakes.api", "pyflakes.reporter", "quickjs",
+    "_quickjs", "cryptography.hazmat.primitives.asymmetric.ed25519",
+]  # fmt: skip
 if sys.platform == "win32":
     # keyring discovers backends via entry points; make sure the Windows one is bundled.
     hiddenimports += ["keyring.backends.Windows", "win32ctypes.core"]

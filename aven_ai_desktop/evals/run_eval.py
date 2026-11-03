@@ -49,6 +49,7 @@ def main() -> int:
     parser.add_argument("--model", required=True, help="AVEN model id, e.g. aven-light")
     parser.add_argument("--app-root", default=str(HERE.parent), help="checkout of the app to evaluate")
     parser.add_argument("--label", default="current")
+    parser.add_argument("--slot", default="", help="name pairing models across versions, e.g. main")
     parser.add_argument("--out", default="eval-results.json")
     parser.add_argument("--cases", default=str(HERE / "cases.json"))
     parser.add_argument("--only", default="", help="comma-separated case ids")

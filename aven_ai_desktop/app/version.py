@@ -6,5 +6,5 @@ APP_ORGANIZATION = "AVEN AI"
 # Folder name used for per-user data (database, settings, logs).
 APP_DATA_FOLDER = "AVEN AI"
 
-__version__ = "1.2.0"
-VERSION_TUPLE = (1, 2, 0, 0)
+__version__ = "2.0.0"
+VERSION_TUPLE = (2, 0, 0, 0)
