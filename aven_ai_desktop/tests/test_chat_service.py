@@ -25,7 +25,7 @@ def test_aven_cloud_is_ready_without_any_key(monkeypatch) -> None:
     status = service(key=None, settings=AppSettings(provider="aven_cloud")).status()
     assert status.ready
     assert status.provider_name == "AVEN Cloud"
-    assert status.model_name == "AVEN 1.1"
+    assert status.model_name == "AVEN 2.0"
 
 
 def test_aven_cloud_unavailable_when_build_has_no_server() -> None:
@@ -54,13 +54,13 @@ def test_personal_key_status_reports_missing_key_and_mapping() -> None:
 
     ready = service(settings=AppSettings(provider="anthropic")).status()
     assert ready.ready
-    assert ready.model_name == "AVEN 1.1"
+    assert ready.model_name == "AVEN 2.0"
     assert ready.model == "claude-opus-5-5"
 
 
 def test_local_openai_server_needs_no_key() -> None:
     settings = AppSettings(provider="openai", openai_base_url="http://localhost:11434/v1")
-    settings.mapping_for("openai")["aven-1-1"] = "llama3"
+    settings.mapping_for("openai")["aven-2"] = "llama3"
     assert service(key=None, settings=settings).status().ready
 
 
@@ -70,7 +70,7 @@ def test_modes_use_distinct_system_prompts() -> None:
     general = svc.build_request("aven", history)
     code = svc.build_request("code", history)
     assert general.system_prompt.startswith("You are AVEN, the general-purpose assistant")
-    assert code.system_prompt.startswith("You are AVEN CODE, the programming assistant")
+    assert code.system_prompt.startswith("You are AVEN CODE, the professional coding assistant")
     assert general.system_prompt == system_prompt_for(
         "aven", "aven-core", provider="anthropic", provider_name="Anthropic (Claude)"
     )
@@ -80,7 +80,7 @@ def test_modes_use_distinct_system_prompts() -> None:
 @pytest.mark.parametrize(
     ("aven_model", "model", "effort"),
     [
-        ("aven-1-1", "claude-opus-5-5", "high"),
+        ("aven-2", "claude-opus-5-5", "high"),
         ("aven-ultra", "claude-opus-5-5", "xhigh"),
         ("aven-core", "claude-sonnet-5-5", None),
         ("aven-light", "claude-haiku-5-5", None),
@@ -95,17 +95,17 @@ def test_personal_key_model_mapping_and_effort(aven_model, model, effort) -> Non
 def test_code_prompt_forbids_claiming_execution() -> None:
     code_prompt = system_prompt_for("code")
     assert "Never claim that code has been executed" in code_prompt
-    for language in ("Roblox Luau", "Unity C#", "Unreal Engine C++", "SQL"):
+    for language in ("Python", "JavaScript", "TypeScript", "C#", "Java", "C++", "SQL"):
         assert language in code_prompt
 
 
 @pytest.mark.parametrize(
     ("aven_model", "name", "profile"),
     [
-        ("aven-1-1", "AVEN 1.1", "main AVEN model"),
-        ("aven-ultra", "AVEN Ultra", "hardest tasks"),
-        ("aven-core", "AVEN Core", "balanced"),
-        ("aven-light", "AVEN Light", "fast AVEN model"),
+        ("aven-2", "AVEN 2.0", "main AVEN model"),
+        ("aven-ultra", "AVEN Ultra 1.0", "hardest tasks"),
+        ("aven-core", "AVEN Core 1.1", "balanced"),
+        ("aven-light", "AVEN Light 1.1", "fast AVEN model"),
     ],
 )
 def test_each_model_gets_its_name_and_profile(aven_model, name, profile) -> None:
@@ -114,7 +114,7 @@ def test_each_model_gets_its_name_and_profile(aven_model, name, profile) -> None
     assert profile in prompt
     assert "Today's date is Monday, 19 October 2026 (mention it only when it is relevant)." in prompt
     # Official names only; never internal labels.
-    assert "AVEN 1.1, AVEN Ultra, AVEN Core, AVEN Light" in prompt
+    assert "AVEN 2.0, AVEN Ultra, AVEN Core, AVEN Light" in prompt
     assert "flagship" not in prompt.lower()
 
 
@@ -127,7 +127,7 @@ def test_prompts_cover_language_honesty_and_tools() -> None:
         "Never use characters from another writing system",
         "no internet access, web search, file access or code execution",
         "Never claim to have searched, browsed, opened a file or run code",
-        "ask them to paste the text",
+        "ask them to paste\n  or attach it",
         "Never state a result\n  before you have worked it out",
         "never inside code, JSON or formal text",
     ):
@@ -186,7 +186,7 @@ def test_missing_credentials_from_real_factory() -> None:
 
 def test_prompts_keep_aven_branding_without_hiding_the_provider() -> None:
     local = system_prompt_for("aven", provider="aven_local")
-    assert "open-source Qwen3 language model" in local
+    assert "open-source Qwen3.5 9B language model" in local
     keyed = system_prompt_for("code", provider="anthropic", provider_name="Anthropic (Claude)")
     assert "large language models from Anthropic (Claude)" in keyed
     for prompt in (local, keyed):

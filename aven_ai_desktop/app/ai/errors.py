@@ -74,3 +74,8 @@ class ContentRefusedError(AIError):
 
 class ProviderError(AIError):
     title = "Provider error"
+
+
+class SubscriptionRequiredError(AIError):
+    title = "Subscription needed"
+    retryable = False

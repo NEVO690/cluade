@@ -6,11 +6,13 @@ import logging
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
+from app.account.service import AccountService
 from app.ai import errors
 from app.ai.base_provider import AIProvider, ChatMessage, ChatRequest, StreamEvent
 from app.ai.prompts import system_prompt_for
 from app.ai.provider_factory import PROVIDERS, create_provider, key_required
-from app.config.aven_models import AVEN_EFFORT, aven_model_name
+from app.config.aven_models import AVEN_EFFORT, aven_model_name, get_aven_model
+from app.config.catalog import catalog
 from app.config.cloud import cloud_url
 from app.config.secrets import CredentialStore
 from app.config.settings import AppSettings
@@ -33,6 +35,7 @@ class ConfigStatus:
     model: str  # provider model id behind it ("" when not mapped)
     problem: str = ""
     needs_download: bool = False  # AVEN Local: the selected model must be downloaded first
+    needs_subscription: bool = False  # a paid category without a verified entitlement
 
     @property
     def model_name(self) -> str:
@@ -69,18 +72,46 @@ class ChatService:
         settings: AppSettings,
         credentials: CredentialStore,
         provider_factory: ProviderFactory = create_provider,
+        account: AccountService | None = None,
     ) -> None:
         self.settings = settings
         self.credentials = credentials
         self.provider_factory = provider_factory
+        self.account = account or AccountService(credentials)
+
+    # --- access --------------------------------------------------------------------
+    def category_access(self, category_id: str) -> tuple[bool, str]:
+        """(allowed, reason) for a category. Paid categories need a server-signed entitlement."""
+        category = catalog().category(category_id)
+        if category is None:
+            return False, "This category does not exist."
+        if not category.paid:
+            return True, ""
+        if not self.account.available:
+            return False, (
+                f"{category.name} is a paid category. Subscriptions are not available in this build yet, "
+                "because it is not connected to the AVEN AI server."
+            )
+        if self.account.has(category.entitlement):
+            return True, ""
+        return False, f"{category.name} is a paid category. Subscribe to unlock it, then click Refresh."
 
     # --- configuration ---------------------------------------------------------
-    def status(self) -> ConfigStatus:
+    def status(self, category_id: str = "aven") -> ConfigStatus:
         pid = self.settings.provider
         info = PROVIDERS[pid]
         aven_model = self.settings.model
         model = self.settings.resolved_model()
         base_url = self.settings.openai_base_url if pid == "openai" else ""
+        allowed, reason = self.category_access(category_id)
+        if not allowed:
+            return ConfigStatus(False, info.name, aven_model, model, reason, needs_subscription=True)
+        spec = get_aven_model(aven_model)
+        if spec is not None and not spec.available:
+            label = "is still in development" if spec.status == "in_development" else "is not available right now"
+            return ConfigStatus(
+                False, info.name, aven_model, model, f"{spec.display_name} {label}. Choose another model."
+            )
         if pid == "aven_local":
             return self._local_status(info.name, aven_model)
         if pid == "aven_cloud" and not cloud_url():
@@ -119,15 +150,21 @@ class ChatService:
             )  # fmt: skip
         return ConfigStatus(True, provider_name, aven_model, aven_model)
 
-    def create_provider(self, provider_id: str | None = None, api_key: str | None = None) -> AIProvider:
+    def create_provider(
+        self, provider_id: str | None = None, api_key: str | None = None, category: str = "aven"
+    ) -> AIProvider:
         pid = provider_id or self.settings.provider
         key = api_key if api_key is not None else self.credentials.get_key(pid)
+        extra = {}
+        if pid == "aven_cloud":
+            # AVEN Cloud checks paid categories itself, so it gets the account token and category.
+            extra = {"client_id": self.account.token or self.settings.install_id, "category": category}
         return self.provider_factory(
             pid,
             key,
             base_url=self.settings.openai_base_url if pid == "openai" else "",
             timeout=float(self.settings.request_timeout),
-            client_id=self.settings.install_id,
+            **({"client_id": self.settings.install_id} | extra),
         )
 
     # --- requests --------------------------------------------------------------

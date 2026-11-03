@@ -45,7 +45,7 @@ class ModelFile:
     size: int
     sha256: str
     label: str
-    license: str
+    license: str = ""
     context: int = 12_288  # context window the engine opens (prompt + history + reply), in tokens
 
     @property

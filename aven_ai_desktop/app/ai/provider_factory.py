@@ -78,6 +78,7 @@ def create_provider(
     base_url: str = "",
     timeout: float = 600.0,
     client_id: str = "",
+    category: str = "",
 ) -> AIProvider:
     if provider_id not in PROVIDERS:
         raise errors.ProviderError(f"Unknown AI provider: {provider_id}")
@@ -98,7 +99,10 @@ def create_provider(
             )
         # AVEN Cloud speaks the OpenAI-compatible chat API. The "key" is only an anonymous
         # install id the server uses for fair-use limits; the real provider key stays on the server.
-        return OpenAIProvider(client_id or "anonymous", base_url=url, timeout=timeout, display_name="AVEN Cloud")
+        headers = {"X-AVEN-Category": category} if category else None
+        return OpenAIProvider(
+            client_id or "anonymous", base_url=url, timeout=timeout, display_name="AVEN Cloud", headers=headers
+        )
     if not api_key and key_required(provider_id, base_url):
         info = PROVIDERS[provider_id]
         raise errors.MissingCredentialsError(

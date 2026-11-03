@@ -13,7 +13,7 @@ import scoring  # noqa: E402
 CASES = {c["id"]: c for c in json.loads((EVALS / "cases.json").read_text(encoding="utf-8"))["cases"]}
 
 
-def check(case_id: str, reply: str, model_name: str = "AVEN 1.1") -> list[str]:
+def check(case_id: str, reply: str, model_name: str = "AVEN 2.0") -> list[str]:
     return scoring.check_case(CASES[case_id], reply, model_name)
 
 
@@ -37,13 +37,13 @@ def test_cases_file_is_valid() -> None:
         ("en_instr_json", '```json\n{"name": "Noa", "age": 30}\n```'),
         ("en_current_bitcoin", "I can't check live prices, so I don't know the current price of Bitcoin."),
         ("he_current_news", "אין לי גישה לאינטרנט, ולכן אני לא יכול לדעת מה החדשות היום."),
-        ("en_identity", "I'm AVEN 1.1, the main AVEN model."),
+        ("en_identity", "I'm AVEN 2.0, the main AVEN model."),
         ("en_logic_bat_ball", "Ball = x, bat = x + 1.00, so 2x = 0.10.\n\nThe ball costs **$0.05**."),
         (
             "en_hallucination_paper",
             "I don't have access to specific information about that paper; it may be fictional.",
         ),
-        ("he_identity", "אני AVEN 1.1, המודל הראשי של AVEN."),
+        ("he_identity", "אני AVEN 2.0, המודל הראשי של AVEN."),
         (
             "code_palindrome",
             "```python\ndef is_palindrome(s):\n    t = s.replace(' ', '').lower()\n    return t == t[::-1]\n```",

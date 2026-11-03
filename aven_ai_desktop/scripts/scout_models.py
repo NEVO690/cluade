@@ -57,14 +57,16 @@ def main() -> int:
                 lfs = entry.get("lfs") or {}
                 print(f"  {name} size={lfs.get('size', entry.get('size'))} sha256={lfs.get('oid')}")
     for term in SEARCHES:
-        query = urllib.parse.urlencode({"search": term, "filter": "gguf", "sort": "downloads", "direction": -1, "limit": 40})
+        query = urllib.parse.urlencode(
+            {"search": term, "filter": "gguf", "sort": "downloads", "direction": -1, "limit": 40}
+        )
         print(f"gguf search {term!r}: " + ", ".join(m["id"] for m in get(f"models?{query}")))
     for author in ("Qwen", "ggml-org"):
         query = urllib.parse.urlencode({"author": author, "sort": "lastModified", "direction": -1, "limit": 40})
         names = [m["id"] for m in get(f"models?{query}")]
         print(f"recent {author}: " + ", ".join(names))
     # The newest llama.cpp release, in case a newer model needs a newer engine.
-    with urllib.request.urlopen("https://api.github.com/repos/ggml-org/llama.cpp/releases?per_page=1", timeout=60) as r:  # noqa: S310
+    with urllib.request.urlopen("https://api.github.com/repos/ggml-org/llama.cpp/releases?per_page=1", timeout=60) as r:
         release = json.load(r)[0]
     print(f"llama.cpp latest: {release['tag_name']} ({release['published_at']})")
     for asset in release["assets"]:

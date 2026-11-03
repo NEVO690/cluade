@@ -30,6 +30,7 @@ class OpenAIProvider(AIProvider):
         client: openai.OpenAI | None = None,
         display_name: str = "",
         extra_body: dict | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.base_url = base_url
         self.extra_body = extra_body
@@ -42,6 +43,7 @@ class OpenAIProvider(AIProvider):
             base_url=base_url or None,
             timeout=timeout,
             max_retries=2,
+            default_headers=headers,
         )
 
     def stream_chat(self, request: ChatRequest) -> Iterator[StreamEvent]:
@@ -111,6 +113,10 @@ def map_openai_error(exc: Exception, model: str, name: str = "OpenAI") -> errors
     if isinstance(exc, openai.APIConnectionError):
         return errors.NetworkError(f"Could not reach {name}. Check your internet connection and retry.")
     if isinstance(exc, openai.APIStatusError):
+        if exc.status_code == 402:
+            return errors.SubscriptionRequiredError(
+                exc.message if "subscription" in str(exc.message).lower() else "This needs an active subscription."
+            )
         if exc.status_code >= 500:
             return errors.ProviderOverloadedError(
                 f"{name} is temporarily unavailable (HTTP {exc.status_code}). Please retry shortly."

@@ -25,9 +25,9 @@ from app.local.engine import LocalEngine  # noqa: E402
 from app.local.models import LOCAL_MODELS  # noqa: E402
 
 QUESTIONS = (
-    ("What is the capital of France? Answer in one word.", "paris"),
-    ("כמה זה 15% מ-240? ענה במספר בלבד.", "36"),
-    ("Write a one-line Python expression that reverses a string s.", "[::-1]"),
+    ("What is the capital of France? Answer in one word.", ("paris",)),
+    ("כמה זה 15% מ-240? ענה במספר בלבד.", ("36",)),
+    ("Write a one-line Python expression that reverses a string s.", ("[::-1]", "reversed(s)")),
 )
 
 
@@ -52,9 +52,10 @@ def main(models: list[str]) -> int:
                     print(f"  ERROR {type(exc).__name__}: {exc}")
                     failures += 1
                     continue
-                ok = expected in reply.lower() and "<think>" not in reply
+                ok = any(e in reply.lower() for e in expected) and "<think>" not in reply
                 failures += not ok
-                print(f"  [{'OK' if ok else 'FAIL'}] {time.monotonic() - started:.1f}s {question}\n  {reply.strip()[:300]}")
+                seconds = time.monotonic() - started
+                print(f"  [{'OK' if ok else 'FAIL'}] {seconds:.1f}s {question}\n  {reply.strip()[:300]}")
             props = urllib.request.Request(
                 f"http://127.0.0.1:{engine.port}/props", headers={"Authorization": f"Bearer {engine.token}"}
             )

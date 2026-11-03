@@ -30,8 +30,8 @@
     {
       "id": "aven-2", "name": "AVEN 2.0", "version": "2.0", "status": "available", "access": "free",
       "released": "2026-11-03",
-      "description": "Our flagship: the smartest everyday model, for writing, research and code.",
-      "profile": "You are the AVEN flagship model. Before answering, identify every requirement in the request and make sure the answer meets all of them. State the final answer clearly.",
+      "description": "The smartest everyday AVEN model, for writing, research and code.",
+      "profile": "You are the main AVEN model, the most capable one for everyday work. Before answering, identify every requirement in the request and make sure the answer meets all of them. State the final answer clearly.",
       "local": {"file": "qwen3.5-9b", "thinking": false, "max_output": 4096,
                 "sampling": {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0.0}},
       "providers": {"anthropic": "claude-opus-5-5"}, "effort": "high"

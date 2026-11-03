@@ -27,18 +27,19 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.background import BackgroundTask
 
 from backends import AVEN_MODEL_IDS, SERVICES, UPSTREAM_ERRORS, Backend, make_client, map_upstream_error
+from billing import Billing, BillingConfig, router
 
 log = logging.getLogger("aven_cloud")
 
 AVEN_MODELS = {
-    "aven-1-1": "AVEN 1.1",
+    "aven-2": "AVEN 2.0",
     "aven-ultra": "AVEN Ultra",
     "aven-core": "AVEN Core",
     "aven-light": "AVEN Light",
 }
 assert tuple(AVEN_MODELS) == AVEN_MODEL_IDS
 # Replaced models, still accepted from older app versions.
-LEGACY_MODELS = {"aven-1": "aven-1-1"}  # AVEN 1.0 -> AVEN 1.1
+LEGACY_MODELS = {"aven-1": "aven-2", "aven-1-1": "aven-2"}  # AVEN 1.0 and 1.1 -> AVEN 2.0
 
 
 def _env_int(name: str, default: int) -> int:
@@ -204,9 +205,10 @@ def chunk(completion_id: str, model: str, created: int, delta: dict, finish: str
 # --- application ---------------------------------------------------------------------------
 
 
-def create_app(config: Config | None = None, client=None) -> FastAPI:
-    """Build the app. ``client`` (an Anthropic or OpenAI async client) is injectable for tests."""
+def create_app(config: Config | None = None, client=None, billing: Billing | None = None) -> FastAPI:
+    """Build the app. ``client`` (an Anthropic or OpenAI async client) and ``billing`` are injectable for tests."""
     config = config or Config.from_env()
+    billing = billing or Billing.create(BillingConfig.from_env())
     service = SERVICES[config.service]
     if client is None and config.api_key:
         client = make_client(service, config.api_key, config.base_url, config.request_timeout)
@@ -214,6 +216,12 @@ def create_app(config: Config | None = None, client=None) -> FastAPI:
     limiter = RateLimiter()
     semaphore = asyncio.Semaphore(max(1, config.max_concurrent))
     app = FastAPI(title="AVEN Cloud", docs_url=None, redoc_url=None, openapi_url=None)
+
+    def allow_signup(request: Request) -> bool:
+        _token, ip = client_identity(request, config.trust_proxy)
+        return limiter.allow(f"signup:{ip}", 5, 3600)
+
+    app.include_router(router(billing, allow_signup))
 
     @app.get("/health")
     async def health() -> dict:
@@ -244,6 +252,10 @@ def create_app(config: Config | None = None, client=None) -> FastAPI:
                 "You've reached today's free message limit for AVEN Cloud. Please come back tomorrow.",
                 "rate_limit_error",
             )
+        # Paid categories are checked here, on the server, for every request.
+        denied = billing.check_category(install_id, request.headers.get("x-aven-category", "").strip().lower())
+        if denied is not None:
+            return denied
         try:
             body = await request.json()
         except ValueError:

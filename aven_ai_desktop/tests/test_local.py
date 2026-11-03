@@ -158,12 +158,12 @@ def test_pinned_model_files_are_https_and_verified() -> None:
         assert file.url.startswith("https://huggingface.co/")
         assert len(file.revision) == 40 and len(file.sha256) == 64
     assert {m: v.file.key for m, v in LOCAL_MODELS.items()} == {
-        "aven-light": "qwen3-1.7b",
-        "aven-core": "qwen3-4b",
-        "aven-1-1": "qwen3-8b",  # AVEN 1.1: the big model, answering directly
+        "aven-light": "qwen3.5-2b-q8",
+        "aven-core": "qwen3.5-4b",
+        "aven-2": "qwen3.5-9b",  # AVEN 2.0: the big model, answering directly
         "aven-ultra": "qwen3-8b",
     }
-    assert [LOCAL_MODELS[m].thinking for m in ("aven-light", "aven-core", "aven-1-1", "aven-ultra")] == [
+    assert [LOCAL_MODELS[m].thinking for m in ("aven-light", "aven-core", "aven-2", "aven-ultra")] == [
         False,
         False,
         False,
@@ -198,7 +198,7 @@ def ask(provider, model: str, text: str = "hello") -> str:
 
 def test_local_provider_streams_with_thinking_per_model(engine, downloaded) -> None:
     provider = LocalProvider(engine)
-    assert ask(provider, "aven-light") == "model=Qwen3-1.7B-Q4_K_M.gguf thinking=False echo=hello"
+    assert ask(provider, "aven-light") == "model=Qwen3.5-2B-Q8_0.gguf thinking=False echo=hello"
     first_process = engine.process
     assert ask(provider, "aven-light", "again").endswith("echo=again")
     assert engine.process is first_process  # same model: engine reused
@@ -206,17 +206,15 @@ def test_local_provider_streams_with_thinking_per_model(engine, downloaded) -> N
     assert ask(provider, "aven-ultra") == "model=Qwen3-8B-Q4_K_M.gguf thinking=True echo=hello"
     assert engine.process is not first_process  # switched model: engine restarted
     assert first_process.poll() is not None  # old engine stopped
-    second_process = engine.process
-    # AVEN 1.1 uses the same file as Ultra (no extra download, no restart) without thinking.
-    assert ask(provider, "aven-1-1") == "model=Qwen3-8B-Q4_K_M.gguf thinking=False echo=hello"
-    assert engine.process is second_process
-    assert ask(provider, "aven-core").startswith("model=Qwen3-4B-Q4_K_M.gguf thinking=False")
+    # AVEN 2.0 runs the newer Qwen3.5 9B without thinking (a different file: the engine switches).
+    assert ask(provider, "aven-2") == "model=Qwen3.5-9B-Q4_K_M.gguf thinking=False echo=hello"
+    assert ask(provider, "aven-core").startswith("model=Qwen3.5-4B-Q4_K_M.gguf thinking=False")
 
 
 def test_local_provider_uses_recommended_sampling(engine, downloaded) -> None:
     provider = LocalProvider(engine)
     # Qwen3's recommended settings: direct answers vs. thinking mode.
-    assert ask(provider, "aven-1-1", "sampling") == "temperature=0.7 top_p=0.8 top_k=20"
+    assert ask(provider, "aven-2", "sampling") == "temperature=0.7 top_p=0.8 top_k=20"
     assert ask(provider, "aven-ultra", "sampling") == "temperature=0.6 top_p=0.95 top_k=20"
 
 
@@ -224,7 +222,7 @@ def test_context_window_and_reply_budget_per_model(engine, downloaded) -> None:
     provider = LocalProvider(engine)
     # The 8B file opens a larger window; Ultra may use more tokens because it thinks first.
     assert ask(provider, "aven-light", "context-info") == "ctx=12288 max_tokens=4096 messages=2"
-    assert ask(provider, "aven-1-1", "context-info") == "ctx=16384 max_tokens=4096 messages=2"
+    assert ask(provider, "aven-2", "context-info") == "ctx=16384 max_tokens=4096 messages=2"
     assert ask(provider, "aven-ultra", "context-info") == "ctx=16384 max_tokens=8192 messages=2"
 
 
@@ -296,7 +294,7 @@ def test_model_not_downloaded(engine, monkeypatch) -> None:
     monkeypatch.setattr(lp, "is_downloaded", lambda file: False)
     with pytest.raises(ModelNotDownloadedError) as info:
         ask(LocalProvider(engine), "aven-core")
-    assert "2.5 GB" in info.value.user_message
+    assert "2.7 GB" in info.value.user_message
 
 
 # --- chat service + UI ----------------------------------------------------------------------------
@@ -320,7 +318,7 @@ def test_status_asks_for_download_then_ready(shared_engine, monkeypatch) -> None
     monkeypatch.setattr(downloader, "is_downloaded", lambda file: False)
     status = svc.status()
     assert not status.ready and status.needs_download
-    assert "1.3 GB" in status.problem and "AVEN Light" in status.problem
+    assert "2.0 GB" in status.problem and "AVEN Light" in status.problem
     monkeypatch.setattr(downloader, "is_downloaded", lambda file: True)
     assert svc.status().ready
 
@@ -360,13 +358,13 @@ def test_ui_downloads_then_chats_locally(qtbot, qapp, tmp_path, shared_engine, d
     window.show()
     assert not window.chat.setup_card.isHidden()
     assert window.chat.setup_button.text() == "Download"
-    assert "1.3 GB download" in window.chat.model_picker.options["aven-light"].description.text()
+    assert "2.0 GB download" in window.chat.model_picker.options["aven-light"].description.text()
 
     window.send_message("hi there")  # triggers the download, then sends
     qtbot.waitUntil(lambda: window.generation is None and bool(repo.list_conversations()), timeout=15000)
     qtbot.waitUntil(lambda: len(repo.list_messages(repo.list_conversations()[0].id)) == 2, timeout=15000)
     reply = repo.list_messages(repo.list_conversations()[0].id)[-1]
-    assert reply.content == "model=Qwen3-1.7B-Q4_K_M.gguf thinking=False echo=hi there"
+    assert reply.content == "model=Qwen3.5-2B-Q8_0.gguf thinking=False echo=hi there"
     assert reply.model == "aven-light"
     assert window.chat.setup_card.isHidden()
     assert "On this computer" in window.chat.model_picker.options["aven-light"].description.text()
