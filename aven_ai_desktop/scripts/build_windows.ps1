@@ -31,7 +31,8 @@
     AVEN_SIGN_PFX_PASSWORD are set, the executable and installer are signed with signtool.
 
     Set the AVEN_CLOUD_URL environment variable (e.g. https://aven-cloud.onrender.com) to build an
-    app that works without an API key through your AVEN Cloud server.
+    app that works without an API key through your AVEN Cloud server, and AVEN_ENTITLEMENT_PUBLIC_KEY
+    (from aven_cloud/scripts/new_signing_key.py) to enable paid categories such as AVEN CODE.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1
@@ -134,7 +135,10 @@ Invoke-Checked (Join-Path $ProjectRoot "engine\llama-server.exe") @("--version")
 $CloudFile = Join-Path $ProjectRoot "assets\cloud.json"
 if ($env:AVEN_CLOUD_URL) {
     Write-Host "==> Using AVEN Cloud server: $($env:AVEN_CLOUD_URL)" -ForegroundColor Cyan
-    @{ url = $env:AVEN_CLOUD_URL } | ConvertTo-Json | Set-Content -Encoding UTF8 $CloudFile
+    $cloud = @{ url = $env:AVEN_CLOUD_URL }
+    # Public key that verifies the server's signed entitlements (paid categories). Not a secret.
+    if ($env:AVEN_ENTITLEMENT_PUBLIC_KEY) { $cloud.entitlement_public_key = $env:AVEN_ENTITLEMENT_PUBLIC_KEY }
+    $cloud | ConvertTo-Json | Set-Content -Encoding UTF8 $CloudFile
 } elseif (Test-Path $CloudFile) {
     Write-Host "==> Using existing assets\cloud.json" -ForegroundColor Cyan
 } else {

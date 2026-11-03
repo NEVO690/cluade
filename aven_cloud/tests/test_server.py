@@ -339,3 +339,28 @@ def test_desktop_app_provider_talks_to_server_over_http() -> None:
     finally:
         server.should_exit = True
         thread.join(timeout=10)
+
+
+def test_dockerfile_copies_every_server_module() -> None:
+    """A module the server imports but the image lacks would crash the deployed server at startup."""
+    import ast
+    import re
+
+    copied = set(re.search(r"^COPY (.+) \./$", (ROOT / "Dockerfile").read_text(), re.M).group(1).split())
+    local = {p.name for p in ROOT.glob("*.py")}
+    needed = {"server.py"}
+    queue = ["server.py"]
+    while queue:
+        tree = ast.parse((ROOT / queue.pop()).read_text())
+        for node in ast.walk(tree):
+            names = (
+                [a.name for a in node.names]
+                if isinstance(node, ast.Import)
+                else ([node.module] if isinstance(node, ast.ImportFrom) and node.module else [])
+            )
+            for name in names:
+                file = f"{name.split('.')[0]}.py"
+                if file in local and file not in needed:
+                    needed.add(file)
+                    queue.append(file)
+    assert needed <= copied, f"Dockerfile does not copy {sorted(needed - copied)}"

@@ -18,3 +18,18 @@ services:
         value: "100"
       - key: AVEN_REQUESTS_PER_MINUTE
         value: "10"
+      # AVEN CODE subscriptions (optional; billing stays off until all of these are set).
+      # Use sk_test_ / test-mode values first. Values are entered in the Render dashboard, never here.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_AVEN_CODE
+        sync: false
+      - key: AVEN_ENTITLEMENT_SIGNING_KEY
+        sync: false
+      - key: AVEN_PUBLIC_URL
+        sync: false
+      # Accounts and subscriptions must survive restarts: point this at a persistent disk.
+      - key: AVEN_BILLING_DB
+        value: /var/data/billing.db

@@ -4,10 +4,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY server.py backends.py ./
+COPY server.py backends.py billing.py ./
 
 # Run as an unprivileged user.
-RUN useradd --create-home aven
+RUN useradd --create-home aven && mkdir -p /var/data && chown aven /var/data
 USER aven
 
 # One worker: the fair-use limits are kept in memory per process.

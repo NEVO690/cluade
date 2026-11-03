@@ -72,6 +72,30 @@ All settings are environment variables:
 
 The limits live in memory, so run **one** instance with one worker; the Dockerfile already does this. They are a fair-use guard, not strong security: someone determined could rotate install IDs and IP addresses. On a free tier the worst case is that the shared daily quota runs out. On a paid service, set a spend limit in its console.
 
+## AVEN CODE subscriptions (Stripe)
+
+AVEN CODE is the paid category. This server is the only place payments are verified:
+
+- **Accounts.** The desktop app creates an anonymous AVEN AI account (`POST /v1/accounts`) and keeps its token in the operating system's credential store. The server stores only a SHA-256 hash of the token.
+- **Checkout.** `POST /v1/billing/checkout` creates a Stripe Checkout session for the configured price and returns Stripe's URL. The app opens it in the browser and never sees card details or Stripe keys.
+- **Webhooks.** `POST /v1/billing/webhook` accepts only events with a valid Stripe signature (`STRIPE_WEBHOOK_SECRET`). Each event is processed once, and the subscription's current state is always re-read from Stripe, so out-of-order or replayed events cannot restore a cancelled subscription.
+- **Access.** Only `active` and `trialing` subscriptions with a current period grant access. `past_due` (failed payment), `unpaid`, `canceled` and expired periods do not. A subscription set to cancel at period end keeps access until that date.
+- **Enforcement.** Every chat request is checked on the server: AVEN CODE requests (header `X-AVEN-Category: code`) without an active subscription get HTTP 402. `GET /v1/account` also returns the entitlements signed with an Ed25519 key, which the app verifies with the public key before it unlocks AVEN CODE for on-device or personal-key use.
+- **Management.** `POST /v1/billing/portal` opens Stripe's customer portal (update card, cancel).
+
+| Variable | Meaning |
+|---|---|
+| `STRIPE_SECRET_KEY` | `sk_test_...` for test mode (no real charges), `sk_live_...` for live mode |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_...` of the webhook endpoint `https://<server>/v1/billing/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_failed`) |
+| `STRIPE_PRICE_AVEN_CODE` | The Price id (`price_...`) of the AVEN CODE subscription. **The price is set in Stripe**, not in code; the app shows what Stripe reports. |
+| `AVEN_ENTITLEMENT_SIGNING_KEY` | Private key from `python scripts/new_signing_key.py`. Its public key goes into the desktop build as `AVEN_ENTITLEMENT_PUBLIC_KEY`. |
+| `AVEN_PUBLIC_URL` | This server's public `https://` address (Stripe's return pages) |
+| `AVEN_BILLING_DB` | SQLite file for accounts and subscriptions. **Put it on a persistent disk**: on Render that needs a paid instance with a disk mounted at `/var/data`. On the free plan it is lost on restart. |
+
+Billing stays off (`GET /v1/billing/config` reports `enabled: false`, AVEN CODE stays locked) until all of the first four are set. Test the whole flow in Stripe test mode with the test card `4242 4242 4242 4242` before switching to live keys.
+
+Limitation: accounts are anonymous and tied to one computer's credential store. Moving a subscription to a new computer needs a sign-in system, which is not built yet.
+
 ## Run locally
 
 ```bash
@@ -94,7 +118,8 @@ The tests mock the AI services at the HTTP level, so they need no key and no net
 - automatic model selection, including renamed models
 - streaming, validation, rate limits and error mapping
 - an end-to-end test where the desktop app's real provider code chats with a running server over HTTP
+- accounts, Stripe checkout (mocked), signed webhooks (real signature verification), failed payments, cancellations, replayed and out-of-order events, server-side AVEN CODE checks, and the desktop app verifying signed entitlements
 
 ## Privacy
 
-Users' messages pass through this server to the AI service it runs on. The server keeps nothing except in-memory rate-limit counters, and its logs record only the model name and a shortened hash of the install ID. If you publish AVEN Cloud, your website's privacy policy should say that conversations are processed by your server and by that AI service, under that service's terms.
+Users' messages pass through this server to the AI service it runs on. The server keeps no conversations: only in-memory rate-limit counters and, when billing is on, account ids, token hashes and subscription status. Its logs record only the model name and a shortened hash of the client id. If you publish AVEN Cloud, your website's privacy policy should say that conversations are processed by your server and by that AI service, under that service's terms.

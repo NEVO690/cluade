@@ -19,6 +19,7 @@ _SECRET_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9_\-]{8,}"),
     re.compile(r"(?i)(api[_-]?key|authorization|x-api-key)(\s*[:=]\s*)((?:bearer\s+)?\S+)"),
     re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{8,}"),
+    re.compile(r"avk_[A-Za-z0-9_\-]{8,}"),  # AVEN AI account tokens
 ]
 
 
@@ -26,6 +27,7 @@ def redact(text: str) -> str:
     text = _SECRET_PATTERNS[0].sub("sk-***REDACTED***", text)
     text = _SECRET_PATTERNS[1].sub(lambda m: f"{m.group(1)}{m.group(2)}***REDACTED***", text)
     text = _SECRET_PATTERNS[2].sub("Bearer ***REDACTED***", text)
+    text = _SECRET_PATTERNS[3].sub("avk_***REDACTED***", text)
     return text
 
 

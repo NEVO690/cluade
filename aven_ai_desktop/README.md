@@ -1,17 +1,24 @@
 # AVEN AI Desktop
 
-AVEN AI Desktop is a Windows desktop AI app written in Python (PySide6). It has two modes:
+AVEN AI Desktop is a Windows desktop AI app written in Python (PySide6). Version 2.0 has five categories, chosen in the sidebar:
 
-- **AVEN** is a friendly general-purpose assistant for questions, explanations, brainstorming, writing, summaries, learning, planning and everyday problem-solving.
-- **AVEN CODE** is a programming assistant for writing, debugging, explaining, refactoring and reviewing code. It knows Python, JavaScript/TypeScript, HTML/CSS, Roblox Luau, Unity C#, Unreal Engine C++, Java, C#, SQL and more.
+| Category | Access | What it is |
+|---|---|---|
+| **AVEN AI** | Free | The general assistant: conversations, questions, writing and rewriting, explanations, research help and coding basics. |
+| **AVEN Python** | Free | A Python specialist: programs and complete projects, error explanations, refactoring, libraries, desktop apps and automation. Python in replies is checked for syntax errors and undefined names. |
+| **AVEN Unity** | Free | A Unity specialist: C# gameplay systems, controllers, UI, physics, scene workflows and Console errors. C# in replies is syntax-checked and checked for common Unity mistakes. |
+| **AVEN CODE** | Paid (subscription) | Professional multi-language coding: projects and repositories (attach files or a folder), debugging, refactoring, architecture, reviews. Code in replies is syntax-checked per language. Access is verified by the AVEN Cloud server (Stripe). |
+| **Made With AVEN** | Preview (pricing not final; free while in preview) | Describe a game; AVEN designs it, writes it, checks it in a sandbox, repairs problems and lets you play it in the browser. 2D HTML5 games for now. |
+
+Each category has its own instructions, conversation list and remembered model. Every category offers the same four AVEN models: **AVEN 2.0** (the main model), **AVEN Ultra**, **AVEN Core** and **AVEN Light**. All models are free.
 
 Out of the box the app uses **AVEN Local**: open-source AI models running **on the user's own computer**, with **no API key, no account and no cost**. Builds that include an **AVEN Cloud** server address (the AVEN AI server in [`../aven_cloud`](../aven_cloud)) use that server instead, again with no key for users. Advanced users can instead use their own key for **Anthropic (Claude)**, **OpenAI**, or any **OpenAI-compatible server** (including local model servers on `localhost`). The app never makes up responses: if nothing is available, it shows a setup screen.
 
-| Dark theme, AVEN CODE | Light theme, first launch |
+| AVEN AI (dark theme) | Made With AVEN (light theme) |
 |---|---|
-| ![AVEN CODE in dark theme](docs/screenshot-dark-code.png) | ![First launch setup in light theme](docs/screenshot-light-setup.png) |
+| ![AVEN AI 2.0 in dark theme](docs/screenshot-2.0-aven-dark.png) | ![Made With AVEN workspace](docs/screenshot-2.0-studio-light.png) |
 
-*The screenshots were taken with a mock provider in an offscreen test harness.*
+*The screenshots were taken in an offscreen test harness, without a downloaded model.*
 
 Version: **2.0.0** (defined in `app/version.py`)
 
@@ -19,14 +26,16 @@ Version: **2.0.0** (defined in `app/version.py`)
 
 ## AVEN Local: free, private, on your computer
 
-AVEN Local runs open-source **Qwen3** models (Apache-2.0) with the bundled **llama.cpp** engine (`llama-server`, MIT). The first time you pick a model, AVEN offers a **one-time download** from Hugging Face. Each file is pinned to an exact version and checked against its SHA-256 checksum. After that it works offline, and conversations never leave the computer.
+AVEN Local runs open-source **Qwen** models (Apache-2.0) with the bundled **llama.cpp** engine (`llama-server`, MIT). The first time you pick a model, AVEN offers a **one-time download** from Hugging Face. Each file is pinned to an exact version and checked against its SHA-256 checksum. After that it works offline, and conversations never leave the computer.
 
-| AVEN model | Local model | Download | Notes |
-|---|---|---|---|
-| **AVEN Light** (default) | Qwen3 1.7B | 1.3 GB | Fastest; runs on almost any PC |
-| **AVEN Core** | Qwen3 4B | 2.5 GB | Smarter; 8 GB of RAM recommended |
-| **AVEN 1.1** | Qwen3 8B, answering directly | 5.0 GB | Far smarter than Light and Core, close to Ultra but faster; 16 GB of RAM recommended |
-| **AVEN Ultra** | Qwen3 8B, with thinking mode | same file as 1.1 | Thinks before answering: the smartest locally, slower |
+| AVEN model | Version | Local model | Download | Notes |
+|---|---|---|---|---|
+| **AVEN 2.0** (main) | 2.0 | Qwen3.5 9B, answering directly | 5.7 GB | The newest generation; the most capable everyday model. 16 GB of RAM recommended |
+| **AVEN Ultra** | 1.0 | Qwen3 8B, with thinking mode | 5.0 GB | Thinks before answering; slower. Unchanged in 2.0 |
+| **AVEN Core** | 1.1 | Qwen3.5 4B | 2.7 GB | Balanced; 8 GB of RAM recommended |
+| **AVEN Light** | 1.1 | Qwen3.5 2B (8-bit) | 2.0 GB | Fastest; runs on most PCs |
+
+The models, their versions and settings live in [`app/data/models.json`](app/data/models.json): a model can be changed, marked unavailable or "in development", or remapped without changing code.
 
 Some things to know:
 
@@ -36,7 +45,7 @@ Some things to know:
 - Models are stored in `%APPDATA%\AVEN AI\models`. Delete them in **Settings → AI Provider → Delete downloaded models**.
 - Local models are capable, but less so than large cloud models. For the best answers use AVEN Cloud or your own key.
 - Replies stay in the writing systems of the conversation: the engine cannot produce stray Chinese, Korean, Cyrillic, Arabic or Greek words inside a Hebrew or English reply, or Hebrew and English letters glued into one word. Questions about other languages or translations have no such limits.
-- Long conversations are fitted to each model's memory using exact token counts. AVEN 1.1 and Ultra use a 16K-token window; Ultra may spend up to 8,192 tokens thinking and answering.
+- Long conversations are fitted to each model's memory using exact token counts. AVEN 2.0 and Ultra use a 16K-token window; replies may use up to 8,192 tokens (for Ultra this includes its thinking).
 
 ## Answer quality
 
@@ -58,7 +67,7 @@ Cloud mapping (AVEN Cloud with Anthropic, or your own Anthropic key):
 
 | AVEN model | Best for | Model behind it with your own Anthropic key |
 |---|---|---|
-| **AVEN 1.1** (default) | Our best everyday model: far smarter than Light and Core, close to Ultra | `claude-opus-5-5` with deeper reasoning (`effort: high`) |
+| **AVEN 2.0** (default) | The smartest everyday AVEN model, for writing, research and code | `claude-opus-5-5` with deeper reasoning (`effort: high`) |
 | **AVEN Ultra** | The hardest questions, research and code: thinks longer | `claude-opus-5-5` with extra-deep reasoning (`effort: xhigh`) |
 | **AVEN Core** | Balanced speed and quality for everyday work | `claude-sonnet-5-5` |
 | **AVEN Light** | The fastest replies for quick questions | `claude-haiku-5-5` |
@@ -72,15 +81,45 @@ AVEN AI does not train its own model. Settings and the privacy notice state who 
 
 ## Features
 
-- Sidebar with branding, a **New conversation** button, search, and history grouped by date (Today, Yesterday, …)
-- Each conversation has its own **mode**. You can switch modes from the header at any time; the system instructions change from the next reply.
+- **Five categories** in the sidebar with **Free**, **Paid** and **Preview** badges; each keeps its own conversations and model. `Ctrl+1` … `Ctrl+5` switch categories.
+- **Model picker** in the message box with each model's version and download size.
+- **Coding tools** (AVEN Python, AVEN Unity, AVEN CODE): attach files or a whole project folder (text files only, size-limited, build folders skipped); **code checks** under each reply (tree-sitter syntax checks for C#, JavaScript, TypeScript, Java, C++, HTML and CSS; Python syntax and pyflakes; Unity rules). Nothing is ever run. **Save files…** writes the files a reply names into a folder you choose, refusing absolute paths, `..` and reserved names.
+- **Made With AVEN**: a dashboard of game projects, a design plan, progress log, code and checks viewers, change requests, version history, **Play** (opens the game in your browser), **Export** (.zip) and **Open folder**. See below.
+- **What's New** after each update, and any time from the sidebar.
+- **Account & subscription** for AVEN CODE (see below).
 - **Streamed responses**, with a *thinking…* indicator, a **Stop** button (or `Esc`), **Retry** after errors and **Regenerate**
-- **Markdown** rendering: headings, lists, tables, links and inline code
-- **Code blocks** with syntax highlighting (Pygments) and a **Copy code** button. You can also copy whole messages.
-- **Local history** in SQLite: create, rename, delete, load earlier messages on demand in long conversations, and delete everything
-- **Settings**: theme (match Windows / light / dark), the AVEN model for each mode, provider, API key, the provider model behind each AVEN model, loading the list of models your key can use, a real **connection test**, max response length and timeout
-- **Clear errors** for a missing or invalid key, unknown models, rate limits, timeouts, network failures, provider outages and declined requests
-- The window stays responsive: network calls run on background threads and streamed text is batched for rendering
+- **Markdown** rendering (with right-to-left layout for Hebrew), **code blocks** with syntax highlighting and **Copy code**
+- **Local history** in SQLite: create, rename, delete, search, load earlier messages on demand, delete everything
+- **Settings**: theme, provider, API key, the provider model behind each AVEN model, connection test, max response length and timeout
+- **Clear errors** for a missing or invalid key, unknown models, rate limits, timeouts, network failures, provider outages, declined requests and missing subscriptions
+- The window stays responsive: network calls, model work and game checks run on background threads
+
+## Made With AVEN
+
+Describe a game in plain words. The pipeline then:
+
+1. **Designs** it: a JSON plan with the genre, controls, systems, characters, scenes, goal, and what was simplified (shown in the workspace).
+2. **Writes** `game.js` on the bundled **AVEN game engine** (a small 2D canvas engine: scenes, input, camera, drawing, collisions, sounds), drawing everything with shapes and text.
+3. **Checks** it: JavaScript syntax (tree-sitter), safety rules (no network, no `eval`, no imports, no external files), and a **sandboxed test run**: the game runs for 300 frames in QuickJS (no file, network or process access; memory and time limits) while simulated keys are pressed. Crashes, games that never start and games that draw nothing are caught.
+4. **Repairs** problems: the errors go back to the model, up to three times.
+5. Marks the version **Validated** only if every check passed; otherwise **Needs fixes**, with the errors shown.
+
+**Play** opens the game in your web browser from a single self-contained `index.html`. A Content-Security-Policy allows only the page's own two scripts (by SHA-256 hash) and blocks every network request, so a generated game cannot load or send anything. Projects, every version and their history are saved in the AVEN AI data folder; request changes at any time, and **Export** a .zip to share.
+
+Honest limits: games are 2D; a big request (an open world with vehicles and missions) becomes a smaller playable 2D version and the plan says what was simplified. The checks catch crashes, not every bug or design problem, so play the result. On-device models are much slower at writing a whole game than cloud models (several minutes to tens of minutes on a CPU).
+
+## AVEN CODE subscription
+
+AVEN CODE is the paid category. The app never decides on its own that it is paid for:
+
+- Checkout and subscription management open **Stripe's own pages** in your browser, created by the AVEN Cloud server. The app never sees card details or Stripe keys.
+- The server records subscriptions only from **signature-verified Stripe webhooks** and re-reads their state from Stripe. Failed payments, cancellations and expired periods remove access.
+- Requests through **AVEN Cloud** are checked by the server on every message.
+- For AVEN Local or a personal key, the app unlocks AVEN CODE only with an **entitlement signed by the server** (Ed25519, valid for up to 24 hours, never beyond the paid period), checked against the account and the server's public key built into the app.
+
+AVEN CODE needs a deployed AVEN Cloud server with Stripe configured (see [`aven_cloud/README.md`](../aven_cloud/README.md)) and a build made with `AVEN_CLOUD_URL` and `AVEN_ENTITLEMENT_PUBLIC_KEY`. Until then the category is shown with a clear "not available in this build yet" message, and nothing is unlocked. The price is set in Stripe and shown as Stripe reports it.
+
+Limitation: when AVEN CODE runs on your own computer (AVEN Local or a personal key), the check runs on that computer. It stops casual unlocking, but someone who modifies the application could bypass it; only requests through AVEN Cloud are enforced by the server.
 
 ## Requirements
 
@@ -291,11 +330,17 @@ aven_ai_desktop/
 │   └── generate_icon.py         # renders the logo into a multi-size .ico
 ├── app/
 │   ├── version.py               # app name and version (single source of truth)
+│   ├── selftest.py              # --self-test: verifies every bundled 2.0 component
+│   ├── data/                    # catalog: models.json, categories.json, releases.json (What's New)
+│   ├── account/                 # AVEN AI account, server-signed entitlements (paid categories)
+│   ├── code/                    # code blocks, static checks, attaching and saving files
+│   ├── studio/                  # Made With AVEN: engine + sandbox (runtime/), pipeline, checks, projects
 │   ├── paths.py                 # per-user data dir, bundled resource paths
 │   ├── logging_setup.py         # rotating log file with secret redaction
 │   ├── application.py           # bootstrap: services, theme, main window
 │   ├── config/
-│   │   ├── aven_models.py       # AVEN 1.1 / Ultra / Core / Light and default mappings
+│   │   ├── aven_models.py       # model lineup API (from the catalog), legacy ids, mappings
+│   │   ├── catalog.py           # loads and validates app/data/*.json
 │   │   ├── cloud.py             # AVEN Cloud server address (env var or assets/cloud.json)
 │   │   ├── settings.py          # settings model, JSON persistence, env overrides
 │   │   └── secrets.py           # API keys: env var → credential store → session
@@ -305,7 +350,7 @@ aven_ai_desktop/
 │   │   ├── openai_provider.py
 │   │   ├── provider_factory.py  # provider registry and construction
 │   │   ├── chat_service.py      # config status, request building, history trimming
-│   │   ├── prompts.py           # system instructions per mode and AVEN model
+│   │   ├── prompts.py           # system instructions per category and AVEN model
 │   │   └── errors.py            # user-facing error types
 │   ├── storage/
 │   │   ├── database.py          # SQLite connection and migrations
@@ -350,8 +395,11 @@ aven_ai_desktop/
 
 ## Current limitations
 
-- Text conversations only: no image or file attachments, and no web search or browsing. AVEN says so instead of guessing current information.
-- The on-device models are small. AVEN Light in particular still makes factual and Hebrew mistakes; AVEN 1.1 or Ultra are much more reliable.
+- No image attachments, web search or browsing. Text files can be attached in the coding categories. AVEN says when it cannot check current information.
+- Code in replies is checked statically (syntax and common mistakes); it is never run, so tests and builds must be run by you. There is no C# compiler or Unity in the checks.
+- The on-device models are small. AVEN Light in particular still makes factual and Hebrew mistakes; AVEN 2.0 or Ultra are much more reliable.
+- Made With AVEN builds 2D browser games; there is no 3D engine and no image or sound generation yet.
+- AVEN CODE needs a deployed AVEN Cloud server with Stripe; AVEN AI accounts are anonymous and tied to one computer (no sign-in to move a subscription yet).
 - Responses come from one provider at a time: AVEN Cloud, Anthropic, or OpenAI (or OpenAI-compatible).
 - AVEN Cloud needs a deployed server and a key for an AI service. Free tiers (Groq, Gemini) cost nothing, but their limits are shared by all users of the server.
 - There is no automatic update system. Install new versions over the old one; your data folder is kept.

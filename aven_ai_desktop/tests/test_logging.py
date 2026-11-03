@@ -10,6 +10,7 @@ def test_redact_masks_common_key_formats() -> None:
     assert "ABCDEFGHIJ" not in text
     assert "abcdefghijklmnop" not in text
     assert "secret123" not in text
+    assert "QWERTYUIOP" not in redact("account token avk_QWERTYUIOPasdfghjkl0123")
 
 
 def test_filter_rewrites_records() -> None:

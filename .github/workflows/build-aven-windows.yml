@@ -61,6 +61,8 @@ jobs:
       # Public address of your AVEN Cloud server. Set it under
       # Settings → Secrets and variables → Actions → Variables. Empty = users need their own key.
       AVEN_CLOUD_URL: ${{ vars.AVEN_CLOUD_URL }}
+      # Public key matching the server's AVEN_ENTITLEMENT_SIGNING_KEY (enables AVEN CODE subscriptions).
+      AVEN_ENTITLEMENT_PUBLIC_KEY: ${{ vars.AVEN_ENTITLEMENT_PUBLIC_KEY }}
     defaults:
       run:
         working-directory: aven_ai_desktop

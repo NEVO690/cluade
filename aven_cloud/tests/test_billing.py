@@ -196,6 +196,7 @@ def test_failed_payment_or_cancellation_removes_access(env, status) -> None:
     account_id, token = new_account(client)
     activate(client, gateway, account_id)
     kind = "customer.subscription.deleted" if status == "canceled" else "customer.subscription.updated"
+    gateway.subscriptions["sub_1"] = subscription(account=account_id, status=status)
     body, headers = signed(event(kind, subscription(account=account_id, status=status), "evt_change"))
     assert client.post("/v1/billing/webhook", content=body, headers=headers).status_code == 200
     assert client.get("/v1/account", headers=auth(token)).json()["entitlements"] == []
@@ -223,6 +224,7 @@ def test_cancel_at_period_end_keeps_access_until_the_period_ends(env) -> None:
     # The signed entitlement never outlives the paid period (ISO-8601 UTC strings compare in time order).
     assert claims["expires"] <= status["subscriptions"][0]["current_period_end"]
     # Period over without a renewal reported: no access.
+    gateway.subscriptions["sub_1"] = subscription(account=account_id, days=-1)
     body, headers = signed(event("customer.subscription.updated", subscription(account=account_id, days=-1), "evt_end"))
     client.post("/v1/billing/webhook", content=body, headers=headers)
     assert client.get("/v1/account", headers=auth(token)).json()["entitlements"] == []
@@ -230,16 +232,27 @@ def test_cancel_at_period_end_keeps_access_until_the_period_ends(env) -> None:
 
 def test_duplicate_webhooks_are_processed_once(env) -> None:
     client, gateway, billing, _key = env
-    account_id, _token = new_account(client)
+    account_id, token = new_account(client)
     activate(client, gateway, account_id)
-    body, headers = signed(
-        event("customer.subscription.updated", subscription(account=account_id, status="canceled"), "evt_dup")
-    )
+    gateway.subscriptions["sub_1"] = subscription(account=account_id, status="canceled")
+    body, headers = signed(event("customer.subscription.updated", subscription(account=account_id), "evt_dup"))
     client.post("/v1/billing/webhook", content=body, headers=headers)
-    # Stripe retries the same event; an older "active" replay with the same id must not undo it.
-    body2, headers2 = signed(event("customer.subscription.updated", subscription(account=account_id), "evt_dup"))
-    client.post("/v1/billing/webhook", content=body2, headers=headers2)
-    assert billing.entitlements_for(_token) == []
+    assert billing.entitlements_for(token) == []
+    # Stripe retries the same event id: it is not processed again (even if it would now read "active").
+    gateway.subscriptions["sub_1"] = subscription(account=account_id)
+    client.post("/v1/billing/webhook", content=body, headers=headers)
+    assert billing.entitlements_for(token) == []
+
+
+def test_out_of_order_events_cannot_restore_a_cancelled_subscription(env) -> None:
+    client, gateway, billing, _key = env
+    account_id, token = new_account(client)
+    activate(client, gateway, account_id)
+    gateway.subscriptions["sub_1"] = subscription(account=account_id, status="canceled")
+    # An older "active" event arrives late: the server applies Stripe's current state instead.
+    body, headers = signed(event("customer.subscription.updated", subscription(account=account_id), "evt_late"))
+    client.post("/v1/billing/webhook", content=body, headers=headers)
+    assert billing.entitlements_for(token) == []
 
 
 def test_billing_config_reports_test_mode_and_the_stripe_price(env) -> None:

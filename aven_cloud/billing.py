@@ -366,7 +366,14 @@ class Billing:
             "customer.subscription.updated",
             "customer.subscription.deleted",
         ):
-            self.sync_subscription(obj)
+            # Events can arrive out of order: always apply the subscription's current state from Stripe.
+            current = obj
+            if self.gateway is not None and obj.get("id"):
+                try:
+                    current = self.gateway.retrieve_subscription(obj["id"])
+                except Exception as exc:
+                    log.warning("Could not re-read subscription %s: %s", obj.get("id"), type(exc).__name__)
+            self.sync_subscription(current)
         elif kind == "invoice.payment_failed":
             sub_id = obj.get("subscription") or ((obj.get("parent") or {}).get("subscription_details") or {}).get(
                 "subscription"

@@ -19,6 +19,18 @@ Work through this list on a clean **Windows 11 x64** machine for every public re
 - [ ] Confirm that `dist\AVEN AI\AVEN AI.exe` exists, shows the AVEN icon, and that *Properties → Details* shows the correct version
 - [ ] Optional: `-OneFile` build, if you also publish a single-file version
 
+## 3b. AVEN AI 2.0 components
+- [ ] The CI "Smoke-test packaged executable" step printed a `--self-test` report with `"ok": true` (catalog, every code checker, the game sandbox and engine, entitlement signatures)
+- [ ] `app/data/models.json`: every model you announce has `"status": "available"` and a pinned file; the CI "Check on-device models" workflow passed
+- [ ] `app/data/releases.json` lists only features that are released and working (never models that were not released)
+- [ ] The "Check on-device models" studio job built a validated game with AVEN Core and AVEN 2.0
+
+## 3c. AVEN CODE subscriptions (only if you sell AVEN CODE)
+- [ ] Create the signing key pair with `python aven_cloud/scripts/new_signing_key.py`; private key → server secret `AVEN_ENTITLEMENT_SIGNING_KEY`, public key → GitHub variable `AVEN_ENTITLEMENT_PUBLIC_KEY`
+- [ ] In Stripe **test mode**: create the AVEN CODE product and monthly price; set `STRIPE_SECRET_KEY` (sk_test_), `STRIPE_PRICE_AVEN_CODE`, the webhook endpoint `https://<server>/v1/billing/webhook` and `STRIPE_WEBHOOK_SECRET`, `AVEN_PUBLIC_URL`, and a persistent `AVEN_BILLING_DB`
+- [ ] With the test card 4242 4242 4242 4242: subscribe from Account & subscription, click Refresh, AVEN CODE unlocks; cancel in Manage subscription; a failing test card (4000 0000 0000 0341) leaves AVEN CODE locked
+- [ ] Only then switch the server to live keys; the app shows "Test mode" while test keys are used
+
 ## 4. Smoke test the packaged build
 Run these on a machine **without Python installed** and **without** `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` set:
 - [ ] First launch shows the setup card, and no console window appears
