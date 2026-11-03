@@ -148,7 +148,9 @@ def check_case(case: dict, reply: str, model_name: str) -> list[str]:
     if checks.get("no_urls") and URL.search(reply):
         failures.append("invented a link")
     if "python_defines" in checks:
-        code = "\n".join(m.group(1) for m in CODE_BLOCK.finditer(reply)) or reply
+        # Only Python blocks: a reply may also show shell commands to run the tests.
+        python = re.compile(r"```(?:python|py)[^\n]*\n(.*?)(?:```|$)", re.S)
+        code = "\n".join(m.group(1) for m in python.finditer(reply)) or reply
         try:
             tree = ast.parse(code)  # parsed only, never executed
             names = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}

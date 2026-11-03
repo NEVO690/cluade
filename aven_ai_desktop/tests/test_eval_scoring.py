@@ -107,3 +107,10 @@ def test_honest_unknown_answers_count() -> None:
 
 def test_negative_numbers_still_parse() -> None:
     assert scoring.numbers("x = -5 and (-2.5) but ל-36") == [-5.0, -2.5, 36.0]
+
+
+def test_python_check_ignores_shell_blocks() -> None:
+    fence = "`" * 3
+    code = "def is_palindrome(s):\n    return s == s[::-1]\n"
+    reply = f"{fence}python\n{code}{fence}\n{fence}bash\npython -m pytest\n{fence}"
+    assert check("code_palindrome", reply) == []

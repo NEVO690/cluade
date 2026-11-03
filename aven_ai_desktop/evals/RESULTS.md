@@ -1,4 +1,40 @@
-# Evaluation results: AVEN 1.2.0 vs 1.1.0
+# Evaluation results: AVEN AI 2.0.0 vs 1.2.0
+
+Measured on 3 November 2026 with this suite (29 cases), real on-device models, GitHub Actions `ubuntu-latest`
+(4 CPU cores). One run per model; earlier runs showed the same code varying by up to about 3 cases between runs.
+
+| Slot | 1.2.0 model | 1.2.0 | 2.0.0 model | 2.0.0 | Language problems (1.2 → 2.0) | Hebrew misspellings / 100 words (hspell) | Median reply time |
+|---|---|---|---|---|---|---|---|
+| Light | AVEN Light (Qwen3 1.7B) | 18 | AVEN Light 1.1 (Qwen3.5 2B 8-bit) | **25** | 3 → 0 | 7.1 → 1.3 | 1.6 s → 7.5 s |
+| Core | AVEN Core (Qwen3 4B) | 25 | AVEN Core 1.1 (Qwen3.5 4B) | 26 | 0 → 0 | 3.0 → 2.2 | 8.2 s → 19 s |
+| Main | AVEN 1.1 (Qwen3 8B) | 27 | AVEN 2.0 (Qwen3.5 9B) | 26 | 1 → 0 | 1.7 → 2.7 | 14 s → 30 s |
+| Ultra | AVEN Ultra (unchanged model) | running | AVEN Ultra 1.0 | running | | | |
+
+What this shows, honestly:
+
+- **AVEN Light 1.1 is clearly better** (+7 cases, well beyond run-to-run noise): no more wrong-language replies,
+  far fewer Hebrew misspellings, correct Hebrew one-sentence answers and math. It is slower (longer, more complete answers).
+- **AVEN Core 1.1** is about the same on this suite (within noise), with fewer Hebrew misspellings.
+- **AVEN 2.0 did not score higher than AVEN 1.1 on this suite** (26 vs 27, within noise). It answered every factual,
+  hallucination, identity, context and instruction case correctly, but made arithmetic slips (36 − 7 = 37,
+  $68 + $6.80 = $87.20) that AVEN 1.1 did not make in this run, and its replies take about twice as long.
+  The suite has only 29 cases, so it cannot show gains on longer tasks (coding, writing, Made With AVEN).
+- In the code case, AVEN Light 1.1 once produced an over-long reply that was cut off; Core and Light also added shell
+  commands after the Python code, which the scorer wrongly counted as invalid Python (fixed in the scorer afterwards).
+
+Made With AVEN, real on-device run (`scripts/studio_e2e.py`, same prompt for each model):
+
+- **AVEN Core 1.1:** design plan, then 11,033 characters of game code in 7 minutes; passed every check on the first
+  attempt (syntax, safety rules, sandbox run of 299 frames with 1,691 draw calls). Total 7.9 minutes.
+- **AVEN 2.0:** still running at the time of writing.
+
+Recommendation (not implemented): AVEN 2.0's arithmetic could be improved by letting it use thinking mode for
+math (slower) or with a calculator tool, and its quality should be re-measured on a larger suite with longer tasks
+before claiming it is better than AVEN 1.1.
+
+---
+
+# Earlier: AVEN 1.2.0 vs 1.1.0
 
 Measured with this suite (29 cases) in GitHub Actions on `ubuntu-latest` (4 CPU cores), real on-device models,
 19 October 2026. Each number is the cases passed in one run. Replies are sampled, so the same code varies between
