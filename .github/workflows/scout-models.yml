@@ -1,0 +1,23 @@
+name: Scout model files
+
+# Looks up candidate on-device models on Hugging Face (revision, size, SHA-256) so they can be pinned.
+on:
+  push:
+    paths:
+      - "aven_ai_desktop/scripts/scout_models.py"
+      - ".github/workflows/scout-models.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python aven_ai_desktop/scripts/scout_models.py
