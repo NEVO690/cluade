@@ -1,0 +1,35 @@
+{
+  "styles": ["gold", "shadow", "neon", "frost", "lava", "candy", "royal", "jungle"],
+  "palettes": {
+    "gold": {"body": [250, 200, 60], "accent": [255, 250, 210]},
+    "shadow": {"body": [52, 48, 72], "accent": [255, 70, 100]},
+    "neon": {"body": [40, 240, 200], "accent": [255, 60, 220]},
+    "frost": {"body": [200, 236, 255], "accent": [80, 160, 255]},
+    "lava": {"body": [200, 50, 30], "accent": [255, 190, 40]},
+    "candy": {"body": [255, 150, 210], "accent": [140, 230, 255]},
+    "royal": {"body": [110, 70, 220], "accent": [255, 210, 60]},
+    "jungle": {"body": [60, 150, 70], "accent": [240, 220, 120]}
+  },
+  "skins": [
+    {"id": "nova_neon", "char": "nova", "style": "neon", "price": {"gems": 30}},
+    {"id": "nova_gold", "char": "nova", "style": "gold", "price": {"gems": 80}},
+    {"id": "rocko_lava", "char": "rocko", "style": "lava", "price": {"gems": 30}},
+    {"id": "rocko_shadow", "char": "rocko", "style": "shadow", "price": {"gems": 60}},
+    {"id": "pip_candy", "char": "pip", "style": "candy", "price": {"coins": 400}},
+    {"id": "pip_royal", "char": "pip", "style": "royal", "price": {"gems": 50}},
+    {"id": "zippa_shadow", "char": "zippa", "style": "shadow", "price": {"gems": 50}},
+    {"id": "fizz_neon", "char": "fizz", "style": "neon", "price": {"coins": 500}},
+    {"id": "bolt_gold", "char": "bolt", "style": "gold", "price": {"gems": 80}},
+    {"id": "kiwi_jungle", "char": "kiwi", "style": "jungle", "price": {"coins": 400}},
+    {"id": "glacia_frost", "char": "glacia", "style": "frost", "price": {"gems": 40}},
+    {"id": "anchor_royal", "char": "anchor", "style": "royal", "price": {"gems": 60}},
+    {"id": "echo_neon", "char": "echo", "style": "neon", "price": {"gems": 50}},
+    {"id": "shade_lava", "char": "shade", "style": "lava", "price": {"gems": 60}},
+    {"id": "cinder_frost", "char": "cinder", "style": "frost", "price": {"gems": 60}},
+    {"id": "blitz_candy", "char": "blitz", "style": "candy", "price": {"coins": 600}},
+    {"id": "terra_jungle", "char": "terra", "style": "jungle", "price": {"coins": 600}},
+    {"id": "rook_shadow", "char": "rook", "style": "shadow", "price": {"gems": 60}},
+    {"id": "mirage_gold", "char": "mirage", "style": "gold", "price": {"gems": 100}},
+    {"id": "vortex_royal", "char": "vortex", "style": "royal", "price": {"gems": 100}}
+  ]
+}

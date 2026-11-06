@@ -1,0 +1,78 @@
+{
+  "order": [
+    "gem_collection",
+    "solo_survival",
+    "team_survival",
+    "goal_rush",
+    "zone_control"
+  ],
+  "modes": {
+    "gem_collection": {
+      "team_size": 3,
+      "teams": 2,
+      "duration": 150,
+      "respawn": 3.0,
+      "gems_to_win": 10,
+      "countdown": 15,
+      "gem_interval": 7,
+      "color": [
+        120,
+        84,
+        160
+      ]
+    },
+    "solo_survival": {
+      "team_size": 1,
+      "teams": 6,
+      "duration": 240,
+      "respawn": null,
+      "poison_start": 30,
+      "poison_shrink_time": 120,
+      "poison_dps": 450,
+      "color": [
+        70,
+        130,
+        84
+      ]
+    },
+    "team_survival": {
+      "team_size": 3,
+      "teams": 2,
+      "duration": 0,
+      "round_time": 75,
+      "rounds_to_win": 2,
+      "respawn": null,
+      "color": [
+        160,
+        58,
+        58
+      ]
+    },
+    "goal_rush": {
+      "team_size": 3,
+      "teams": 2,
+      "duration": 150,
+      "respawn": 3.0,
+      "goals_to_win": 2,
+      "color": [
+        60,
+        104,
+        156
+      ]
+    },
+    "zone_control": {
+      "team_size": 3,
+      "teams": 2,
+      "duration": 150,
+      "respawn": 3.0,
+      "points_to_win": 100,
+      "capture_time": 3.0,
+      "points_per_sec": 1.6,
+      "color": [
+        190,
+        146,
+        56
+      ]
+    }
+  }
+}

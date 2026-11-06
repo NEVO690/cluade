@@ -1,0 +1,1141 @@
+{
+  "order": [
+    "nova",
+    "rocko",
+    "pip",
+    "zippa",
+    "fizz",
+    "bolt",
+    "kiwi",
+    "glacia",
+    "anchor",
+    "echo",
+    "shade",
+    "cinder",
+    "blitz",
+    "terra",
+    "rook",
+    "mirage",
+    "vortex"
+  ],
+  "level_bonus": 0.06,
+  "max_level": 9,
+  "upgrade_costs": [
+    0,
+    20,
+    40,
+    70,
+    110,
+    160,
+    220,
+    300,
+    400
+  ],
+  "characters": {
+    "nova": {
+      "class": "marksman",
+      "rarity": "common",
+      "unlock": {
+        "type": "starter"
+      },
+      "hp": 2800,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.6,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "single",
+        "damage": 780,
+        "speed": 900,
+        "range": 9,
+        "radius": 8,
+        "color": [
+          90,
+          220,
+          255
+        ],
+        "shape": "bolt",
+        "sound": "laser"
+      },
+      "super": {
+        "type": "snipe",
+        "damage": 2400,
+        "speed": 1300,
+        "range": 11,
+        "radius": 15,
+        "color": [
+          160,
+          245,
+          255
+        ]
+      },
+      "style": {
+        "body": [
+          80,
+          180,
+          255
+        ],
+        "accent": [
+          245,
+          250,
+          255
+        ],
+        "shape": "round",
+        "accessory": "visor",
+        "skin": [
+          236,
+          196,
+          166
+        ],
+        "hair": [
+          70,
+          48,
+          36
+        ],
+        "weapon": "long"
+      }
+    },
+    "rocko": {
+      "class": "tank",
+      "rarity": "common",
+      "unlock": {
+        "type": "starter"
+      },
+      "hp": 5600,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.9,
+      "hits_to_super": 3,
+      "attack": {
+        "type": "spread",
+        "count": 5,
+        "spread": 34,
+        "damage": 330,
+        "speed": 760,
+        "range": 3.8,
+        "radius": 7,
+        "color": [
+          255,
+          170,
+          70
+        ],
+        "shape": "pellet",
+        "sound": "shoot_heavy"
+      },
+      "super": {
+        "type": "dash",
+        "damage": 1600,
+        "distance": 5,
+        "knockback": 360,
+        "color": [
+          255,
+          190,
+          90
+        ]
+      },
+      "style": {
+        "body": [
+          190,
+          120,
+          80
+        ],
+        "accent": [
+          245,
+          210,
+          140
+        ],
+        "shape": "wide",
+        "accessory": "horns",
+        "skin": [
+          196,
+          140,
+          104
+        ],
+        "hair": [
+          30,
+          26,
+          24
+        ],
+        "beard": true,
+        "weapon": "heavy"
+      }
+    },
+    "pip": {
+      "class": "support",
+      "rarity": "common",
+      "unlock": {
+        "type": "starter"
+      },
+      "hp": 3200,
+      "speed": 195,
+      "ammo": 3,
+      "reload": 1.4,
+      "hits_to_super": 5,
+      "attack": {
+        "type": "single",
+        "damage": 640,
+        "heal": 520,
+        "pierce": true,
+        "speed": 700,
+        "range": 7.5,
+        "radius": 10,
+        "color": [
+          170,
+          255,
+          120
+        ],
+        "shape": "orb",
+        "sound": "shoot"
+      },
+      "super": {
+        "type": "heal_zone",
+        "heal_per_sec": 700,
+        "radius": 2.6,
+        "duration": 4,
+        "range": 7,
+        "color": [
+          120,
+          255,
+          140
+        ]
+      },
+      "style": {
+        "body": [
+          120,
+          215,
+          120
+        ],
+        "accent": [
+          255,
+          236,
+          120
+        ],
+        "shape": "round",
+        "accessory": "leaf",
+        "skin": [
+          244,
+          206,
+          178
+        ],
+        "hair": [
+          196,
+          92,
+          48
+        ],
+        "weapon": "short"
+      }
+    },
+    "zippa": {
+      "class": "assassin",
+      "rarity": "rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 50
+      },
+      "hp": 3600,
+      "speed": 215,
+      "ammo": 3,
+      "reload": 0.9,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "melee",
+        "damage": 820,
+        "range": 1.9,
+        "arc": 110,
+        "color": [
+          255,
+          110,
+          170
+        ],
+        "sound": "melee"
+      },
+      "super": {
+        "type": "blink",
+        "damage": 1400,
+        "range": 5.5,
+        "radius": 1.8,
+        "color": [
+          255,
+          90,
+          160
+        ]
+      },
+      "style": {
+        "body": [
+          220,
+          70,
+          120
+        ],
+        "accent": [
+          50,
+          36,
+          70
+        ],
+        "shape": "tall",
+        "accessory": "mask",
+        "skin": [
+          214,
+          164,
+          124
+        ],
+        "hair": [
+          24,
+          20,
+          24
+        ],
+        "weapon": "melee"
+      }
+    },
+    "fizz": {
+      "class": "controller",
+      "rarity": "rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 120
+      },
+      "hp": 3000,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.6,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "lob",
+        "damage": 900,
+        "explode_radius": 1.3,
+        "speed": 520,
+        "range": 7,
+        "radius": 9,
+        "color": [
+          255,
+          120,
+          60
+        ],
+        "shape": "bomb",
+        "sound": "lob"
+      },
+      "super": {
+        "type": "meteor",
+        "damage": 2000,
+        "explode_radius": 2.6,
+        "range": 8,
+        "color": [
+          255,
+          90,
+          40
+        ]
+      },
+      "style": {
+        "body": [
+          255,
+          170,
+          50
+        ],
+        "accent": [
+          90,
+          60,
+          200
+        ],
+        "shape": "round",
+        "accessory": "goggles",
+        "skin": [
+          240,
+          198,
+          168
+        ],
+        "hair": [
+          210,
+          120,
+          50
+        ],
+        "weapon": "lob"
+      }
+    },
+    "bolt": {
+      "class": "marksman",
+      "rarity": "rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 200
+      },
+      "hp": 3000,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.3,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "burst",
+        "count": 3,
+        "delay": 0.09,
+        "damage": 360,
+        "speed": 950,
+        "range": 8,
+        "radius": 6,
+        "color": [
+          255,
+          230,
+          80
+        ],
+        "shape": "bolt",
+        "sound": "shoot"
+      },
+      "super": {
+        "type": "turret",
+        "hp": 3000,
+        "damage": 220,
+        "fire_rate": 0.45,
+        "attack_range": 7,
+        "duration": 14,
+        "range": 3,
+        "color": [
+          255,
+          220,
+          60
+        ]
+      },
+      "style": {
+        "body": [
+          160,
+          172,
+          196
+        ],
+        "accent": [
+          255,
+          220,
+          60
+        ],
+        "shape": "square",
+        "accessory": "antenna",
+        "skin": [
+          168,
+          176,
+          190
+        ],
+        "hair": null,
+        "robot": true,
+        "weapon": "rifle"
+      }
+    },
+    "kiwi": {
+      "class": "support",
+      "rarity": "rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 300
+      },
+      "hp": 3400,
+      "speed": 190,
+      "ammo": 3,
+      "reload": 1.5,
+      "hits_to_super": 5,
+      "attack": {
+        "type": "lob",
+        "damage": 650,
+        "heal": 600,
+        "explode_radius": 1.25,
+        "speed": 520,
+        "range": 7,
+        "radius": 9,
+        "color": [
+          150,
+          230,
+          90
+        ],
+        "shape": "seed",
+        "sound": "lob"
+      },
+      "super": {
+        "type": "heal_totem",
+        "hp": 2200,
+        "heal_per_sec": 380,
+        "heal_radius": 3.2,
+        "duration": 12,
+        "range": 3,
+        "color": [
+          140,
+          240,
+          120
+        ]
+      },
+      "style": {
+        "body": [
+          140,
+          196,
+          80
+        ],
+        "accent": [
+          120,
+          76,
+          44
+        ],
+        "shape": "round",
+        "accessory": "feather",
+        "skin": [
+          150,
+          102,
+          72
+        ],
+        "hair": [
+          30,
+          24,
+          20
+        ],
+        "weapon": "lob"
+      }
+    },
+    "glacia": {
+      "class": "controller",
+      "rarity": "super_rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 450
+      },
+      "hp": 3300,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.5,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "wave",
+        "damage": 700,
+        "slow": 1.2,
+        "pierce": true,
+        "speed": 540,
+        "range": 7,
+        "radius": 22,
+        "color": [
+          170,
+          230,
+          255
+        ],
+        "shape": "wave",
+        "sound": "whoosh"
+      },
+      "super": {
+        "type": "slow_field",
+        "radius": 3,
+        "duration": 5,
+        "dps": 260,
+        "slow": 0.5,
+        "range": 8,
+        "color": [
+          150,
+          220,
+          255
+        ]
+      },
+      "style": {
+        "body": [
+          150,
+          215,
+          255
+        ],
+        "accent": [
+          255,
+          255,
+          255
+        ],
+        "shape": "tall",
+        "accessory": "crystal",
+        "skin": [
+          240,
+          226,
+          224
+        ],
+        "hair": [
+          226,
+          236,
+          246
+        ],
+        "weapon": "short"
+      }
+    },
+    "anchor": {
+      "class": "tank",
+      "rarity": "super_rare",
+      "unlock": {
+        "type": "trophies",
+        "value": 600
+      },
+      "hp": 6200,
+      "speed": 175,
+      "ammo": 3,
+      "reload": 1.6,
+      "hits_to_super": 3,
+      "attack": {
+        "type": "melee",
+        "damage": 1100,
+        "range": 2.3,
+        "arc": 150,
+        "color": [
+          120,
+          190,
+          255
+        ],
+        "sound": "melee"
+      },
+      "super": {
+        "type": "stun_wave",
+        "damage": 1000,
+        "stun": 1.3,
+        "speed": 650,
+        "range": 6,
+        "radius": 34,
+        "color": [
+          140,
+          210,
+          255
+        ]
+      },
+      "style": {
+        "body": [
+          64,
+          112,
+          172
+        ],
+        "accent": [
+          250,
+          250,
+          250
+        ],
+        "shape": "wide",
+        "accessory": "captain_hat",
+        "skin": [
+          226,
+          172,
+          140
+        ],
+        "hair": [
+          200,
+          200,
+          206
+        ],
+        "beard": true,
+        "weapon": "melee"
+      }
+    },
+    "echo": {
+      "class": "support",
+      "rarity": "epic",
+      "unlock": {
+        "type": "trophies",
+        "value": 800
+      },
+      "hp": 3600,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.5,
+      "hits_to_super": 5,
+      "attack": {
+        "type": "wave",
+        "damage": 560,
+        "heal": 350,
+        "pierce": true,
+        "speed": 650,
+        "range": 6.5,
+        "radius": 18,
+        "color": [
+          255,
+          140,
+          220
+        ],
+        "shape": "ring",
+        "sound": "whoosh"
+      },
+      "super": {
+        "type": "shield_aura",
+        "radius": 3.6,
+        "duration": 4,
+        "reduction": 0.5,
+        "heal": 900,
+        "color": [
+          255,
+          170,
+          230
+        ]
+      },
+      "style": {
+        "body": [
+          255,
+          120,
+          200
+        ],
+        "accent": [
+          60,
+          40,
+          90
+        ],
+        "shape": "round",
+        "accessory": "headphones",
+        "skin": [
+          202,
+          142,
+          112
+        ],
+        "hair": [
+          230,
+          110,
+          170
+        ],
+        "weapon": "short"
+      }
+    },
+    "shade": {
+      "class": "assassin",
+      "rarity": "epic",
+      "unlock": {
+        "type": "trophies",
+        "value": 1000
+      },
+      "hp": 3400,
+      "speed": 215,
+      "ammo": 3,
+      "reload": 1.4,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "boomerang",
+        "damage": 640,
+        "speed": 760,
+        "range": 5.5,
+        "radius": 11,
+        "color": [
+          190,
+          120,
+          255
+        ],
+        "shape": "blade",
+        "sound": "whoosh"
+      },
+      "super": {
+        "type": "stealth",
+        "duration": 4,
+        "speed_mult": 1.35,
+        "heal": 800,
+        "color": [
+          150,
+          100,
+          255
+        ]
+      },
+      "style": {
+        "body": [
+          90,
+          72,
+          130
+        ],
+        "accent": [
+          190,
+          120,
+          255
+        ],
+        "shape": "tall",
+        "accessory": "hood",
+        "skin": [
+          186,
+          138,
+          108
+        ],
+        "hair": [
+          20,
+          18,
+          26
+        ],
+        "weapon": "melee"
+      }
+    },
+    "cinder": {
+      "class": "tank",
+      "rarity": "super_rare",
+      "unlock": {
+        "type": "coins",
+        "value": 900
+      },
+      "hp": 5200,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.0,
+      "hits_to_super": 3,
+      "attack": {
+        "type": "flame",
+        "count": 5,
+        "spread": 26,
+        "damage": 200,
+        "pierce": true,
+        "speed": 520,
+        "range": 3.3,
+        "radius": 10,
+        "color": [
+          255,
+          140,
+          40
+        ],
+        "shape": "flame",
+        "sound": "flame"
+      },
+      "super": {
+        "type": "nova_ring",
+        "count": 18,
+        "damage": 700,
+        "speed": 600,
+        "range": 5,
+        "radius": 12,
+        "color": [
+          255,
+          120,
+          30
+        ]
+      },
+      "style": {
+        "body": [
+          220,
+          84,
+          52
+        ],
+        "accent": [
+          255,
+          205,
+          60
+        ],
+        "shape": "wide",
+        "accessory": "flame_hair",
+        "skin": [
+          172,
+          112,
+          82
+        ],
+        "hair": [
+          200,
+          60,
+          30
+        ],
+        "weapon": "heavy"
+      }
+    },
+    "blitz": {
+      "class": "assassin",
+      "rarity": "super_rare",
+      "unlock": {
+        "type": "coins",
+        "value": 1200
+      },
+      "hp": 3800,
+      "speed": 210,
+      "ammo": 3,
+      "reload": 1.1,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "spread",
+        "count": 2,
+        "spread": 8,
+        "damage": 520,
+        "speed": 900,
+        "range": 5,
+        "radius": 6,
+        "color": [
+          255,
+          220,
+          90
+        ],
+        "shape": "pellet",
+        "sound": "shoot"
+      },
+      "super": {
+        "type": "rage",
+        "duration": 5,
+        "speed_mult": 1.35,
+        "reload_mult": 2.5,
+        "damage_mult": 1.2,
+        "color": [
+          255,
+          70,
+          70
+        ]
+      },
+      "style": {
+        "body": [
+          250,
+          210,
+          72
+        ],
+        "accent": [
+          220,
+          40,
+          60
+        ],
+        "shape": "round",
+        "accessory": "bandana",
+        "skin": [
+          236,
+          192,
+          152
+        ],
+        "hair": [
+          232,
+          200,
+          110
+        ],
+        "weapon": "short"
+      }
+    },
+    "terra": {
+      "class": "controller",
+      "rarity": "epic",
+      "unlock": {
+        "type": "coins",
+        "value": 1500
+      },
+      "hp": 4000,
+      "speed": 180,
+      "ammo": 3,
+      "reload": 1.6,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "lob",
+        "damage": 820,
+        "explode_radius": 1.1,
+        "speed": 500,
+        "range": 6.5,
+        "radius": 11,
+        "color": [
+          170,
+          130,
+          90
+        ],
+        "shape": "rock",
+        "sound": "lob"
+      },
+      "super": {
+        "type": "wall",
+        "length": 5,
+        "duration": 9,
+        "range": 6,
+        "color": [
+          150,
+          110,
+          70
+        ]
+      },
+      "style": {
+        "body": [
+          160,
+          120,
+          80
+        ],
+        "accent": [
+          100,
+          200,
+          90
+        ],
+        "shape": "square",
+        "accessory": "moss",
+        "skin": [
+          132,
+          124,
+          112
+        ],
+        "hair": null,
+        "golem": true,
+        "weapon": "lob"
+      }
+    },
+    "rook": {
+      "class": "marksman",
+      "rarity": "epic",
+      "unlock": {
+        "type": "gems",
+        "value": 120
+      },
+      "hp": 2600,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 2.1,
+      "hits_to_super": 3,
+      "attack": {
+        "type": "single",
+        "damage": 1500,
+        "speed": 1250,
+        "range": 10.5,
+        "radius": 7,
+        "color": [
+          255,
+          250,
+          200
+        ],
+        "shape": "bolt",
+        "sound": "shoot_heavy"
+      },
+      "super": {
+        "type": "rain",
+        "count": 6,
+        "damage": 650,
+        "explode_radius": 1.3,
+        "spread": 2.4,
+        "range": 9,
+        "duration": 1.2,
+        "color": [
+          255,
+          160,
+          60
+        ]
+      },
+      "style": {
+        "body": [
+          96,
+          140,
+          92
+        ],
+        "accent": [
+          44,
+          62,
+          44
+        ],
+        "shape": "tall",
+        "accessory": "beret",
+        "skin": [
+          204,
+          152,
+          120
+        ],
+        "hair": [
+          90,
+          64,
+          44
+        ],
+        "beard": true,
+        "weapon": "long"
+      }
+    },
+    "mirage": {
+      "class": "support",
+      "rarity": "mythic",
+      "unlock": {
+        "type": "gems",
+        "value": 150
+      },
+      "hp": 3000,
+      "speed": 195,
+      "ammo": 3,
+      "reload": 1.3,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "single",
+        "damage": 620,
+        "heal": 300,
+        "pierce": true,
+        "speed": 980,
+        "range": 8,
+        "radius": 8,
+        "color": [
+          210,
+          160,
+          255
+        ],
+        "shape": "star",
+        "sound": "laser"
+      },
+      "super": {
+        "type": "decoy",
+        "hp": 3000,
+        "duration": 8,
+        "damage_mult": 0.6,
+        "range": 4,
+        "color": [
+          220,
+          180,
+          255
+        ]
+      },
+      "style": {
+        "body": [
+          236,
+          236,
+          255
+        ],
+        "accent": [
+          176,
+          100,
+          255
+        ],
+        "shape": "round",
+        "accessory": "crown",
+        "skin": [
+          246,
+          218,
+          204
+        ],
+        "hair": [
+          214,
+          214,
+          232
+        ],
+        "weapon": "short"
+      }
+    },
+    "vortex": {
+      "class": "controller",
+      "rarity": "legendary",
+      "unlock": {
+        "type": "gems",
+        "value": 180
+      },
+      "hp": 3200,
+      "speed": 185,
+      "ammo": 3,
+      "reload": 1.5,
+      "hits_to_super": 4,
+      "attack": {
+        "type": "bounce",
+        "damage": 720,
+        "bounces": 2,
+        "speed": 760,
+        "range": 9,
+        "radius": 10,
+        "color": [
+          120,
+          255,
+          230
+        ],
+        "shape": "orb",
+        "sound": "laser"
+      },
+      "super": {
+        "type": "pull",
+        "radius": 3,
+        "duration": 2.2,
+        "pull": 260,
+        "dps": 200,
+        "final_damage": 900,
+        "range": 7,
+        "color": [
+          140,
+          255,
+          230
+        ]
+      },
+      "style": {
+        "body": [
+          76,
+          44,
+          128
+        ],
+        "accent": [
+          120,
+          255,
+          230
+        ],
+        "shape": "round",
+        "accessory": "halo",
+        "skin": [
+          118,
+          96,
+          160
+        ],
+        "hair": [
+          20,
+          16,
+          40
+        ],
+        "weapon": "short"
+      }
+    }
+  }
+}

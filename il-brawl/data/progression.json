@@ -1,0 +1,69 @@
+{
+  "trophy_road": [
+    {"trophies": 10, "reward": {"type": "coins", "amount": 100}},
+    {"trophies": 25, "reward": {"type": "gems", "amount": 10}},
+    {"trophies": 50, "reward": {"type": "character", "id": "zippa"}},
+    {"trophies": 80, "reward": {"type": "coins", "amount": 200}},
+    {"trophies": 120, "reward": {"type": "character", "id": "fizz"}},
+    {"trophies": 160, "reward": {"type": "gems", "amount": 20}},
+    {"trophies": 200, "reward": {"type": "character", "id": "bolt"}},
+    {"trophies": 250, "reward": {"type": "coins", "amount": 300}},
+    {"trophies": 300, "reward": {"type": "character", "id": "kiwi"}},
+    {"trophies": 375, "reward": {"type": "gems", "amount": 30}},
+    {"trophies": 450, "reward": {"type": "character", "id": "glacia"}},
+    {"trophies": 525, "reward": {"type": "coins", "amount": 500}},
+    {"trophies": 600, "reward": {"type": "character", "id": "anchor"}},
+    {"trophies": 700, "reward": {"type": "gems", "amount": 40}},
+    {"trophies": 800, "reward": {"type": "character", "id": "echo"}},
+    {"trophies": 900, "reward": {"type": "coins", "amount": 800}},
+    {"trophies": 1000, "reward": {"type": "character", "id": "shade"}},
+    {"trophies": 1150, "reward": {"type": "gems", "amount": 60}},
+    {"trophies": 1300, "reward": {"type": "coins", "amount": 1200}},
+    {"trophies": 1500, "reward": {"type": "gems", "amount": 100}}
+  ],
+  "daily_rewards": [
+    {"type": "coins", "amount": 50},
+    {"type": "coins", "amount": 80},
+    {"type": "gems", "amount": 5},
+    {"type": "coins", "amount": 120},
+    {"type": "gems", "amount": 10},
+    {"type": "coins", "amount": 200},
+    {"type": "gems", "amount": 25}
+  ],
+  "xp_per_level": [0, 60, 140, 240, 360, 500, 660, 840, 1040, 1260, 1500],
+  "xp_per_level_after": 260,
+  "level_up_reward": {"type": "gems", "amount": 5},
+  "match_rewards": {
+    "win": {"coins": 22, "xp": 30},
+    "draw": {"coins": 14, "xp": 20},
+    "loss": {"coins": 8, "xp": 12}
+  },
+  "trophy_changes": {
+    "team": {"win": 8, "draw": 0, "loss": -4},
+    "solo": [10, 7, 4, 0, -2, -4]
+  },
+  "missions": [
+    {"type": "play_matches", "targets": [2, 3, 4], "coins": 40, "xp": 30},
+    {"type": "win_matches", "targets": [1, 2, 3], "coins": 60, "xp": 40},
+    {"type": "deal_damage", "targets": [15000, 25000, 40000], "coins": 50, "xp": 35},
+    {"type": "eliminate", "targets": [5, 8, 12], "coins": 50, "xp": 35},
+    {"type": "use_super", "targets": [3, 5, 8], "coins": 40, "xp": 30},
+    {"type": "heal_amount", "targets": [5000, 9000], "coins": 50, "xp": 35},
+    {"type": "play_mode", "targets": [1, 2], "coins": 45, "xp": 30},
+    {"type": "collect_gems", "targets": [6, 10], "coins": 50, "xp": 35},
+    {"type": "score_goals", "targets": [1, 2], "coins": 60, "xp": 40},
+    {"type": "win_with_class", "targets": [1, 2], "coins": 60, "xp": 40}
+  ],
+  "achievements": [
+    {"id": "first_win", "stat": "wins", "thresholds": [1, 10, 50, 200], "gems": [5, 10, 20, 40]},
+    {"id": "brawler", "stat": "matches", "thresholds": [5, 25, 100, 300], "gems": [5, 10, 20, 40]},
+    {"id": "eliminator", "stat": "kills", "thresholds": [10, 100, 500, 2000], "gems": [5, 10, 25, 50]},
+    {"id": "heavy_hitter", "stat": "damage", "thresholds": [50000, 250000, 1000000, 5000000], "gems": [5, 10, 25, 50]},
+    {"id": "medic", "stat": "healing", "thresholds": [10000, 50000, 200000, 1000000], "gems": [5, 10, 20, 40]},
+    {"id": "gem_master", "stat": "gems_collected", "thresholds": [20, 100, 400, 1500], "gems": [5, 10, 20, 40]},
+    {"id": "striker", "stat": "goals", "thresholds": [3, 15, 60, 200], "gems": [5, 10, 20, 40]},
+    {"id": "survivor", "stat": "solo_wins", "thresholds": [1, 10, 40, 150], "gems": [5, 15, 30, 60]},
+    {"id": "collector", "stat": "characters_unlocked", "thresholds": [4, 8, 12, 17], "gems": [10, 20, 40, 80]},
+    {"id": "supercharged", "stat": "supers", "thresholds": [10, 100, 500, 2000], "gems": [5, 10, 20, 40]}
+  ]
+}

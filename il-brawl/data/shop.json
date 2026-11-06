@@ -1,0 +1,14 @@
+{
+  "coin_packs": [
+    {"id": "coins_small", "coins": 150, "price": {"gems": 10}},
+    {"id": "coins_medium", "coins": 500, "price": {"gems": 30}},
+    {"id": "coins_large", "coins": 1200, "price": {"gems": 65}}
+  ],
+  "special_offers": [
+    {"id": "starter_pack", "contents": [{"type": "coins", "amount": 600}, {"type": "gems", "amount": 20}], "price": {"coins": 300}, "once": true},
+    {"id": "brawler_bundle", "contents": [{"type": "character", "id": "cinder"}, {"type": "skin", "id": "cinder_frost"}], "price": {"gems": 90}, "once": true},
+    {"id": "gem_chest", "contents": [{"type": "gems", "amount": 40}], "price": {"coins": 900}, "once": false}
+  ],
+  "daily_offer_count": 3,
+  "daily_discount": 0.3
+}

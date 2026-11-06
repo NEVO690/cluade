@@ -1,0 +1,27 @@
+{
+  "icons": [
+    {"id": "icon_star", "shape": "star", "color": [255, 210, 60], "price": {"coins": 0}},
+    {"id": "icon_rocket", "shape": "rocket", "color": [255, 100, 90], "price": {"coins": 250}},
+    {"id": "icon_diamond", "shape": "diamond", "color": [90, 230, 200], "price": {"gems": 20}},
+    {"id": "icon_bolt", "shape": "lightning", "color": [255, 230, 70], "price": {"coins": 300}},
+    {"id": "icon_heart", "shape": "heart", "color": [255, 90, 150], "price": {"coins": 200}},
+    {"id": "icon_planet", "shape": "planet", "color": [140, 120, 255], "price": {"gems": 25}},
+    {"id": "icon_crown", "shape": "crown", "color": [255, 200, 40], "price": {"gems": 40}},
+    {"id": "icon_flame", "shape": "flame", "color": [255, 130, 40], "price": {"coins": 350}}
+  ],
+  "titles": [
+    {"id": "title_rookie", "price": {"coins": 0}},
+    {"id": "title_unstoppable", "price": {"coins": 500}},
+    {"id": "title_gem_hunter", "price": {"coins": 400}},
+    {"id": "title_zone_king", "price": {"coins": 400}},
+    {"id": "title_sharpshooter", "price": {"gems": 30}},
+    {"id": "title_legend", "price": {"gems": 60}}
+  ],
+  "name_colors": [
+    {"id": "color_white", "color": [255, 255, 255], "price": {"coins": 0}},
+    {"id": "color_gold", "color": [255, 210, 60], "price": {"coins": 300}},
+    {"id": "color_mint", "color": [110, 255, 190], "price": {"coins": 300}},
+    {"id": "color_rose", "color": [255, 120, 180], "price": {"gems": 15}},
+    {"id": "color_sky", "color": [110, 190, 255], "price": {"gems": 15}}
+  ]
+}
