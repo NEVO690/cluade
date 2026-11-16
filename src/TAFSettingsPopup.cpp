@@ -9,10 +9,10 @@ using namespace geode::prelude;
 
 namespace taf {
     namespace {
-        constexpr float W = 360.f;
-        constexpr float H = 250.f;
-        constexpr float SIZE_MIN = 0.5f;
-        constexpr float SIZE_MAX = 1.5f;
+        constexpr float POPUP_W = 360.f;
+        constexpr float POPUP_H = 250.f;
+        constexpr float SUB_SIZE_MIN = 0.5f;
+        constexpr float SUB_SIZE_MAX = 1.5f;
     }
 
     TAFSettingsPopup* TAFSettingsPopup::create(TAFLayer* layer) {
@@ -26,26 +26,26 @@ namespace taf {
     }
 
     bool TAFSettingsPopup::init(TAFLayer* layer) {
-        if (!Popup::init(W, H)) return false;
+        if (!Popup::init(POPUP_W, POPUP_H)) return false;
         m_layer = layer;
         this->setTitle("TAF Settings");
 
         auto menu = CCMenu::create();
         menu->setPosition({0, 0});
-        menu->setContentSize({W, H});
+        menu->setContentSize({POPUP_W, POPUP_H});
         m_mainLayer->addChild(menu, 5);
 
-        float y = H - 58.f;
+        float y = POPUP_H - 58.f;
         this->addToggle(menu, "Mod Enabled", "enabled", y);
         this->addToggle(menu, "Subtitles", "show-subtitles", y -= 30.f);
         this->addToggle(menu, "Subtitles On Top", "subtitles-top", y -= 30.f);
         this->addToggle(menu, "Uppercase", "subtitle-uppercase", y -= 30.f);
         this->addToggle(menu, "Auto Play Next", "auto-advance", y -= 30.f);
 
-        m_volumeLabel = this->addSlider("Voice Volume", 265.f, H - 62.f, settings::voiceVolume(),
+        m_volumeLabel = this->addSlider("Voice Volume", 265.f, POPUP_H - 62.f, settings::voiceVolume(),
             menu_selector(TAFSettingsPopup::onVolume), &m_volume);
-        float sizeNorm = (settings::subtitleSize() - SIZE_MIN) / (SIZE_MAX - SIZE_MIN);
-        m_sizeLabel = this->addSlider("Subtitle Size", 265.f, H - 122.f, sizeNorm,
+        float sizeNorm = (settings::subtitleSize() - SUB_SIZE_MIN) / (SUB_SIZE_MAX - SUB_SIZE_MIN);
+        m_sizeLabel = this->addSlider("Subtitle Size", 265.f, POPUP_H - 122.f, sizeNorm,
             menu_selector(TAFSettingsPopup::onSize), &m_size);
         this->updateSliderLabels();
 
@@ -57,13 +57,13 @@ namespace taf {
             menu->addChild(btn);
         };
         mkBtn("Audio Folder", menu_selector(TAFSettingsPopup::onAudioFolder), 70.f);
-        mkBtn("Reload", menu_selector(TAFSettingsPopup::onReload), W / 2.f);
-        mkBtn("All Settings", menu_selector(TAFSettingsPopup::onAllSettings), W - 70.f);
+        mkBtn("Reload", menu_selector(TAFSettingsPopup::onReload), POPUP_W / 2.f);
+        mkBtn("All Settings", menu_selector(TAFSettingsPopup::onAllSettings), POPUP_W - 70.f);
 
         auto hint = CCLabelBMFont::create("Put voice files in the Audio Folder, then press Reload.", "chatFont.fnt");
         hint->setScale(0.5f);
         hint->setOpacity(190);
-        hint->setPosition({W / 2.f, 52.f});
+        hint->setPosition({POPUP_W / 2.f, 52.f});
         m_mainLayer->addChild(hint);
         return true;
     }
@@ -124,7 +124,7 @@ namespace taf {
 
     void TAFSettingsPopup::onSize(CCObject*) {
         if (!m_size) return;
-        float v = SIZE_MIN + m_size->getThumb()->getValue() * (SIZE_MAX - SIZE_MIN);
+        float v = SUB_SIZE_MIN + m_size->getThumb()->getValue() * (SUB_SIZE_MAX - SUB_SIZE_MIN);
         settings::setF("subtitle-size", std::round(v * 20.f) / 20.f);
         this->updateSliderLabels();
         if (m_layer) m_layer->applySettings();
