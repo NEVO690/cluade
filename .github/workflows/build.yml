@@ -43,9 +43,12 @@ jobs:
       - name: Publish build to taf-build branch
         if: steps.build.outcome == 'success'
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir out
           find build output -name "*.geode" -exec cp {} out/ \; 2>/dev/null || true
+          gh release download v6.0.0-alpha.2 -R geode-sdk/geode -p "*-win.zip" -D out || echo "loader download failed"
           ls -la out
           cd out
           git init -q
