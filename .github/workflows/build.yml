@@ -6,6 +6,9 @@ on:
     branches:
       - taf-mod
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Windows
@@ -36,3 +39,17 @@ jobs:
           name: taf-mod
           path: ${{ steps.build.outputs.build-output }}/*.geode
           if-no-files-found: error
+
+      - name: Publish build to taf-build branch
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          mkdir out
+          find build output -name "*.geode" -exec cp {} out/ \; 2>/dev/null || true
+          ls -la out
+          cd out
+          git init -q
+          git checkout -q -b taf-build
+          git add .
+          git -c user.name=github-actions -c user.email=actions@github.com commit -qm "Build ${{ github.sha }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" taf-build
