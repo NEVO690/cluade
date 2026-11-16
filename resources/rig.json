@@ -1,0 +1,224 @@
+{
+  "aura": {
+    "parts": [
+      {
+        "id": "aura",
+        "sprite": "af_aura.png",
+        "pos": [
+          0,
+          75
+        ],
+        "anchor": [
+          0.5,
+          0.5
+        ],
+        "z": -10,
+        "additive": true
+      },
+      {
+        "id": "arm_back",
+        "sprite": "af_arm_back.png",
+        "pos": [
+          -20,
+          96
+        ],
+        "anchor": [
+          0.5,
+          0.92
+        ],
+        "z": -1,
+        "color": [
+          200,
+          200,
+          215
+        ]
+      },
+      {
+        "id": "legs",
+        "sprite": "af_legs.png",
+        "pos": [
+          0,
+          0
+        ],
+        "anchor": [
+          0.5,
+          0
+        ],
+        "z": 0
+      },
+      {
+        "id": "torso",
+        "sprite": "af_torso.png",
+        "pos": [
+          0,
+          42
+        ],
+        "anchor": [
+          0.5,
+          0
+        ],
+        "z": 1
+      },
+      {
+        "id": "head",
+        "sprite": "af_head.png",
+        "pos": [
+          0,
+          92
+        ],
+        "anchor": [
+          0.5,
+          0.1
+        ],
+        "z": 2
+      },
+      {
+        "id": "eyes",
+        "sprite": "af_eyes_open.png",
+        "parent": "head",
+        "pos": [
+          31,
+          29
+        ],
+        "anchor": [
+          0.5,
+          0.5
+        ],
+        "z": 1
+      },
+      {
+        "id": "mouth",
+        "sprite": "af_mouth_closed.png",
+        "parent": "head",
+        "pos": [
+          30,
+          14
+        ],
+        "anchor": [
+          0.5,
+          0.5
+        ],
+        "z": 1
+      },
+      {
+        "id": "arm_front",
+        "sprite": "af_arm_front.png",
+        "pos": [
+          22,
+          96
+        ],
+        "anchor": [
+          0.5,
+          0.92
+        ],
+        "z": 3
+      }
+    ],
+    "eyes": {
+      "open": "af_eyes_open.png",
+      "closed": "af_eyes_closed.png",
+      "angry": "af_eyes_angry.png"
+    },
+    "mouth": [
+      "af_mouth_closed.png",
+      "af_mouth_mid.png",
+      "af_mouth_open.png"
+    ],
+    "height": 150
+  },
+  "chicken": {
+    "parts": [
+      {
+        "id": "legs",
+        "sprite": "ck_legs.png",
+        "pos": [
+          0,
+          0
+        ],
+        "anchor": [
+          0.5,
+          0
+        ],
+        "z": 0
+      },
+      {
+        "id": "torso",
+        "sprite": "ck_body.png",
+        "pos": [
+          -4,
+          18
+        ],
+        "anchor": [
+          0.5,
+          0
+        ],
+        "z": 1
+      },
+      {
+        "id": "head",
+        "sprite": "ck_head.png",
+        "pos": [
+          24,
+          64
+        ],
+        "anchor": [
+          0.5,
+          0.15
+        ],
+        "z": 2
+      },
+      {
+        "id": "eyes",
+        "sprite": "ck_eyes_open.png",
+        "parent": "head",
+        "pos": [
+          32,
+          29
+        ],
+        "anchor": [
+          0.5,
+          0.5
+        ],
+        "z": 1
+      },
+      {
+        "id": "mouth",
+        "sprite": "ck_mouth_closed.png",
+        "parent": "head",
+        "pos": [
+          44,
+          23
+        ],
+        "anchor": [
+          0.1,
+          0.5
+        ],
+        "z": 1
+      },
+      {
+        "id": "arm_front",
+        "sprite": "ck_wing.png",
+        "pos": [
+          -6,
+          50
+        ],
+        "anchor": [
+          0.15,
+          0.8
+        ],
+        "z": 3
+      }
+    ],
+    "eyes": {
+      "open": "ck_eyes_open.png",
+      "closed": "ck_eyes_closed.png",
+      "angry": "ck_eyes_angry.png"
+    },
+    "mouth": [
+      "ck_mouth_closed.png",
+      "ck_mouth_mid.png",
+      "ck_mouth_open.png"
+    ],
+    "height": 120
+  }
+}

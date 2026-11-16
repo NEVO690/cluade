@@ -1,0 +1,64 @@
+{
+	"version": 1,
+	"characters": {
+		"aura": {
+			"name": "Aura Farmer",
+			"rig": "aura",
+			"side": "left",
+			"color": [90, 220, 255]
+		},
+		"larry": {
+			"name": "Larper Larry",
+			"rig": "chicken",
+			"side": "right",
+			"color": [255, 90, 80]
+		}
+	},
+	"scenes": [
+		{
+			"id": "taf",
+			"title": "TAF",
+			"lines": [
+				{
+					"speaker": "aura",
+					"emotion": "aura",
+					"listener": "neutral",
+					"text": "[Line 1 - Aura Farmer: write the line from the video here]",
+					"audio": "line01.ogg"
+				},
+				{
+					"speaker": "larry",
+					"emotion": "angry",
+					"listener": "surprised",
+					"text": "[שורה 2 - לרי: כתוב כאן את השורה מהסרטון]",
+					"audio": "line02.ogg"
+				},
+				{
+					"speaker": "aura",
+					"emotion": "laugh",
+					"listener": "angry",
+					"text": "[Line 3 - Aura Farmer] This line shows subtitle cues:",
+					"audio": "line03.ogg",
+					"cues": [
+						{ "start": 0.0, "end": 1.6, "text": "[Line 3 - part one]" },
+						{ "start": 1.6, "end": 3.4, "text": "[Line 3 - part two]" }
+					]
+				},
+				{
+					"speaker": "larry",
+					"emotion": "attack",
+					"listener": "hit",
+					"text": "[Line 4 - Larper Larry attacks]",
+					"audio": "line04.ogg"
+				},
+				{
+					"speaker": "aura",
+					"emotion": "happy",
+					"listener": "neutral",
+					"text": "[Line 5 - Aura Farmer]",
+					"audio": "line05.ogg"
+				}
+			]
+		}
+	]
+}

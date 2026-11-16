@@ -1,0 +1,88 @@
+{
+	"geode": "6.0.0-alpha.2",
+	"gd": {
+		"win": "2.2091"
+	},
+	"id": "nevo690.taf",
+	"name": "TAF",
+	"version": "v1.0.0",
+	"developer": "NEVO690",
+	"description": "TAF (The Aura Farmer) - animated characters, dialogue and subtitles.",
+	"resources": {
+		"sprites": [
+			"resources/sprites/*.png"
+		],
+		"files": [
+			"resources/rig.json",
+			"resources/dialogue.json"
+		],
+		"fonts": {
+			"subFont": {
+				"path": "resources/fonts/DejaVuSans-Bold.ttf",
+				"size": 44,
+				"outline": 5,
+				"charset": "32-126,1456-1470,1471,1473-1474,1488-1514,8211-8212,8216-8217,8220-8221,8230"
+			}
+		}
+	},
+	"settings": {
+		"enabled": {
+			"type": "bool",
+			"default": true,
+			"name": "Enable TAF",
+			"description": "Shows the TAF button in the main menu."
+		},
+		"show-subtitles": {
+			"type": "bool",
+			"default": true,
+			"name": "Subtitles",
+			"description": "Show subtitles while characters speak."
+		},
+		"subtitles-top": {
+			"type": "bool",
+			"default": false,
+			"name": "Subtitles On Top",
+			"description": "Show subtitles at the top of the screen instead of the bottom."
+		},
+		"subtitle-uppercase": {
+			"type": "bool",
+			"default": true,
+			"name": "Uppercase Subtitles",
+			"description": "Write English subtitles in CAPITAL letters."
+		},
+		"subtitle-size": {
+			"type": "float",
+			"default": 1.0,
+			"min": 0.5,
+			"max": 1.5,
+			"name": "Subtitle Size",
+			"description": "Size of the subtitle text.",
+			"control": {
+				"slider": true,
+				"slider-step": 0.05,
+				"arrows": true,
+				"arrow-step": 0.1
+			}
+		},
+		"voice-volume": {
+			"type": "float",
+			"default": 0.8,
+			"min": 0.0,
+			"max": 1.0,
+			"name": "Voice Volume",
+			"description": "Volume of character voice lines.",
+			"control": {
+				"slider": true,
+				"slider-step": 0.05,
+				"arrows": true,
+				"arrow-step": 0.1
+			}
+		},
+		"auto-advance": {
+			"type": "bool",
+			"default": true,
+			"name": "Auto Play Next Line",
+			"description": "Automatically continue to the next dialogue line."
+		}
+	}
+}
